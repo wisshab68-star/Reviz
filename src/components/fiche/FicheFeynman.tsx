@@ -4,18 +4,9 @@ interface FicheFeynmanProps {
 
 export function FicheFeynman({ texte }: FicheFeynmanProps) {
   return (
-    <div
-      style={{
-        borderLeft: "2px solid var(--ink)",
-        padding: "14px",
-        fontSize: 13,
-        color: "var(--ink)",
-        lineHeight: 1.7,
-        fontStyle: "italic",
-        marginBottom: 10,
-      }}
-    >
-      &ldquo;{texte}&rdquo;
+    <div className="reviz-fiche-feynman">
+      <p className="reviz-fiche-feynman-kicker">Comme si tu l'expliquais a un ami</p>
+      <p className="reviz-fiche-feynman-text">&ldquo;{texte}&rdquo;</p>
     </div>
   );
 }

@@ -27,7 +27,7 @@ export function MarketingSite() {
         width: "100%",
         minHeight: "100vh",
         border: "0",
-        background: "#dcdde2",
+        background: "#ffffff",
       }}
     />
   );

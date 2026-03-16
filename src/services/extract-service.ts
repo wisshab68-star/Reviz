@@ -1,7 +1,8 @@
 import pdfParse from "pdf-parse";
 
 import { openai } from "@/lib/openai";
-import { sanitizeText } from "@/lib/text";
+import { normalizeDocumentText, sanitizeText } from "@/lib/text";
+import type { SourceQuality } from "@/types/generation-pipeline";
 
 type ExtractedPayload = {
   extractedText: string;
@@ -44,11 +45,11 @@ function removeOcrArtifacts(text: string) {
 }
 
 function normalizeExtractedText(text: string) {
-  let cleaned = sanitizeText(text);
+  let cleaned = normalizeDocumentText(text);
   cleaned = removePageNumbers(cleaned);
   cleaned = removeRepetitiveHeaders(cleaned);
   cleaned = removeOcrArtifacts(cleaned);
-  cleaned = cleaned.replace(/\n{3,}/g, "\n\n").trim();
+  cleaned = normalizeDocumentText(cleaned).replace(/\n{3,}/g, "\n\n").trim();
   return cleaned;
 }
 
@@ -87,6 +88,7 @@ async function extractFromImage(file: File) {
           {
             type: "input_image",
             image_url: dataUrl,
+            detail: "auto",
           },
         ],
       },
@@ -94,6 +96,32 @@ async function extractFromImage(file: File) {
   });
 
   return normalizeExtractedText(response.output_text);
+}
+
+export function assessSourceQuality(sourceText: string): SourceQuality {
+  const wordCount = sourceText.trim().split(/\s+/).length;
+  const totalChars = sourceText.length;
+  const noiseChars = (sourceText.match(/[^\w\sÀ-ÿ.,;:!?()\-"'/+=%°€$£@&#\n\r\t]/g) ?? []).length;
+  const noiseRatio = totalChars > 0 ? noiseChars / totalChars : 0;
+  const noiseLevel = noiseRatio > 0.15 ? "eleve" as const : noiseRatio > 0.05 ? "moyen" as const : "faible" as const;
+  const warnings: string[] = [];
+
+  if (wordCount < 100) {
+    warnings.push(`Texte tres court (${wordCount} mots). La fiche generee risque d'etre incomplete.`);
+  }
+  if (noiseLevel === "eleve") {
+    warnings.push(`Bruit OCR eleve (${(noiseRatio * 100).toFixed(1)}% de caracteres parasites). Qualite de l'extraction degradee.`);
+  }
+  if (noiseLevel === "moyen") {
+    warnings.push(`Bruit OCR modere detecte. Certains caracteres peuvent etre mal interpretes.`);
+  }
+
+  return {
+    wordCount,
+    noiseLevel,
+    isUsable: wordCount >= 100 && noiseLevel !== "eleve",
+    warnings,
+  };
 }
 
 export async function extractTextFromFile(file: File): Promise<ExtractedPayload> {

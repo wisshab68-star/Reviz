@@ -12,16 +12,14 @@ export default async function LibraryPage() {
       <div className="content-shell library-content-shell">
         <section className="section-block library-section-block">
           <div className="section-title library-section-title">
-            <p className="eyebrow">Bibliotheque</p>
-            <h1>Toutes les fiches generees</h1>
+            <p className="eyebrow">REVIZ</p>
+            <h1>tes fiches.</h1>
             <p>
               {session?.user?.id
-                ? "Retrouve les fiches sauvegardees, ouvre-les rapidement et relance une session de revision en un clic."
-                : "Mode demo actif : tu peux consulter les fiches generees sans connexion."}
+                ? "Retrouve tes fiches et relance une revision en un clic."
+                : "Mode demo actif. Tu peux consulter les fiches deja generees."}
             </p>
-            <p className="library-support-note">
-              (PDF, TXT, PNG, JPG, JPEG, WEBP, photo)
-            </p>
+            <p className="library-support-note">(PDF, TXT, PNG, JPG, JPEG, WEBP, photo)</p>
           </div>
 
           <LibraryClient />

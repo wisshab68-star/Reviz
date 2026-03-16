@@ -19,12 +19,15 @@ export function FeynmanBlock({ explanation }: FeynmanBlockProps) {
       </p>
       <div
         style={{
-          borderLeft: "2px solid var(--ink)",
-          padding: "12px 16px",
-          fontSize: 13,
-          color: "var(--ink)",
+          border: "3px solid #050505",
+          borderRadius: 28,
+          padding: "14px 18px",
+          fontSize: 14,
+          color: "#050505",
           lineHeight: 1.7,
           fontStyle: "italic",
+          background: "var(--accent-soft)",
+          boxShadow: "8px 8px 0 #050505",
         }}
       >
         &ldquo;{explanation}&rdquo;

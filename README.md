@@ -1,4 +1,4 @@
-# Prompt SaaS
+npm run dev# Prompt SaaS
 
 Starter backend minimal pour une SaaS de generation de fiches de revision.
 

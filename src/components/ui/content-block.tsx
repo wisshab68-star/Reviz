@@ -28,12 +28,14 @@ export function ContentBlock({ type, label, content, className }: ContentBlockPr
       </p>
       <div
         style={{
-          background: "#ffffff",
-          borderLeft: "2px solid var(--ink)",
-          padding: "10px 14px",
-          color: "var(--ink)",
+          background: type === "piege" ? "#050505" : type === "exemple" ? "var(--accent-soft)" : "#ffffff",
+          border: "3px solid #050505",
+          borderRadius: 28,
+          padding: "12px 16px",
+          color: type === "piege" ? "#ffffff" : "#050505",
           fontSize: 14,
           lineHeight: 1.65,
+          boxShadow: "8px 8px 0 #050505",
         }}
       >
         {content}

@@ -37,10 +37,14 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("POST /api/generate failed", error);
 
+    const message = error instanceof Error
+      ? error.message
+      : "Unexpected server error";
+
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Unexpected server error",
+        error: message,
       },
       { status: 400 },
     );

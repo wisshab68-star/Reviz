@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type ChangeEvent } from "react";
 
 import { FREE_MONTHLY_SHEET_LIMIT } from "@/lib/plans";
+import { RevizMascotDoodle, RevizMindOrbitDoodle, RevizNotebookDoodle } from "@/components/reviz-illustrations";
 
 type GenerateResponse = {
   success: boolean;
@@ -230,11 +231,19 @@ export function HomeGenerator({
         />
 
         <div className="reviz-generator-card">
-          <p className="reviz-app-eyebrow">Accueil Reviz</p>
-          <h1>Transforme un cours en fiche de revision.</h1>
-          <p className="reviz-generator-support">
-            (Formats supportes : PDF, TXT, PNG, JPG, JPEG, WEBP, photo)
-          </p>
+          <p className="reviz-app-eyebrow">REVIZ AI</p>
+          <h1>
+            transforme ton cours
+            <br />
+            en fiche.
+          </h1>
+          <p className="reviz-generator-support">(PDF, TXT, PNG, JPG, JPEG, WEBP, photo)</p>
+
+          <div className="reviz-generator-illustrations" aria-hidden="true">
+            <RevizNotebookDoodle className="reviz-illustration reviz-illustration-notebook" />
+            <RevizMindOrbitDoodle className="reviz-illustration reviz-illustration-orbit" />
+            <RevizMascotDoodle className="reviz-illustration reviz-illustration-mascot" />
+          </div>
 
           <div className="reviz-generator-actions">
             <button
@@ -271,7 +280,7 @@ export function HomeGenerator({
             {isUploading ? "Extraction..." : isSubmitting ? "Generation..." : "Generer ma fiche"}
           </button>
 
-          {fileName ? <p className="reviz-generator-file">Fichier selectionne : {fileName}</p> : null}
+          {fileName ? <p className="reviz-generator-file">Pret : {fileName}</p> : null}
           {status ? <div className="status-box success">{status}</div> : null}
           {error ? <div className="status-box error">{error}</div> : null}
         </div>

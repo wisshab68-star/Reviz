@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { deriveClassicSheetFromFiche, wrapKeyPointsPayload } from "@/lib/fiche-storage";
-import { sanitizeJsonValue, sanitizeText } from "@/lib/text";
+import { sanitizeAiJsonValue, sanitizeText } from "@/lib/text";
 import type { GenerateSheetRequest } from "@/lib/validations";
 import type { FicheGeneree } from "@/types/fiche-generated";
 import type { GeneratedSheet } from "@/types/sheet";
@@ -12,8 +12,8 @@ export async function saveGeneratedSheet(
   fiche?: FicheGeneree,
 ) {
   const baseGenerated = fiche ? deriveClassicSheetFromFiche(fiche) : generated;
-  const safeGenerated = sanitizeJsonValue(baseGenerated);
-  const safeFiche = fiche ? sanitizeJsonValue(fiche) : null;
+  const safeGenerated = sanitizeAiJsonValue(baseGenerated);
+  const safeFiche = fiche ? sanitizeAiJsonValue(fiche) : null;
 
   return db.studySheet.create({
     data: {

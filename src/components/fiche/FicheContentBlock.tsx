@@ -1,3 +1,5 @@
+import { MathRenderer } from "@/components/math-renderer";
+
 type BlockType = "definition" | "exemple" | "piege";
 
 const LABELS: Record<BlockType, string> = {
@@ -13,30 +15,9 @@ interface FicheContentBlockProps {
 
 export function FicheContentBlock({ type, content }: FicheContentBlockProps) {
   return (
-    <div
-      style={{
-        background: "#ffffff",
-        borderLeft: "2px solid var(--ink)",
-        padding: "10px 14px",
-        color: "var(--ink)",
-        fontSize: 14,
-        lineHeight: 1.65,
-        marginBottom: 10,
-      }}
-    >
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          color: "var(--muted)",
-          marginBottom: 4,
-        }}
-      >
-        {LABELS[type]}
-      </p>
-      {content}
+    <div className={`reviz-fiche-block reviz-fiche-block-${type}`}>
+      <p className="reviz-fiche-block-label">{LABELS[type]}</p>
+      <MathRenderer content={content} className="reviz-fiche-block-content" />
     </div>
   );
 }

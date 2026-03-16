@@ -6,3 +6,5 @@ coverage
 *.log
 uploads/
 .claude/
+
+.vercel

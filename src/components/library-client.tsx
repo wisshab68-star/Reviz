@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { RevizMascotDoodle, RevizMindOrbitDoodle, RevizNotebookDoodle } from "@/components/reviz-illustrations";
 
 type SheetSourceType = "TEXT" | "PDF" | "IMAGE" | "DOCX" | "AUDIO";
 
@@ -26,11 +27,11 @@ const SOURCE_BADGE_CONFIG: Record<
   SheetSourceType,
   { label: string; bg: string; color: string }
 > = {
-  TEXT: { label: "Texte", bg: "#f5f5f5", color: "#111111" },
-  PDF: { label: "PDF", bg: "#f5f5f5", color: "#111111" },
-  IMAGE: { label: "Image", bg: "#f5f5f5", color: "#111111" },
-  DOCX: { label: "Word", bg: "#f5f5f5", color: "#111111" },
-  AUDIO: { label: "Audio", bg: "#f5f5f5", color: "#111111" },
+  TEXT: { label: "Texte", bg: "#eaf0ff", color: "#1736b6" },
+  PDF: { label: "PDF", bg: "#eaf0ff", color: "#1736b6" },
+  IMAGE: { label: "Image", bg: "#eaf0ff", color: "#1736b6" },
+  DOCX: { label: "Word", bg: "#eaf0ff", color: "#1736b6" },
+  AUDIO: { label: "Audio", bg: "#eaf0ff", color: "#1736b6" },
 };
 
 export function LibraryClient() {
@@ -74,16 +75,17 @@ export function LibraryClient() {
   if (items.length === 0) {
     return (
       <div className="card empty-state">
-        <p>
-          Aucune fiche trouvee. Genere ta premiere fiche depuis l&apos;accueil ou connecte-toi
-          pour retrouver ta bibliotheque.
-        </p>
+        <div className="reviz-empty-art" aria-hidden="true">
+          <RevizNotebookDoodle className="reviz-illustration reviz-illustration-notebook" />
+          <RevizMascotDoodle className="reviz-illustration reviz-illustration-mascot" />
+        </div>
+        <p>Aucune fiche pour le moment.</p>
         <div className="cta-row" style={{ justifyContent: "center", marginTop: "1rem" }}>
           <Link href="/app" className="btn btn-primary">
-            Generer une fiche
+            Nouvelle fiche
           </Link>
           <Link href="/sign-in" className="btn btn-soft">
-            Se connecter
+            Connexion
           </Link>
         </div>
       </div>
@@ -94,11 +96,16 @@ export function LibraryClient() {
     <div className="library-workspace">
       <div className="library-toolbar">
         <div>
-          <p className="eyebrow">Fiches</p>
-          <h2 className="workspace-title">Bibliotheque personnelle</h2>
+          <p className="eyebrow">Reviz</p>
+          <h2 className="workspace-title">bibliotheque</h2>
+        </div>
+        <div className="reviz-library-art" aria-hidden="true">
+          <RevizMindOrbitDoodle className="reviz-illustration reviz-illustration-orbit" />
+          <RevizMascotDoodle className="reviz-illustration reviz-illustration-mascot" />
+          <RevizNotebookDoodle className="reviz-illustration reviz-illustration-notebook" />
         </div>
         <Link href="/app" className="btn btn-primary">
-          Nouvelle fiche
+          Ajouter
         </Link>
       </div>
 

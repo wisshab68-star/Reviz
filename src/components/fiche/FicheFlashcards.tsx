@@ -1,37 +1,62 @@
+import { MathRenderer } from "@/components/math-renderer";
 import type { FicheFlashcard } from "@/types/fiche-generated";
 
 interface FicheFlashcardsProps {
   flashcards: FicheFlashcard[];
+  blueprintId?: string;
 }
 
-export function FicheFlashcards({ flashcards }: FicheFlashcardsProps) {
+function classifyFlashcard(question: string, blueprintId?: string) {
+  const lower = question.toLowerCase();
+
+  if (blueprintId === "formulaire") {
+    if (/[=()]|derive|formule|calcul|quotient|produit/.test(lower)) return { chip: "Carte formule", tone: "jaune" };
+    if (/piege|erreur|confondre/.test(lower)) return { chip: "Carte piege", tone: "rose" };
+    return { chip: "Carte methode", tone: "bleu" };
+  }
+
+  if (blueprintId === "algorithmique") {
+    if (/pseudo|etat|transition|complexit|boucle|condition/.test(lower)) return { chip: "Carte logique", tone: "bleu" };
+    if (/cas|limite|erreur|exception/.test(lower)) return { chip: "Carte limite", tone: "rose" };
+    return { chip: "Carte systeme", tone: "menthe" };
+  }
+
+  if (blueprintId === "chronologie") {
+    if (/\d{4}|date|quand|periode|avant|apres/.test(lower)) return { chip: "Carte repere", tone: "jaune" };
+    if (/acteur|memoire|debat|enjeu/.test(lower)) return { chip: "Carte contexte", tone: "violet" };
+    return { chip: "Carte histoire", tone: "bleu" };
+  }
+
+  if (blueprintId === "mecanisme" || blueprintId === "processus") {
+    if (/cause|effet|etape|phase|comment/.test(lower)) return { chip: "Carte processus", tone: "menthe" };
+    return { chip: "Carte mecanisme", tone: "bleu" };
+  }
+
+  if (blueprintId === "comparaison" || blueprintId === "taxonomie") {
+    if (/difference|comparer|oppose|categorie|type/.test(lower)) return { chip: "Carte distinction", tone: "violet" };
+    return { chip: "Carte notion", tone: "bleu" };
+  }
+
+  return { chip: "Carte memoire", tone: "bleu" };
+}
+
+export function FicheFlashcards({ flashcards, blueprintId }: FicheFlashcardsProps) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: "1rem" }}>
+    <div className="reviz-fiche-flashcards">
       {flashcards.map((flashcard, index) => (
-        <div
+        <article
           key={`${flashcard.question}-${index}`}
-          style={{
-            background: "#ffffff",
-            border: "0.5px solid var(--line)",
-            padding: 12,
-          }}
+          className={`reviz-fiche-flashcard reviz-fiche-flashcard-${classifyFlashcard(flashcard.question, blueprintId).tone}`}
         >
-          <p style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>
-            {flashcard.question}
-          </p>
-          <p
-            style={{
-              fontSize: 12,
-              color: "var(--muted)",
-              borderTop: "0.5px solid var(--line)",
-              paddingTop: 6,
-              marginTop: 6,
-              lineHeight: 1.6,
-            }}
-          >
-            {flashcard.reponse}
-          </p>
-        </div>
+          <div className="reviz-fiche-flashcard-head">
+            <span className="reviz-fiche-flashcard-index">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <span className="reviz-fiche-flashcard-chip">{classifyFlashcard(flashcard.question, blueprintId).chip}</span>
+          </div>
+          <MathRenderer content={flashcard.question} className="reviz-fiche-flashcard-question" />
+          <MathRenderer content={flashcard.reponse} className="reviz-fiche-flashcard-answer" />
+        </article>
       ))}
     </div>
   );

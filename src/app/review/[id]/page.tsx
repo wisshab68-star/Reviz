@@ -34,7 +34,9 @@ export default async function ReviewPage({ params }: PageProps) {
     <main className="app-layout">
       <AppTopbar />
       <div className="content-shell review-content-shell">
-        <div style={{ maxWidth: 768, margin: "0 auto", width: "100%" }}>
+        <div className="reviz-review-frame">
+          <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
+          <div className="reviz-sheet-orb reviz-sheet-orb-c" aria-hidden="true" />
           <ReviewView
             sheetId={sheet.id}
             title={sheet.title}

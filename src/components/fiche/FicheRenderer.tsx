@@ -5,7 +5,7 @@ import { FicheHeader } from "@/components/fiche/FicheHeader";
 import { FicheImageMentaleBlock } from "@/components/fiche/FicheImageMentaleBlock";
 import { FicheSchemaVisuel } from "@/components/fiche/FicheSchemaVisuel";
 import { MathRenderer } from "@/components/math-renderer";
-import { looksLikeFormula, normalizeFormulaText, sanitizeAiText } from "@/lib/text";
+import { looksLikeFormula, sanitizeAiText } from "@/lib/text";
 import type { FicheGeneree } from "@/types/fiche-generated";
 import type { ReactElement, ReactNode } from "react";
 
@@ -23,7 +23,14 @@ function normalizeDisplayText(value: string) {
 }
 
 function normalizeDisplayFormula(value: string) {
-  return normalizeFormulaText(value);
+  // Preserve LaTeX delimiters ($$, \(, $) — normalizeFormulaText strips them.
+  // Only apply light sanitization for display.
+  const cleaned = sanitizeAiText(value).trim();
+  // If the formula has no LaTeX delimiters, wrap it in $$ for KaTeX rendering
+  if (!/^\$\$|^\\\(|^\$/.test(cleaned) && /[=^_]/.test(cleaned)) {
+    return `$$${cleaned}$$`;
+  }
+  return cleaned;
 }
 
 function isDisplayFormula(value: string) {

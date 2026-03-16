@@ -88,8 +88,6 @@ export function cleanGeneratedContent(value: string) {
     .replace(/\b\d+\s*(?:chapitre|partie|section)\s*\d+(?:\.\d+)*\b/giu, "")
     .replace(/\b(?:chapitre|partie|section)\s*\d+(?:\.\d+)*\b/giu, "")
     .replace(/\b\d+\s+\d+(?:\.\d+){1,}\b/gu, "")
-    .replace(/\b\d+(?=[A-Za-zÀ-ÿ])/gu, "")
-    .replace(/\b\d+[A-Za-zÀ-ÿ]+\b/gu, "")
     .replace(/\(\s*p\.?\s*\d+\s*\)/giu, "")
     .replace(/\bp\.?\s*\d+\b/giu, "")
     .replace(/\s{2,}/g, " ")
@@ -124,7 +122,19 @@ export function cleanGeneratedContent(value: string) {
 }
 
 export function normalizeFormulaText(value: string) {
-  return normalizeAcademicText(value)
+  // Use sanitizeAiText instead of normalizeAcademicText to preserve LaTeX backslashes.
+  // normalizeAcademicText strips all backslashes via /\s*\\\s*/g → " " (line 47).
+  return sanitizeAiText(value)
+    .replace(/\u00A0/g, " ")
+    .replace(/[−–—]/g, "-")
+    .replace(/[×·]/g, "*")
+    .replace(/÷/g, "/")
+    .replace(/√/g, "sqrt")
+    .replace(/≤/g, "<=")
+    .replace(/≥/g, ">=")
+    .replace(/≠/g, "!=")
+    .replace(/≈/g, "~=")
+    .replace(/[→⇒]/g, " -> ")
     .replace(/^\$\$([\s\S]+)\$\$$/g, "$1")
     .replace(/^\\\(([\s\S]+)\\\)$/g, "$1")
     .replace(/^\$([\s\S]+)\$$/g, "$1")

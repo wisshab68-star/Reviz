@@ -857,7 +857,7 @@ function selectBestNotions(candidates: string[], subject: string, content: strin
       return left.notion.length - right.notion.length;
     })
     .map((item) => item.notion)
-    .slice(0, 8);
+    .slice(0, 6);
 }
 
 function appearsInSource(term: string, content: string) {
@@ -1606,7 +1606,7 @@ function normalizeFlashcards(flashcards: FicheFlashcard[], fallback: FicheFlashc
       reponse: truncate(normalizeText(flashcard.reponse), 180),
     }));
 
-  while (normalized.length < 4) {
+  while (normalized.length < 4 && normalized.length < fallback.length) {
     normalized.push(fallback[normalized.length]);
   }
 
@@ -1629,9 +1629,15 @@ function cleanGeneratedFicheContent(fiche: FicheGeneree): FicheGeneree {
   return {
     ...fiche,
     definition: cleanGeneratedContent(fiche.definition),
+    exemple: cleanGeneratedContent(fiche.exemple),
     piege: cleanGeneratedContent(fiche.piege),
     feynman: cleanGeneratedContent(fiche.feynman),
+    imageMentale: fiche.imageMentale ? {
+      titre: cleanGeneratedContent(fiche.imageMentale.titre),
+      texte: cleanGeneratedContent(fiche.imageMentale.texte),
+    } : fiche.imageMentale,
     notionsCles: (fiche.notionsCles ?? []).map((item) => cleanGeneratedContent(item)).filter(Boolean),
+    formulesCles: (fiche.formulesCles ?? []).map((item) => sanitizeAiText(item)).filter(Boolean),
     proprietesCles: (fiche.proprietesCles ?? []).map((item) => cleanGeneratedContent(item)).filter(Boolean),
     flashcards: (fiche.flashcards ?? []).map((flashcard) => ({
       question: cleanGeneratedContent(flashcard.question),
@@ -1696,23 +1702,32 @@ function enrichFiche(input: GenerateSheetRequest, fiche: FicheGeneree): FicheGen
       fallbackMetrics,
       /mathematiques/i.test(subject) || vectorCourse,
     ),
-    notionsCles: selectBestNotions(
-      (fiche.notionsCles ?? []).concat(fallbackNotions, vectorCourse ? vectorNotions : []),
-      subject,
-      input.content,
-      resolvedBlueprint,
-    ),
-    formulesCles: dedupeStrings(
-      (vectorCourse ? vectorFormules : [])
-        .concat(fiche.formulesCles ?? [], fallbackFormules)
-        .map((item) => canonicalizeFormalFormula(item))
-        .filter((item) => !isSuspiciousFormula(item) && isHighQualityFormula(item, vectorCourse)),
-    ).slice(0, 10),
-    proprietesCles: dedupeStrings(
-      (fiche.proprietesCles ?? []).concat(fallbackProprietes, vectorCourse ? vectorProprietes : []),
-    )
-      .filter((item) => !isSuspiciousProperty(item) && (!vectorCourse || /[.]/.test(item) || /^Deux vecteurs|^Un vecteur|^Le vecteur|^La relation|^Le milieu|^Dans un repere|^Si k>0/i.test(item)))
-      .slice(0, 10),
+    notionsCles: (fiche.notionsCles ?? []).length >= 3
+      ? selectBestNotions(fiche.notionsCles ?? [], subject, input.content, resolvedBlueprint)
+      : selectBestNotions(
+          (fiche.notionsCles ?? []).concat(fallbackNotions, vectorCourse ? vectorNotions : []),
+          subject, input.content, resolvedBlueprint,
+        ),
+    formulesCles: (fiche.formulesCles ?? []).length >= 2
+      ? dedupeStrings(
+          (fiche.formulesCles ?? [])
+            .filter((item) => !isSuspiciousFormula(canonicalizeFormalFormula(item)) && isHighQualityFormula(canonicalizeFormalFormula(item), vectorCourse)),
+        ).slice(0, 8)
+      : dedupeStrings(
+          (vectorCourse ? vectorFormules : [])
+            .concat(fiche.formulesCles ?? [], fallbackFormules)
+            .map((item) => canonicalizeFormalFormula(item))
+            .filter((item) => !isSuspiciousFormula(item) && isHighQualityFormula(item, vectorCourse)),
+        ).slice(0, 8),
+    proprietesCles: (fiche.proprietesCles ?? []).length >= 3
+      ? dedupeStrings(fiche.proprietesCles ?? [])
+          .filter((item) => !isSuspiciousProperty(item))
+          .slice(0, 8)
+      : dedupeStrings(
+          (fiche.proprietesCles ?? []).concat(fallbackProprietes, vectorCourse ? vectorProprietes : []),
+        )
+          .filter((item) => !isSuspiciousProperty(item) && (!vectorCourse || /[.]/.test(item) || /^Deux vecteurs|^Un vecteur|^Le vecteur|^La relation|^Le milieu|^Dans un repere|^Si k>0/i.test(item)))
+          .slice(0, 8),
     imageMentale: {
       titre: truncate(normalizeText(safeImageMentale.titre || `Image mentale : ${keywords[0] ?? "idee centrale"}`), 60),
       texte: ensureSentence(safeImageMentale.texte, fallbackImage, 60, 240),
@@ -1722,10 +1737,12 @@ function enrichFiche(input: GenerateSheetRequest, fiche: FicheGeneree): FicheGen
     piege: ensureSentence(fiche.piege, fallbackTrap, 70, 240),
     schema: normalizeSchema(safeSchema, fallbackSchema),
     feynman: ensureSentence(fiche.feynman, fallbackFeynman, 90, 360),
-    flashcards: normalizeFlashcards(
-      mergeFlashcards(vectorCourse ? vectorFlashcards : [], safeFlashcards, fallbackFlashcards),
-      fallbackFlashcards,
-    ),
+    flashcards: safeFlashcards.length >= 4
+      ? normalizeFlashcards(safeFlashcards, fallbackFlashcards)
+      : normalizeFlashcards(
+          mergeFlashcards(vectorCourse ? vectorFlashcards : [], safeFlashcards, fallbackFlashcards),
+          fallbackFlashcards,
+        ),
   };
 
   return {

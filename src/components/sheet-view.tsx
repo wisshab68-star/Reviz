@@ -21,6 +21,7 @@ type SheetViewProps = {
   keyMetrics?: KeyMetric[];
   contentBlocks?: SheetContentBlock[];
   ficheGeneree?: FicheGeneree | null;
+  sheetId?: string;
 };
 
 function deriveMemoryImage(summary: string, keyPoints: string[], definitions: Definition[]) {
@@ -102,9 +103,10 @@ export function SheetView({
   keyMetrics,
   contentBlocks,
   ficheGeneree,
+  sheetId,
 }: SheetViewProps) {
   if (ficheGeneree?.titre && ficheGeneree.flashcards?.length) {
-    return <FicheRenderer fiche={ficheGeneree} />;
+    return <FicheRenderer fiche={ficheGeneree} sheetId={sheetId} />;
   }
 
   const visibleBlocks =

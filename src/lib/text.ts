@@ -1,4 +1,8 @@
-function stripUnsupportedControlChars(value: string) {
+function stripUnsupportedControlChars(value: unknown) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
   return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
 }
 
@@ -292,7 +296,7 @@ export function sanitizeJsonValue<T>(value: T): T {
  * Only strips control characters and normalizes whitespace — does NOT touch
  * backslashes, so LaTeX commands like \frac, \mathbb, \sqrt are preserved.
  */
-export function sanitizeAiText(value: string) {
+export function sanitizeAiText(value: unknown) {
   return stripUnsupportedControlChars(value)
     .replace(/\r/g, "")
     .replace(/\u00A0/g, " ")

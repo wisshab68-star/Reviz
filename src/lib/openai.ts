@@ -1,11 +1,6 @@
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const apiKey = process.env.OPENAI_API_KEY;
-
-if (!apiKey) {
-  console.warn("OPENAI_API_KEY is not set. API routes that use OpenAI will fail.");
-}
-
-export const openai = new OpenAI({
-  apiKey,
+// TODO: add ANTHROPIC_API_KEY to .env.local for local AI generation.
+export const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });

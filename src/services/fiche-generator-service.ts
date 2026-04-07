@@ -1,5 +1,7 @@
-import { buildUserPrompt, FICHE_SYSTEM_PROMPT } from "@/lib/prompts/fiche-generator";
-import { openai } from "@/lib/openai";
+import { buildFicheSystemPrompt, buildUserPrompt } from "@/lib/prompts/fiche-generator";
+import { MODELS } from "@/lib/models";
+import { anthropic } from "@/lib/openai";
+import { detectSubjectFamily, getSubjectFamilyCaps, type SubjectFamily } from "@/lib/subject-families";
 import {
   cleanGeneratedContent,
   extractFormulaCandidates,
@@ -64,7 +66,7 @@ function fitEducationalContent(text: string, maxLength: number) {
   return splitIndex > Math.floor(maxLength * 0.6) ? cleaned.slice(0, splitIndex).trim() : cleaned;
 }
 
-function normalizeText(value: string) {
+function normalizeText(value: unknown) {
   // Use light sanitizer to preserve LaTeX backslashes from AI-generated content.
   // normalizeAcademicText would strip them via \s*\\\s* → " ".
   return sanitizeAiText(value).replace(/\s+/g, " ").trim();
@@ -1042,19 +1044,171 @@ function buildNotionsCles(content: string, keywords: string[], blueprintId?: str
   return selectBestNotions(candidates, subject, content, blueprintId);
 }
 
-function buildFormulesCles(content: string, blueprintId?: string, subject?: string) {
-  const vectorCourse = isVectorCourse(content);
-  const chemistryCourse = isChemistryCourse(content, subject);
-  const sourceFormulas = chemistryCourse
-    ? extractChemistryFormulaLines(content)
-    : extractMathFormulaLines(content);
-  const normalizedFormulas = sourceFormulas
-    .map((line) => chemistryCourse ? canonicalizeChemistryFormula(line) : canonicalizeFormalFormula(line))
-    .filter((line) => !isIncompleteFormula(line, chemistryCourse));
+function extractHistoryRepereLines(content: string) {
+  const lines = content
+    .split(/\n+/)
+    .map((line) => normalizeText(line))
+    .filter((line) => line.length >= 16 && line.length <= 180);
 
   return dedupeStrings(
-    normalizedFormulas
-      .filter((line) => !isSuspiciousFormula(line) && isHighQualityFormula(line, vectorCourse)),
+    lines.filter((line) =>
+      /\b(?:\d{4}|xixe|xxe|xxie|premiere guerre mondiale|seconde guerre mondiale|guerre froide|revolution|empire|regime|trait[eé]|attentat|independance|genocide|onu|ue|afghanistan|ukraine|cachemire|yemen)\b/i.test(line),
+    ),
+  );
+}
+
+function extractHumanitiesTextLines(content: string) {
+  const lines = content
+    .split(/\n+/)
+    .map((line) => normalizeText(line))
+    .filter((line) => line.length >= 18 && line.length <= 180);
+
+  return dedupeStrings(
+    lines.filter((line) =>
+      /["“”«»]|(?:auteur|oeuvre|th[èe]se|argument|objection|concept|roman|po[ée]sie|th[ée][âa]tre|philosoph)/i.test(line),
+    ),
+  );
+}
+
+function extractLanguageRuleLines(content: string) {
+  const lines = content
+    .split(/\n+/)
+    .map((line) => normalizeText(line))
+    .filter((line) => line.length >= 12 && line.length <= 180);
+
+  return dedupeStrings(
+    lines.filter((line) =>
+      /\b(?:present|preterit|past|future|conditional|subjonctif|grammaire|vocabulaire|expression|idiomatique|faux ami|traduction|anglais|espagnol|allemand|italien)\b/i.test(line)
+      || /[:>-]/.test(line),
+    ),
+  );
+}
+
+function extractEconomicsIndicatorLines(content: string) {
+  const lines = content
+    .split(/\n+/)
+    .map((line) => normalizeText(line))
+    .filter((line) => line.length >= 14 && line.length <= 180);
+
+  return dedupeStrings(
+    lines.filter((line) =>
+      /\b(?:pib|croissance|inflation|chomage|offre|demande|marche|capital|productivite|taux|elasticite|consommation|investissement|modele)\b/i.test(line)
+      || /\d+(?:[.,]\d+)?\s*%/.test(line),
+    ),
+  );
+}
+
+function extractLifeScienceKeyLines(content: string) {
+  const lines = content
+    .split(/\n+/)
+    .map((line) => normalizeText(line))
+    .filter((line) => line.length >= 14 && line.length <= 180);
+
+  return dedupeStrings(
+    lines.filter((line) =>
+      /\b(?:cycle|enzyme|adn|arn|cellule|mitose|meiose|photosynthese|respiration|ecosysteme|organe|hormone|chromosome|mutation|reaction)\b/i.test(line)
+      || /->|=>|=/.test(line),
+    ),
+  );
+}
+
+function normalizeSubjectFormulaEntry(value: string, family: SubjectFamily, chemistryCourse = false) {
+  const cleaned = normalizeText(value)
+    .replace(/^[•\-–]\s*/, "")
+    .replace(/\s*[-–—]\s*/g, " — ")
+    .replace(/\s*:\s*/g, " : ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleaned) {
+    return "";
+  }
+
+  switch (family) {
+    case "humanities_history": {
+      const match = cleaned.match(/\b(\d{4}|xixe|xxe|xxie)\b/i);
+      if (!match) {
+        return "";
+      }
+      const marker = match[1].toUpperCase();
+      const detail = cleaned.replace(match[0], "").replace(/^[-–—: ]+/, "").trim();
+      return detail ? `${marker} — ${detail}` : marker;
+    }
+    case "humanities_text":
+    case "languages":
+    case "economics":
+      return cleaned;
+    case "life_sciences":
+      return chemistryCourse ? canonicalizeChemistryFormula(cleaned) : cleaned;
+    case "exact_sciences":
+    case "general":
+    default:
+      return chemistryCourse ? canonicalizeChemistryFormula(cleaned) : canonicalizeFormalFormula(cleaned);
+  }
+}
+
+function isCompleteSubjectFormulaEntry(value: string, family: SubjectFamily, chemistryCourse = false) {
+  if (!value) {
+    return false;
+  }
+
+  if (family === "humanities_history") {
+    return /\b(\d{4}|XIXE|XXE|XXIE)\b\s+—\s+.+/.test(value);
+  }
+
+  if (family === "humanities_text" || family === "languages" || family === "economics") {
+    return value.length >= 18;
+  }
+
+  if (family === "life_sciences" && !/[=]/.test(value)) {
+    return value.length >= 18;
+  }
+
+  return !isIncompleteFormula(value, chemistryCourse);
+}
+
+function isUsefulSubjectFormulaEntry(
+  value: string,
+  family: SubjectFamily,
+  vectorCourse = false,
+  chemistryCourse = false,
+) {
+  switch (family) {
+    case "humanities_history":
+      return /\b(\d{4}|XIXE|XXE|XXIE)\b\s+—\s+.+/.test(value);
+    case "humanities_text":
+      return value.length >= 18 && /["“”«»]|(?:auteur|oeuvre|th[èe]se|argument|objection|concept)/i.test(value);
+    case "languages":
+      return value.length >= 14 && /(?:[:>-]|\b(?:present|preterit|future|conditional|subjonctif|expression|faux ami|traduction|grammaire)\b)/i.test(value);
+    case "economics":
+      return value.length >= 14 && /(?:\d+(?:[.,]\d+)?\s*%|\b(?:pib|croissance|inflation|chomage|offre|demande|taux|modele|elasticite|consommation|investissement)\b)/i.test(value);
+    case "life_sciences":
+      return /(?:=|->|=>|\b(?:cycle|enzyme|adn|cellule|photosynthese|mitose|meiose|respiration|hormone)\b)/i.test(value);
+    case "exact_sciences":
+    case "general":
+    default:
+      return !isSuspiciousFormula(value) && isHighQualityFormula(value, vectorCourse);
+  }
+}
+
+function buildFormulesCles(content: string, blueprintId?: string, subject?: string) {
+  const subjectFamily = detectSubjectFamily(subject ?? inferSubject(content));
+  const vectorCourse = isVectorCourse(content);
+  const chemistryCourse = isChemistryCourse(content, subject);
+  const sourceFormulas = [
+    ...(subjectFamily === "humanities_history" ? extractHistoryRepereLines(content) : []),
+    ...(subjectFamily === "humanities_text" ? extractHumanitiesTextLines(content) : []),
+    ...(subjectFamily === "languages" ? extractLanguageRuleLines(content) : []),
+    ...(subjectFamily === "economics" ? extractEconomicsIndicatorLines(content) : []),
+    ...(subjectFamily === "life_sciences" ? extractLifeScienceKeyLines(content) : []),
+    ...(chemistryCourse ? extractChemistryFormulaLines(content) : extractMathFormulaLines(content)),
+  ];
+  const normalizedFormulas = sourceFormulas
+    .map((line) => normalizeSubjectFormulaEntry(line, subjectFamily, chemistryCourse))
+    .filter((line) => isCompleteSubjectFormulaEntry(line, subjectFamily, chemistryCourse));
+
+  return dedupeStrings(
+    normalizedFormulas.filter((line) => isUsefulSubjectFormulaEntry(line, subjectFamily, vectorCourse, chemistryCourse)),
   ).slice(0, blueprintId === "formulaire" ? 12 : 8);
 }
 
@@ -1594,13 +1748,13 @@ function normalizeSchema(schema: FicheSchema, fallback: FicheSchema) {
   };
 }
 
-function normalizeFlashcards(flashcards: FicheFlashcard[], fallback: FicheFlashcard[]) {
+function normalizeFlashcards(flashcards: FicheFlashcard[], fallback: FicheFlashcard[], maxCards = 6) {
   const normalized = flashcards
     .filter(
       (flashcard) =>
         normalizeText(flashcard.question).length > 0 && normalizeText(flashcard.reponse).length > 0,
     )
-    .slice(0, 8)
+    .slice(0, maxCards)
     .map((flashcard) => ({
       question: truncate(normalizeText(flashcard.question), 110),
       reponse: truncate(normalizeText(flashcard.reponse), 180),
@@ -1610,7 +1764,7 @@ function normalizeFlashcards(flashcards: FicheFlashcard[], fallback: FicheFlashc
     normalized.push(fallback[normalized.length]);
   }
 
-  return normalized.slice(0, 8);
+  return normalized.slice(0, maxCards);
 }
 
 function buildFicheClassification(
@@ -1650,7 +1804,10 @@ function enrichFiche(input: GenerateSheetRequest, fiche: FicheGeneree): FicheGen
   const sentences = splitSentences(input.content);
   const keywords = extractKeywords(input.content);
   const subject = inferSubject(input.content);
+  const subjectFamily = detectSubjectFamily(subject);
+  const caps = getSubjectFamilyCaps(subjectFamily);
   const vectorCourse = isVectorCourse(input.content);
+  const chemistryCourse = isChemistryCourse(input.content, subject);
   const resolvedBlueprint = resolveBlueprintId(subject, input.content, fiche.blueprintId);
   const level = inferLevel(input.content);
   const safeImageMentale = fiche.imageMentale ?? { titre: "", texte: "" };
@@ -1691,6 +1848,7 @@ function enrichFiche(input: GenerateSheetRequest, fiche: FicheGeneree): FicheGen
     blueprintId: resolvedBlueprint,
     titre: truncate(normalizeText(fiche.titre || input.titleHint || "Fiche de revision"), 60),
     matiere: normalizeText(fiche.matiere) || subject,
+    subjectFamily: fiche.subjectFamily ?? subjectFamily,
     niveau: normalizeText(fiche.niveau) || level,
     classification: buildFicheClassification(
       fiche.classification?.matiere || fiche.matiere || subject,
@@ -1703,31 +1861,32 @@ function enrichFiche(input: GenerateSheetRequest, fiche: FicheGeneree): FicheGen
       /mathematiques/i.test(subject) || vectorCourse,
     ),
     notionsCles: (fiche.notionsCles ?? []).length >= 3
-      ? selectBestNotions(fiche.notionsCles ?? [], subject, input.content, resolvedBlueprint)
+        ? selectBestNotions(fiche.notionsCles ?? [], subject, input.content, resolvedBlueprint).slice(0, 4)
       : selectBestNotions(
           (fiche.notionsCles ?? []).concat(fallbackNotions, vectorCourse ? vectorNotions : []),
           subject, input.content, resolvedBlueprint,
-        ),
+        ).slice(0, 4),
     formulesCles: (fiche.formulesCles ?? []).length >= 2
       ? dedupeStrings(
           (fiche.formulesCles ?? [])
-            .filter((item) => !isSuspiciousFormula(canonicalizeFormalFormula(item)) && isHighQualityFormula(canonicalizeFormalFormula(item), vectorCourse)),
-        ).slice(0, 8)
+            .map((item) => normalizeSubjectFormulaEntry(item, subjectFamily, chemistryCourse))
+            .filter((item) => isUsefulSubjectFormulaEntry(item, subjectFamily, vectorCourse, chemistryCourse)),
+        ).slice(0, caps.formules)
       : dedupeStrings(
           (vectorCourse ? vectorFormules : [])
             .concat(fiche.formulesCles ?? [], fallbackFormules)
-            .map((item) => canonicalizeFormalFormula(item))
-            .filter((item) => !isSuspiciousFormula(item) && isHighQualityFormula(item, vectorCourse)),
-        ).slice(0, 8),
+            .map((item) => normalizeSubjectFormulaEntry(item, subjectFamily, chemistryCourse))
+            .filter((item) => isUsefulSubjectFormulaEntry(item, subjectFamily, vectorCourse, chemistryCourse)),
+        ).slice(0, caps.formules),
     proprietesCles: (fiche.proprietesCles ?? []).length >= 3
       ? dedupeStrings(fiche.proprietesCles ?? [])
           .filter((item) => !isSuspiciousProperty(item))
-          .slice(0, 8)
+          .slice(0, 4)
       : dedupeStrings(
           (fiche.proprietesCles ?? []).concat(fallbackProprietes, vectorCourse ? vectorProprietes : []),
         )
           .filter((item) => !isSuspiciousProperty(item) && (!vectorCourse || /[.]/.test(item) || /^Deux vecteurs|^Un vecteur|^Le vecteur|^La relation|^Le milieu|^Dans un repere|^Si k>0/i.test(item)))
-          .slice(0, 8),
+          .slice(0, 4),
     imageMentale: {
       titre: truncate(normalizeText(safeImageMentale.titre || `Image mentale : ${keywords[0] ?? "idee centrale"}`), 60),
       texte: ensureSentence(safeImageMentale.texte, fallbackImage, 60, 240),
@@ -1738,10 +1897,11 @@ function enrichFiche(input: GenerateSheetRequest, fiche: FicheGeneree): FicheGen
     schema: normalizeSchema(safeSchema, fallbackSchema),
     feynman: ensureSentence(fiche.feynman, fallbackFeynman, 90, 360),
     flashcards: safeFlashcards.length >= 4
-      ? normalizeFlashcards(safeFlashcards, fallbackFlashcards)
+      ? normalizeFlashcards(safeFlashcards, fallbackFlashcards, caps.flashcards)
       : normalizeFlashcards(
           mergeFlashcards(vectorCourse ? vectorFlashcards : [], safeFlashcards, fallbackFlashcards),
           fallbackFlashcards,
+          caps.flashcards,
         ),
   };
 
@@ -1756,7 +1916,10 @@ function buildDemoFiche(input: GenerateSheetRequest): FicheGeneree {
   const keywords = extractKeywords(input.content);
   const excerpt = normalizeText(input.content.slice(0, 180));
   const subject = inferSubject(input.content);
+  const subjectFamily = detectSubjectFamily(subject);
+  const caps = getSubjectFamilyCaps(subjectFamily);
   const vectorCourse = isVectorCourse(input.content);
+  const chemistryCourse = isChemistryCourse(input.content, subject);
   const resolvedBlueprint = resolveBlueprintId(subject, input.content);
   const fallbackNotions = buildNotionsCles(input.content, keywords, resolvedBlueprint);
   const fallbackFormules = buildFormulesCles(input.content, resolvedBlueprint, subject);
@@ -1777,6 +1940,7 @@ function buildDemoFiche(input: GenerateSheetRequest): FicheGeneree {
   const demo: FicheGeneree = {
     titre: input.titleHint?.trim() || "Fiche de revision",
     matiere: subject,
+    subjectFamily,
     niveau: inferLevel(input.content),
     classification: buildFicheClassification(subject, inferLevel(input.content), resolvedBlueprint),
     blueprintId: resolvedBlueprint,
@@ -1786,18 +1950,18 @@ function buildDemoFiche(input: GenerateSheetRequest): FicheGeneree {
       subject,
       input.content,
       resolvedBlueprint,
-    ),
+    ).slice(0, 4),
     formulesCles: dedupeStrings(
       (vectorCourse ? vectorFormules : [])
         .concat(fallbackFormules)
-        .map((item) => canonicalizeFormalFormula(item))
-        .filter((item) => !isSuspiciousFormula(item) && isHighQualityFormula(item, vectorCourse)),
-    ).slice(0, 10),
+        .map((item) => normalizeSubjectFormulaEntry(item, subjectFamily, chemistryCourse))
+        .filter((item) => isUsefulSubjectFormulaEntry(item, subjectFamily, vectorCourse, chemistryCourse)),
+    ).slice(0, caps.formules),
     proprietesCles: dedupeStrings(
       fallbackProprietes.concat(vectorCourse ? vectorProprietes : []),
     )
       .filter((item) => !isSuspiciousProperty(item) && (!vectorCourse || /[.]/.test(item) || /^Deux vecteurs|^Un vecteur|^Le vecteur|^La relation|^Le milieu|^Dans un repere|^Si k>0/i.test(item)))
-      .slice(0, 10),
+      .slice(0, 4),
     imageMentale: {
       titre: `Image mentale : ${keywords[0] ?? "idee centrale"}`,
       texte: `Imagine une scene tres simple : ${keywords[0] ?? "le concept"} agit comme un repere visuel qui organise tout le reste du cours. ${truncate(sentences[0] ?? excerpt, 150)}`,
@@ -1813,7 +1977,7 @@ function buildDemoFiche(input: GenerateSheetRequest): FicheGeneree {
       vectorCourse ? vectorFlashcards : [],
       fallbackFlashcards,
       [],
-    ).slice(0, 8),
+    ).slice(0, caps.flashcards),
   };
 
   return {
@@ -1890,46 +2054,55 @@ function validateFicheQuality(fiche: FicheGeneree): string[] {
   return issues;
 }
 
-export async function generateRichFiche(input: GenerateSheetRequest): Promise<FicheGeneree> {
-  const normalizedInput = {
-    ...input,
-    content: normalizeDocumentText(input.content),
-  };
+function isQuotaError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /429|quota|insufficient_quota|billing|rate limit/i.test(message);
+}
 
-  if (!process.env.OPENAI_API_KEY) {
-    return buildDemoFiche(normalizedInput);
+export async function generateRichFiche(input: GenerateSheetRequest): Promise<FicheGeneree> {
+  // Nettoyage complet du texte source — supprime les metadonnees parasites
+  // (noms de profs, ISBN, copyright, titres de manuels) AVANT toute generation.
+  // cleanAndClassify inclut normalizeDocumentText + removeMetadataLines.
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return buildDemoFiche(input);
   }
 
-  const wordCount = normalizedInput.content.trim().split(/\s+/).length;
+  const wordCount = input.content.trim().split(/\s+/).length;
   if (wordCount < 30) {
     console.warn(`Source text too short (${wordCount} words), using demo fiche.`);
-    return buildDemoFiche(normalizedInput);
+    return buildDemoFiche(input);
   }
 
   try {
-    const parsed = cleanGeneratedFicheContent(await generateWithPipeline(normalizedInput));
+    const parsed = cleanGeneratedFicheContent(await generateWithPipeline(input));
 
     const issues = validateFicheQuality(parsed);
     if (issues.length > 0) {
       console.warn("Fiche quality issues detected:", issues);
     }
 
-    return sanitizeFicheOutput(enrichFiche(normalizedInput, parsed));
+    return sanitizeFicheOutput(enrichFiche(input, parsed));
   } catch (pipelineError) {
     console.warn("Pipeline generation failed, falling back to single-call.", pipelineError);
 
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        temperature: 0.25,
+      // Le fallback utilise normalizedInput.content qui est DEJA nettoye
+      // par cleanAndClassify ci-dessus — plus de parasites possibles.
+      const subject = inferSubject(input.content);
+      const message = await anthropic.messages.create({
+        model: MODELS.MAIN,
         max_tokens: 3200,
-        messages: [
-          { role: "system", content: FICHE_SYSTEM_PROMPT },
-          { role: "user", content: buildUserPrompt(normalizedInput.content) },
+        system: [
+          {
+            type: "text" as const,
+            text: buildFicheSystemPrompt(subject),
+            cache_control: { type: "ephemeral" as const },
+          },
         ],
+        messages: [{ role: "user", content: buildUserPrompt(input.content) }],
       });
 
-      const raw = completion.choices[0]?.message?.content ?? "";
+      const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
       const stripped = raw.replace(/```json|```/g, "").trim();
       const cleaned = stripped
         .replace(/\\\\/g, "\x00DB\x00")
@@ -1939,8 +2112,13 @@ export async function generateRichFiche(input: GenerateSheetRequest): Promise<Fi
         sanitizeAiJsonValue(JSON.parse(cleaned)) as FicheGeneree,
       );
 
-      return sanitizeFicheOutput(enrichFiche(normalizedInput, fallbackParsed));
+      return sanitizeFicheOutput(enrichFiche(input, fallbackParsed));
     } catch (fallbackError) {
+      if (isQuotaError(pipelineError) || isQuotaError(fallbackError)) {
+        console.warn("OpenAI quota exceeded, falling back to demo fiche.");
+        return buildDemoFiche(input);
+      }
+
       const pe = pipelineError instanceof Error ? pipelineError.message : String(pipelineError);
       const fe = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
       throw new Error(`Pipeline: ${pe} | Fallback: ${fe}`);

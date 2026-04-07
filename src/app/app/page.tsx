@@ -1,9 +1,20 @@
 import { auth } from "@/auth";
+import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { AppTopbar } from "@/components/app-topbar";
 import { HomeGenerator } from "@/components/home-generator";
 
 export default async function AppPage() {
-  const session = await auth();
+  let session = null;
+
+  try {
+    session = await auth();
+  } catch (error) {
+    if (!isDatabaseConnectionError(error)) {
+      throw error;
+    }
+
+    console.error("Auth lookup failed on /app, continuing as guest.", error);
+  }
 
   return (
     <main className="app-layout">
@@ -14,7 +25,6 @@ export default async function AppPage() {
           <HomeGenerator
             isAuthenticated={Boolean(session?.user?.id)}
             plan={session?.user?.plan ?? "FREE"}
-            minimal
           />
         </section>
       </div>

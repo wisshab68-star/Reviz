@@ -1,7 +1,13 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-const uploadRoot = join(process.cwd(), "uploads");
+function resolveUploadRoot() {
+  if (process.env.VERCEL) {
+    return join("/tmp", "uploads");
+  }
+
+  return join(process.cwd(), "uploads");
+}
 
 function sanitizeFileName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -10,8 +16,9 @@ function sanitizeFileName(name: string) {
 export async function saveUploadedFile(file: File) {
   const timestamp = Date.now();
   const safeName = sanitizeFileName(file.name || "upload.bin");
-  const relativePath = join("uploads", `${timestamp}-${safeName}`);
-  const absolutePath = join(process.cwd(), relativePath);
+  const uploadRoot = resolveUploadRoot();
+  const filename = `${timestamp}-${safeName}`;
+  const absolutePath = join(uploadRoot, filename);
   const bytes = Buffer.from(await file.arrayBuffer());
 
   await mkdir(uploadRoot, { recursive: true });
@@ -19,7 +26,7 @@ export async function saveUploadedFile(file: File) {
 
   return {
     absolutePath,
-    relativePath,
+    relativePath: process.env.VERCEL ? absolutePath : join("uploads", filename),
     size: bytes.length,
   };
 }

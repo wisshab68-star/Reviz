@@ -1,10 +1,21 @@
 import { redirect } from "next/navigation";
 
 import { auth, signIn } from "@/auth";
+import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { AppTopbar } from "@/components/app-topbar";
 
 export default async function SignInPage() {
-  const session = await auth();
+  let session = null;
+
+  try {
+    session = await auth();
+  } catch (error) {
+    if (!isDatabaseConnectionError(error)) {
+      throw error;
+    }
+
+    console.error("Auth lookup failed on /sign-in, continuing.", error);
+  }
 
   if (session?.user) {
     redirect("/library");

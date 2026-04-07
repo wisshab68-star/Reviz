@@ -1,3 +1,5 @@
+import type { SubjectFamily } from "@/lib/subject-families";
+
 export interface FicheMetrique {
   valeur: string;
   label: string;
@@ -70,6 +72,21 @@ export interface FicheClassification {
   type: string;
 }
 
+export type SheetZone = "anchor" | "core" | "action";
+
+export type BlockType = "concept" | "formula" | "rule" | "example" | "trap";
+
+export type BlockLevel = "understand" | "apply" | "trap";
+
+export interface ZonedBlock {
+  id: string;
+  zone: SheetZone;
+  type: BlockType;
+  level: BlockLevel;
+  title: string;
+  content: string;
+}
+
 export interface FicheBlueprintSections {
   tableauSynthese?: FicheTableRow[];
   etapesCles?: FicheStep[];
@@ -81,9 +98,48 @@ export interface FicheBlueprintSections {
   applications?: FicheTableRow[];
 }
 
+export interface ZonedFiche {
+  titre: string;
+  matiere: string;
+  subjectFamily?: SubjectFamily;
+  niveau: string;
+  classification?: FicheClassification;
+  blueprintId?: string;
+  objectifRevision?: string;
+  blueprintSections?: FicheBlueprintSections;
+  metriques: FicheMetrique[];
+
+  // Zone Ancre
+  anchorImageMentale: FicheImageMentale;
+  anchorDefinition: string;
+
+  // Zone Coeur - max 5 blocs
+  coreBlocks: ZonedBlock[];
+
+  // Zone Action
+  actionExample: string;
+  actionTrap: string;
+  actionQuiz?: FicheFlashcard[];
+
+  // Preserved for backward compat
+  schema: FicheSchema;
+  feynman: string;
+  flashcards: FicheFlashcard[];
+
+  // Legacy fields - kept for Prisma compat
+  notionsCles?: string[];
+  formulesCles?: string[];
+  proprietesCles?: string[];
+  imageMentale: FicheImageMentale;
+  definition: string;
+  exemple: string;
+  piege: string;
+}
+
 export interface FicheGeneree {
   titre: string;
   matiere: string;
+  subjectFamily?: SubjectFamily;
   niveau: string;
   classification?: FicheClassification;
   blueprintId?: string;

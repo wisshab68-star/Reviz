@@ -6,6 +6,8 @@ export function RevizNotebookDoodle({ className }: IllustrationProps) {
   return (
     <svg
       className={className}
+      width="220"
+      height="220"
       viewBox="0 0 220 220"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -35,6 +37,8 @@ export function RevizMindOrbitDoodle({ className }: IllustrationProps) {
   return (
     <svg
       className={className}
+      width="260"
+      height="220"
       viewBox="0 0 260 220"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -62,6 +66,8 @@ export function RevizMascotDoodle({ className }: IllustrationProps) {
   return (
     <svg
       className={className}
+      width="220"
+      height="220"
       viewBox="0 0 220 220"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

@@ -1,9 +1,20 @@
 import { auth } from "@/auth";
+import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { AppTopbar } from "@/components/app-topbar";
 import { LibraryClient } from "@/components/library-client";
 
 export default async function LibraryPage() {
-  const session = await auth();
+  let session = null;
+
+  try {
+    session = await auth();
+  } catch (error) {
+    if (!isDatabaseConnectionError(error)) {
+      throw error;
+    }
+
+    console.error("Auth lookup failed on /library, continuing as guest.", error);
+  }
 
   return (
     <main className="app-layout">

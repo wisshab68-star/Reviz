@@ -1,9 +1,20 @@
 import Link from "next/link";
 
 import { auth, signOut } from "@/auth";
+import { isDatabaseConnectionError } from "@/lib/database-fallback";
 
 export async function AuthButtons() {
-  const session = await auth();
+  let session = null;
+
+  try {
+    session = await auth();
+  } catch (error) {
+    if (!isDatabaseConnectionError(error)) {
+      throw error;
+    }
+
+    console.error("Auth lookup failed in AuthButtons, continuing as guest.", error);
+  }
 
   if (!session?.user) {
     return (

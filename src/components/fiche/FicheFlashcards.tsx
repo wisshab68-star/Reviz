@@ -54,8 +54,8 @@ export function FicheFlashcards({ flashcards, blueprintId }: FicheFlashcardsProp
             </span>
             <span className="reviz-fiche-flashcard-chip">{classifyFlashcard(flashcard.question, blueprintId).chip}</span>
           </div>
-          <MathRenderer content={flashcard.question} className="reviz-fiche-flashcard-question" />
-          <MathRenderer content={flashcard.reponse} className="reviz-fiche-flashcard-answer" />
+          <MathRenderer text={flashcard.question} className="reviz-fiche-flashcard-question" />
+          <MathRenderer text={flashcard.reponse} className="reviz-fiche-flashcard-answer" />
         </article>
       ))}
     </div>

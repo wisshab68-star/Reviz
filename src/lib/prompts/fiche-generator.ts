@@ -1,4 +1,17 @@
 import { normalizeDocumentText } from "@/lib/text";
+import { inferSubject } from "@/lib/prompts/classify-content";
+import {
+  detectSubjectFamily,
+  getFlashcardCap,
+  getFormulesSectionLabel,
+  getSubjectFamilyCaps,
+  getSubjectSpecificInstructions,
+} from "@/lib/subject-families";
+import {
+  ABSOLUTE_GENERATION_CONSTRAINTS,
+  COMPACT_FICHE_REFERENCE_SCHEMA,
+} from "@/lib/prompts/generate-sheet";
+import { prepareTextForModel } from "@/lib/document-coverage";
 
 function buildDocumentContextExcerpt(content: string, maxChars: number): string {
   const cleanedContent = normalizeDocumentText(content);
@@ -16,7 +29,12 @@ function buildDocumentContextExcerpt(content: string, maxChars: number): string 
   return `${head}\n\n[... extrait milieu du document ...]\n\n${middle}\n\n[... extrait fin du document ...]\n\n${tail}`;
 }
 
-export const FICHE_SYSTEM_PROMPT = `
+const FICHE_SYSTEM_PROMPT_BASE = `
+${ABSOLUTE_GENERATION_CONSTRAINTS}
+
+SCHEMA PEDAGOGIQUE DE REFERENCE A RESPECTER :
+${COMPACT_FICHE_REFERENCE_SCHEMA}
+
 Tu es un professeur experimente, rigoureux et pedagogue. Tu maitrises toutes les matieres et tu adaptes ta facon de construire une fiche selon le type reel du cours.
 Tu rediges des fiches de revision fiables, structurees, utiles et precises. Tu ne reformules jamais de facon vague.
 
@@ -41,20 +59,17 @@ INTERDIT : lister un mot simplement parce qu'il apparait souvent
 dans le cours. Un mot frequent mais non actionnable a l'examen
 (ex: "introduction", "contexte", "methode") ne doit JAMAIS figurer
 dans notionsCles.
+Les proprietes et criteres importants doivent etre absorbes dans notionsCles, jamais dans un champ separe.
 
-POUR LES proprietesCles — INTERDICTION DE COPIER-COLLER :
+POUR LES notionsCles — INTERDICTION DE COPIER-COLLER :
 INTERDIT : recopier une phrase du cours mot pour mot ou quasi
-mot pour mot. Chaque propriete DOIT etre reformulee.
-TEST OBLIGATOIRE : chaque propriete doit repondre a la question
+mot pour mot. Chaque item DOIT etre reformule.
+TEST OBLIGATOIRE : chaque item doit repondre a la question
 "Qu'est-ce que l'eleve va rater a l'examen s'il ne sait pas ca ?"
-Si la propriete ne repond pas a cette question, elle est rejetee.
-FORMAT : formule chaque propriete comme une regle actionnable que
-l'eleve peut appliquer directement, jamais comme une definition
+Si l'item ne repond pas a cette question, il est rejete.
+FORMAT : formule chaque item comme une regle ou un critere actionnable que
+l'eleve peut reutiliser directement, jamais comme une definition
 passive ou une description.
-MAUVAIS : "La derivee mesure le taux de variation d'une fonction"
-BON : "Pour trouver le sens de variation, calculer f'(x) et
-determiner son signe — f'(x)>0 implique f croissante sur
-l'intervalle"
 
 POUR LES flashcards — QUOTAS OBLIGATOIRES :
 - MINIMUM 2 flashcards portant sur des pieges ou erreurs classiques
@@ -120,7 +135,7 @@ Regles de reconstruction :
 - Toute formule reconstruite doit etre en LaTeX avec delimiters valides
 
 - Chaque champ textuel doit contenir des phrases completes et autonomes, jamais un fragment coupe
-- Respecte des longueurs courtes par bloc : notions/formules <= 120 caracteres, proprietes <= 160 caracteres, reponses de flashcards <= 220 caracteres
+- Respecte des longueurs courtes par bloc : notions <= 160 caracteres, formules <= 120 caracteres, reponses de flashcards <= 220 caracteres
 - Si un contenu est trop long, reformule-le proprement sans utiliser "..."
 
 FORMAT DE SORTIE EXACT :
@@ -135,7 +150,6 @@ FORMAT DE SORTIE EXACT :
   ],
   "notionsCles": ["string"],
   "formulesCles": ["string"],
-  "proprietesCles": ["string"],
   "imageMentale": {
     "titre": "string",
     "texte": "string"
@@ -165,21 +179,52 @@ FORMAT DE SORTIE EXACT :
 }
 `;
 
+export function buildFicheSystemPrompt(subject: string): string {
+  const family = detectSubjectFamily(subject);
+  const specificInstructions = getSubjectSpecificInstructions(family);
+  const formulesLabel = getFormulesSectionLabel(family);
+  const flashcardCap = getFlashcardCap(family);
+
+  console.log("[SUBJECT_FAMILY] matière:", subject,
+    "→ famille:", family,
+    "→ label formules:", formulesLabel,
+    "→ cap flashcards:", flashcardCap);
+
+  return `
+${ABSOLUTE_GENERATION_CONSTRAINTS}
+
+${specificInstructions}
+
+NOTE SUR LES FLASHCARDS : Maximum ${flashcardCap} flashcards pour ce cours.
+
+NOTE SUR LE BLOC FORMULES : Ce bloc s'intitule "${formulesLabel}"
+pour cette matière. Adapter le contenu en conséquence.
+
+${FICHE_SYSTEM_PROMPT_BASE.replace(`${ABSOLUTE_GENERATION_CONSTRAINTS}\n\n`, "")}`;
+}
+
 export function buildUserPrompt(content: string): string {
   const cleanedContent = normalizeDocumentText(content);
+  const subject = inferSubject(cleanedContent);
+  const family = detectSubjectFamily(subject);
+  const caps = getSubjectFamilyCaps(family);
+  const subjectInstructions = getSubjectSpecificInstructions(family);
+  const textForModel = prepareTextForModel(cleanedContent, 60000);
 
   return `Voici le contenu du cours a analyser :
 
 ---
-${buildDocumentContextExcerpt(cleanedContent, 14000)}
+${textForModel}
 ---
 
-Genere la fiche de revision complete en JSON selon le format demande.
+Genere la fiche de revision complete en JSON selon le format demande, sans jamais depasser les caps absolus.
+
+${subjectInstructions}
 
 Instructions prioritaires :
 1. Identifie la nature du cours avant d'ecrire la fiche : formel, processus, conceptuel, algorithmique ou comparatif
 2. Structure la fiche selon cette nature, pas selon un gabarit fixe
-3. Identifie les 3 a 8 notions centrales du cours et organise toute la fiche autour d'elles
+3. Identifie au maximum 4 notions centrales du cours et organise toute la fiche autour d'elles
 4. Choisis les notionsCles par importance conceptuelle, pas par frequence brute
 5. La definition doit poser clairement le concept, son role et ce qui le distingue d'une notion proche
 6. L'exemple doit etre concret, specifique et immediatement parlant pour un eleve
@@ -187,16 +232,17 @@ Instructions prioritaires :
 8. Les metriques doivent etre des chiffres reels extraits du cours quand c'est possible ; sinon utilise des reperes structurels pertinents
 9. Les formulesCles doivent lister les formules, egalites ou relations exactes du document si elles existent
 9bis. Toute formule dans formulesCles doit etre enveloppee dans $$...$$ et toute formule integree dans une phrase doit etre enveloppee dans \\(...\\)
-10. Les proprietesCles doivent lister les proprietes, criteres et consequences a connaitre
+10. Les proprietes et criteres importants doivent etre integres dans notionsCles
 11. Le schema doit etre riche, structure et montrer la logique du raisonnement ou du processus
 12. Les flashcards doivent couvrir definition, application, distinction, piege et methode selon le type de cours
+12bis. Les procedures cles apparaissent comme flashcards de type methode
+12ter. Les exemples d'application sont integres dans les flashcards de type methode, pas dans un champ separe
 13. Si le document traite de geometrie vectorielle, couvre explicitement quand present : vecteur nul, vecteurs opposes, relation de Chasles, produit par un reel, colinearite, coordonnees du milieu, distance en repere orthonorme, propriete du parallelogramme, propriete du milieu
 
 CONTRAINTES EDITORIALES STRICTES (non negociables) :
-- notionsCles : 3 a 6 elements maximum. Au-dela, tu n'as pas filtre.
-- formulesCles : uniquement les formules indispensables pour resoudre un exercice type. Pas de formule decorative ou secondaire.
-- proprietesCles : 4 a 8 elements, chacun distinct et actionnable. Aucun doublon, aucune reformulation d'un meme point.
-- flashcards : exactement 6, dans cet ordre strict :
+- notionsCles : 4 elements maximum. Elles correspondent aux fondamentaux absolus et absorbent les proprietes ou criteres importants.
+- formulesCles : ${caps.formules} elements maximum pour cette famille de matiere. Pas de formule decorative ou secondaire.
+- flashcards : ${caps.flashcards === 8 ? "jusqu'a 8" : "exactement 6"}, avec definition, application, distinction, piege et methode :
   1. definition (tester la connaissance d'un concept cle)
   2. application (appliquer une formule ou regle sur un cas)
   3. distinction (differencier deux notions proches)
@@ -268,9 +314,9 @@ export function buildClassicUserPrompt(content: string, titleHint?: string): str
     "",
     "Contraintes de sortie :",
     "- summary : 80 a 180 mots, ton direct",
-    "- keyPoints : 5 a 10 elements",
-    "- definitions : 3 a 8 elements si possible",
-    "- flashcards : 5 a 10, varier les types",
+    "- keyPoints : 4 elements maximum",
+    "- definitions : 3 elements maximum",
+    "- flashcards : 6 elements maximum",
     "- quiz : 5 questions testant la comprehension",
     "- ne retourne que du JSON valide",
     titleHint ? `- titre suggere : ${titleHint}` : "",

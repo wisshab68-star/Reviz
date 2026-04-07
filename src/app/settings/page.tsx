@@ -1,13 +1,24 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { AppTopbar } from "@/components/app-topbar";
 import { BillingActions } from "@/components/billing-actions";
 import { FREE_MONTHLY_SHEET_LIMIT, getPlanLabel, hasUnlimitedSheets } from "@/lib/plans";
 import { getMonthlySheetUsage } from "@/services/usage-service";
 
 export default async function SettingsPage() {
-  const session = await auth();
+  let session = null;
+
+  try {
+    session = await auth();
+  } catch (error) {
+    if (!isDatabaseConnectionError(error)) {
+      throw error;
+    }
+
+    console.error("Auth lookup failed on /settings, redirecting to sign-in.", error);
+  }
 
   if (!session?.user?.id) {
     redirect("/sign-in");

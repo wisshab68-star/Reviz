@@ -6,22 +6,30 @@ import { useRef, useState, type ChangeEvent } from "react";
 
 import { FREE_MONTHLY_SHEET_LIMIT } from "@/lib/plans";
 import { RevizMascotDoodle, RevizMindOrbitDoodle, RevizNotebookDoodle } from "@/components/reviz-illustrations";
+import type { FicheGeneree } from "@/types/fiche-generated";
+import type { GeneratedSheet } from "@/types/sheet";
+
+const PREVIEW_STORAGE_KEY = "reviz-preview-sheet";
 
 type GenerateResponse = {
   success: boolean;
-  sheetId?: string;
+  sheetId?: string | null;
   mode?: "ai_or_fallback" | "demo";
+  data?: GeneratedSheet;
+  fiche?: FicheGeneree;
+  warning?: string;
   error?: string;
 };
 
 type UploadResponse = {
   success: boolean;
   data?: {
-    documentId: string;
+    documentId: string | null;
     sourceType: "TEXT" | "PDF" | "IMAGE";
-    filename: string;
-    extractedText: string;
+    filename: string | null;
+    extractedText: string | null;
   };
+  warning?: string;
   error?: string;
 };
 
@@ -30,6 +38,22 @@ type QuickAction = {
   accept: string;
   enabled: boolean;
   capture?: "environment";
+};
+
+const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_UPLOAD_SIZE_LABEL = "10 Mo";
+const MINIMAL_UPLOAD_INPUT_ID = "reviz-minimal-upload-input";
+const MINIMAL_CAMERA_INPUT_ID = "reviz-minimal-camera-input";
+const hiddenFileInputStyle = {
+  position: "absolute" as const,
+  width: "1px",
+  height: "1px",
+  padding: 0,
+  margin: "-1px",
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap" as const,
+  border: 0,
 };
 
 const quickActions: QuickAction[] = [
@@ -97,6 +121,34 @@ export function HomeGenerator({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  function formatGenerationError(message: string) {
+    if (/429|quota|insufficient_quota|billing/i.test(message)) {
+      return "Le compte OpenAI configure localement n'a plus de quota. Reviz peut maintenant basculer en mode demo ; relance la generation une fois.";
+    }
+
+    return message;
+  }
+
+  async function readApiPayload<T>(response: Response): Promise<T> {
+    const raw = await response.text();
+
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      const normalized = raw.trim();
+
+      if (/request entity too large|payload too large/i.test(normalized)) {
+        throw new Error(`Le fichier est trop lourd pour l'envoi en ligne. Garde-le sous ${MAX_UPLOAD_SIZE_LABEL}.`);
+      }
+
+      if (!normalized) {
+        throw new Error("Le serveur a renvoye une reponse vide.");
+      }
+
+      throw new Error(normalized);
+    }
+  }
+
   useEffect(() => {
     if (!launchMode) {
       return;
@@ -122,6 +174,16 @@ export function HomeGenerator({
     }
 
     setError(null);
+
+    if (selectedFile.size > MAX_UPLOAD_SIZE_BYTES) {
+      setError(`Le fichier depasse la limite de ${MAX_UPLOAD_SIZE_LABEL}. Reduis sa taille ou exporte un PDF plus leger.`);
+      setStatus(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+
     setStatus("Import du fichier et extraction du texte...");
     setIsUploading(true);
 
@@ -134,20 +196,20 @@ export function HomeGenerator({
         body: formData,
       });
 
-      const data = (await response.json()) as UploadResponse;
+      const data = await readApiPayload<UploadResponse>(response);
 
       if (!response.ok || !data.success || !data.data) {
         throw new Error(data.error ?? "L'import du fichier a echoue.");
       }
 
-      setContent(data.data.extractedText);
+      setContent(data.data.extractedText ?? "");
       setIsActivated(true);
       setTextMode(true);
       setSourceType(data.data.sourceType);
       setDocumentId(data.data.documentId);
       setFileName(data.data.filename);
-      setTitleHint(data.data.filename.replace(/\.[^.]+$/, ""));
-      setStatus("Texte extrait avec succes. Tu peux maintenant generer la fiche.");
+      setTitleHint((data.data.filename ?? selectedFile.name).replace(/\.[^.]+$/, ""));
+      setStatus(data.warning ?? "Texte extrait avec succes. Tu peux maintenant generer la fiche.");
     } catch (uploadError) {
       setError(
         uploadError instanceof Error
@@ -182,22 +244,42 @@ export function HomeGenerator({
         }),
       });
 
-      const data = (await response.json()) as GenerateResponse;
+      const data = await readApiPayload<GenerateResponse>(response);
 
-      if (!response.ok || !data.success || !data.sheetId) {
+      if (!response.ok || !data.success) {
         throw new Error(data.error ?? "La generation a echoue.");
       }
 
-      setStatus(
-        data.mode === "demo"
-          ? "Fiche generee en mode demo. Redirection vers le resultat..."
-          : "Fiche generee. Redirection vers le resultat...",
-      );
-      router.push(`/sheet/${data.sheetId}`);
+      if (data.sheetId) {
+        setStatus(
+          data.mode === "demo"
+            ? "Fiche generee en mode demo. Redirection vers le resultat..."
+            : data.warning
+              ? `${data.warning} Redirection vers la fiche sauvegardee...`
+              : "Fiche generee. Redirection vers le resultat...",
+        );
+        router.push(`/sheet/${data.sheetId}`);
+        return;
+      }
+
+      if (!data.data) {
+        throw new Error(data.error ?? "La generation a echoue.");
+      }
+
+      const previewPayload = JSON.stringify({
+        generated: data.data,
+        fiche: data.fiche ?? null,
+      });
+
+      window.sessionStorage.setItem(PREVIEW_STORAGE_KEY, previewPayload);
+      window.localStorage.setItem(PREVIEW_STORAGE_KEY, previewPayload);
+
+      setStatus(data.warning ?? "Fiche generee. Redirection vers l'apercu temporaire...");
+      router.push("/sheet/preview");
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
-          ? submissionError.message
+          ? formatGenerationError(submissionError.message)
           : "Une erreur inattendue est survenue.",
       );
       setStatus(null);
@@ -210,26 +292,61 @@ export function HomeGenerator({
     setIsActivated(true);
     setFileAccept(accept);
 
-    if (capture) {
-      fileInputRef.current?.setAttribute("capture", capture);
-    } else {
-      fileInputRef.current?.removeAttribute("capture");
+    const input = fileInputRef.current;
+    if (!input) {
+      setError("Le selecteur de fichier n'est pas disponible pour le moment. Recharge la page et reessaie.");
+      return;
     }
 
-    fileInputRef.current?.click();
+    input.accept = accept;
+
+    if (capture) {
+      input.setAttribute("capture", capture);
+    } else {
+      input.removeAttribute("capture");
+    }
+
+    try {
+      if ("showPicker" in input && typeof input.showPicker === "function") {
+        input.showPicker();
+        return;
+      }
+    } catch (pickerError) {
+      console.warn("showPicker failed, fallback to click()", pickerError);
+    }
+
+    input.click();
   }
 
   if (minimal) {
     return (
+      <>
+      <input
+        id={MINIMAL_UPLOAD_INPUT_ID}
+        type="file"
+        accept=".pdf,.txt,image/*"
+        onChange={(event) => void handleFileChange(event)}
+        onClick={() => {
+          setIsActivated(true);
+          setError(null);
+        }}
+        style={hiddenFileInputStyle}
+        disabled={isUploading || isSubmitting}
+      />
+      <input
+        id={MINIMAL_CAMERA_INPUT_ID}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={(event) => void handleFileChange(event)}
+        onClick={() => {
+          setIsActivated(true);
+          setError(null);
+        }}
+        style={hiddenFileInputStyle}
+        disabled={isUploading || isSubmitting}
+      />
       <section className="reviz-generator-home">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={fileAccept}
-          onChange={(event) => void handleFileChange(event)}
-          style={{ display: "none" }}
-        />
-
         <div className="reviz-generator-card">
           <p className="reviz-app-eyebrow">REVIZ AI</p>
           <h1>
@@ -246,29 +363,29 @@ export function HomeGenerator({
           </div>
 
           <div className="reviz-generator-actions">
-            <button
-              type="button"
+            <label
+              htmlFor={MINIMAL_UPLOAD_INPUT_ID}
               className="reviz-icon-action"
-              onClick={() => openFilePicker(".pdf,.txt,image/*")}
-              disabled={isUploading || isSubmitting}
+              style={{ opacity: isUploading || isSubmitting ? 0.55 : 1 }}
+              aria-disabled={isUploading || isSubmitting}
             >
               <span className="reviz-icon-action-mark" aria-hidden="true">
                 ↓
               </span>
               <span>Importer un fichier</span>
-            </button>
+            </label>
 
-            <button
-              type="button"
+            <label
+              htmlFor={MINIMAL_CAMERA_INPUT_ID}
               className="reviz-icon-action"
-              onClick={() => openFilePicker("image/*", "environment")}
-              disabled={isUploading || isSubmitting}
+              style={{ opacity: isUploading || isSubmitting ? 0.55 : 1 }}
+              aria-disabled={isUploading || isSubmitting}
             >
               <span className="reviz-icon-action-mark" aria-hidden="true">
                 ○
               </span>
               <span>Prendre une photo</span>
-            </button>
+            </label>
           </div>
 
           <button
@@ -285,6 +402,7 @@ export function HomeGenerator({
           {error ? <div className="status-box error">{error}</div> : null}
         </div>
       </section>
+      </>
     );
   }
 
@@ -459,7 +577,7 @@ export function HomeGenerator({
         type="file"
         accept={fileAccept}
         onChange={(event) => void handleFileChange(event)}
-        style={{ display: "none" }}
+        style={hiddenFileInputStyle}
       />
 
       {!minimal ? (

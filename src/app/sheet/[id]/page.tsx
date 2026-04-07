@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
+import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { AppTopbar } from "@/components/app-topbar";
 import { RevizMascotDoodle, RevizMindOrbitDoodle, RevizNotebookDoodle } from "@/components/reviz-illustrations";
+import { SaveSheetButton } from "@/components/save-sheet-button";
 import { SheetView } from "@/components/sheet-view";
 import { db } from "@/lib/db";
 import { readKeyPointsPayload } from "@/lib/fiche-storage";
@@ -21,7 +23,18 @@ type PageProps = {
 };
 
 export default async function SheetPage({ params }: PageProps) {
-  const session = await auth();
+  let session = null;
+
+  try {
+    session = await auth();
+  } catch (error) {
+    if (!isDatabaseConnectionError(error)) {
+      throw error;
+    }
+
+    console.error("Auth lookup failed on /sheet/[id], continuing as guest.", error);
+  }
+
   const { id } = await params;
   const sheet = session?.user?.id
     ? await db.studySheet.findFirst({
@@ -61,6 +74,7 @@ export default async function SheetPage({ params }: PageProps) {
                 <Link href="/library" className="btn btn-soft">
                   Retour
                 </Link>
+                <SaveSheetButton title={sheet.title} />
                 <Link href={`/review/${sheet.id}`} className="btn btn-primary">
                   Reviser
                 </Link>
@@ -84,6 +98,7 @@ export default async function SheetPage({ params }: PageProps) {
             feynmanExplanation={enrichedSheet.feynmanExplanation}
             keyMetrics={enrichedSheet.keyMetrics}
             ficheGeneree={ficheGeneree}
+            sheetId={sheet.id}
           />
         </div>
       </div>

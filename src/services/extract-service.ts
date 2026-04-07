@@ -1,6 +1,7 @@
 import pdfParse from "pdf-parse";
 
-import { openai } from "@/lib/openai";
+import { MODELS } from "@/lib/models";
+import { anthropic } from "@/lib/openai";
 import { normalizeDocumentText, sanitizeText } from "@/lib/text";
 import type { SourceQuality } from "@/types/generation-pipeline";
 
@@ -44,58 +45,201 @@ function removeOcrArtifacts(text: string) {
     .replace(/[~]{3,}/g, "");
 }
 
-function normalizeExtractedText(text: string) {
+/**
+ * Supprime les lignes de metadonnees du document source :
+ * noms de profs, titres de manuels, copyright, ISBN, references de pages.
+ * Doit etre applique au plus tot dans le pipeline (extraction) pour que
+ * le texte stocke en base et envoye au client soit deja propre.
+ */
+function removeMetadataLines(text: string): string {
+  const lines = text.split("\n");
+
+  return lines.filter((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return true;
+
+    const wordCount = trimmed.split(/\s+/).length;
+
+    // Lignes courtes contenant un nom propre + mot-cle scolaire = metadata
+    if (
+      wordCount <= 10
+      && /[A-Z][a-zà-ÿ]+\s+[A-Z][a-zà-ÿ]+/.test(trimmed)
+      && /\b(Sp[eé]cialit[eé]|Terminale|Premi[eè]re|Seconde|Lyc[eé]e|Coll[eè]ge|Professeur|Prof\b|Manuel|[EÉ]dition|Acad[eé]mie)\b/i.test(trimmed)
+    ) {
+      return false;
+    }
+
+    // Copyright, ISBN, editeurs
+    if (/^\s*(©|Copyright)\b/i.test(trimmed) || /^\s*ISBN\b/i.test(trimmed) || /\b[EÉ]ditions?\s+[A-Z]/i.test(trimmed)) {
+      return false;
+    }
+
+    // References de pages isolees
+    if (/^\s*(p\.?\s*\d|pp\.?\s*\d|fig\.?\s*\d)/i.test(trimmed) && wordCount <= 4) {
+      return false;
+    }
+
+    // Lignes type "Chapitre 3" ou "Cours de Terminale" isolees
+    if (
+      /^(Chapitre|Cours|Le[cç]on|Activit[eé]|Exercice|Fiche|Document)\s+\d\b/i.test(trimmed)
+      && wordCount <= 12
+    ) {
+      return false;
+    }
+
+    // Dates isolees
+    if (/^\d{1,2}[/\-.]\d{1,2}[/\-.]\d{2,4}$/.test(trimmed)) {
+      return false;
+    }
+
+    return true;
+  }).join("\n");
+}
+
+export function cleanExtractedText(text: string) {
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[CLEAN_INPUT_LENGTH] ${text.length}`);
+  }
+
   let cleaned = normalizeDocumentText(text);
   cleaned = removePageNumbers(cleaned);
   cleaned = removeRepetitiveHeaders(cleaned);
+  cleaned = removeMetadataLines(cleaned);
   cleaned = removeOcrArtifacts(cleaned);
+  cleaned = cleaned
+    .replace(/\\[a-zA-Z]+\{[^}]{0,50}\}/g, "")
+    .replace(/[tuq]\{[^}]{0,20}\}/g, "")
+    .replace(/[\u25A0-\u25FF□■]{2,}/g, "")
+    .replace(/^\s*\d+\.\d+(\.\d+)*\s*$/gm, "")
+    .replace(/[«»„"‟]/g, "\"")
+    .replace(/\u201C|\u201D|\u201E|\u201F/g, "\"");
   cleaned = normalizeDocumentText(cleaned).replace(/\n{3,}/g, "\n\n").trim();
+
+  const lines = cleaned.split("\n");
+  const firstNonEmptyLine = lines.find((line) => line.trim().length > 0)?.trim() ?? "";
+  cleaned = lines
+    .filter((line, index) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        return true;
+      }
+
+      const hasUrl =
+        /http:\/\//i.test(trimmed)
+        || /www\./i.test(trimmed)
+        || /\.jimdofree/i.test(trimmed)
+        || /\.com\//i.test(trimmed)
+        || /\.fr\//i.test(trimmed);
+      if (hasUrl) {
+        return false;
+      }
+
+      const isProfInstruction =
+        /\(H[0-9]+\)/i.test(trimmed)
+        || /À FAIRE POUR/i.test(trimmed)
+        || /LIRE MANUEL/i.test(trimmed)
+        || /pages? [0-9]+ à [0-9]+/i.test(trimmed)
+        || /sur [0-9]+ pages?/i.test(trimmed)
+        || /[0-9]+\/[0-9]+\s*$/i.test(trimmed);
+      if (isProfInstruction) {
+        return false;
+      }
+
+      const startsWithConjugatedVerb =
+        /^(sont|est|ont|a|était|étaient|sera|seront|peut|peuvent|doit|doivent|fait|font|va|vont|permet|permettent)\b/i
+          .test(trimmed);
+      if (startsWithConjugatedVerb) {
+        return false;
+      }
+
+      const isOrphanFragment =
+        /^(- [a-zàâéèêëîïôùûüç])/.test(trimmed)
+        && trimmed.length < 40;
+      if (isOrphanFragment) {
+        return false;
+      }
+
+      if (index > 0 && firstNonEmptyLine && trimmed === firstNonEmptyLine) {
+        return false;
+      }
+
+      if (trimmed.length < 15) {
+        return false;
+      }
+
+      return true;
+    })
+    .join("\n");
+
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[CLEAN_OUTPUT_LENGTH] ${cleaned.length}`);
+  }
+
   return cleaned;
 }
 
 async function extractFromPdf(file: File) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const parsed = await pdfParse(buffer);
-  return normalizeExtractedText(parsed.text);
+  const rawText = parsed.text;
+  const cleanedText = cleanExtractedText(rawText);
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("[EXTRACT] longueur texte brut:", rawText.length, "chars");
+    console.log("[EXTRACT] longueur apres nettoyage:", cleanedText.length, "chars");
+  }
+
+  return cleanedText;
 }
 
 async function extractFromPlainText(file: File) {
-  const text = await file.text();
-  return normalizeExtractedText(text);
+  const rawText = await file.text();
+  const cleanedText = cleanExtractedText(rawText);
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("[EXTRACT] longueur texte brut:", rawText.length, "chars");
+    console.log("[EXTRACT] longueur apres nettoyage:", cleanedText.length, "chars");
+  }
+
+  return cleanedText;
 }
 
 async function extractFromImage(file: File) {
   const buffer = Buffer.from(await file.arrayBuffer());
-  const base64 = buffer.toString("base64");
+  const base64Data = buffer.toString("base64");
   const mimeType = file.type || "image/png";
-  const dataUrl = `data:${mimeType};base64,${base64}`;
-
-  const response = await openai.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
-      {
-        role: "system",
-        content:
-          "Tu fais de l'OCR. Extrais uniquement le texte lisible de l'image. Retourne le texte brut, sans commentaire ni markdown.",
-      },
+  const ocrMessage = await anthropic.messages.create({
+    model: MODELS.OCR,
+    max_tokens: 4096,
+    messages: [
       {
         role: "user",
         content: [
           {
-            type: "input_text",
-            text: "Extrais le texte pedagogique de cette image de cours. Garde l'ordre de lecture.",
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+              data: base64Data,
+            },
           },
           {
-            type: "input_image",
-            image_url: dataUrl,
-            detail: "auto",
+            type: "text",
+            text: "Extrais tout le texte visible dans cette image de cours. Retourne uniquement le texte brut, sans mise en forme.",
           },
         ],
       },
     ],
   });
+  const rawText = ocrMessage.content[0]?.type === "text" ? ocrMessage.content[0].text : "";
+  const cleanedText = cleanExtractedText(rawText);
 
-  return normalizeExtractedText(response.output_text);
+  if (process.env.NODE_ENV === "development") {
+    console.log("[EXTRACT] longueur texte brut:", rawText.length, "chars");
+    console.log("[EXTRACT] longueur apres nettoyage:", cleanedText.length, "chars");
+  }
+
+  return cleanedText;
 }
 
 export function assessSourceQuality(sourceText: string): SourceQuality {
@@ -125,6 +269,10 @@ export function assessSourceQuality(sourceText: string): SourceQuality {
 }
 
 export async function extractTextFromFile(file: File): Promise<ExtractedPayload> {
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error("Fichier trop volumineux (max 10 Mo)");
+  }
+
   let result: ExtractedPayload;
 
   if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {

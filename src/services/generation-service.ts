@@ -1,87 +1,33 @@
-import { openai } from "@/lib/openai";
+import { MODELS } from "@/lib/models";
+import { anthropic } from "@/lib/openai";
 import { CLASSIC_SYSTEM_PROMPT, buildClassicUserPrompt } from "@/lib/prompts/fiche-generator";
 import { generatedSheetSchema, type GenerateSheetRequest } from "@/lib/validations";
 import type { GeneratedSheet } from "@/types/sheet";
 import { generateDemoStudySheet } from "@/services/demo-sheet-service";
 
 export async function generateStudySheet(input: GenerateSheetRequest): Promise<GeneratedSheet> {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return generateDemoStudySheet(input);
   }
 
   const prompt = buildClassicUserPrompt(input.content, input.titleHint);
 
   try {
-    const response = await openai.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        { role: "system", content: CLASSIC_SYSTEM_PROMPT },
-        { role: "user", content: prompt },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "study_sheet",
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              title: { type: "string" },
-              summary: { type: "string" },
-              keyPoints: {
-                type: "array",
-                items: { type: "string" },
-              },
-              definitions: {
-                type: "array",
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    term: { type: "string" },
-                    definition: { type: "string" },
-                  },
-                  required: ["term", "definition"],
-                },
-              },
-              flashcards: {
-                type: "array",
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    question: { type: "string" },
-                    answer: { type: "string" },
-                  },
-                  required: ["question", "answer"],
-                },
-              },
-              quiz: {
-                type: "array",
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    question: { type: "string" },
-                    type: { type: "string", enum: ["mcq", "open"] },
-                    options: {
-                      type: "array",
-                      items: { type: "string" },
-                    },
-                    correctAnswer: { type: "string" },
-                    explanation: { type: "string" },
-                  },
-                  required: ["question", "type", "options", "correctAnswer", "explanation"],
-                },
-              },
-            },
-            required: ["title", "summary", "keyPoints", "definitions", "flashcards", "quiz"],
-          },
+    const response = await anthropic.messages.create({
+      model: MODELS.FAST,
+      max_tokens: 4000,
+      system: [
+        {
+          type: "text" as const,
+          text: CLASSIC_SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" as const },
         },
-      },
+      ],
+      messages: [{ role: "user", content: prompt }],
     });
 
-    const payload = JSON.parse(response.output_text);
+    const raw = response.content[0]?.type === "text" ? response.content[0].text : "";
+    const payload = JSON.parse(raw.replace(/```json|```/g, "").trim());
     return generatedSheetSchema.parse(payload);
   } catch (error) {
     console.warn("OpenAI generation failed, using demo fallback.", error);

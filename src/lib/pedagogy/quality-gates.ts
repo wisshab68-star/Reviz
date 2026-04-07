@@ -5,6 +5,7 @@ import type {
   PedagogicalQualityReport,
 } from "@/types/generation-pipeline";
 import type { PedagogicalBlueprint } from "@/lib/pedagogy/blueprint-selector";
+import { detectSubjectFamily } from "@/lib/subject-families";
 
 const META_NOTIONS = new Set([
   "chapitre",
@@ -85,6 +86,7 @@ export function evaluatePedagogicalQuality(
   const relevantConcepts = buildRelevantConceptSet(inventory);
   const notions = sheet.notionsCles ?? [];
   const sections = sheet.blueprintSections ?? {};
+  const subjectFamily = detectSubjectFamily(profile.matiere);
 
   for (const notion of notions) {
     const normalized = normalize(notion);
@@ -225,6 +227,58 @@ export function evaluatePedagogicalQuality(
     issues.push("La fiche n'offre pas encore assez de repères pour une restitution redigee.");
     remediation.push("Ajouter plus de notions pivots, de distinctions et de repères argumentatifs.");
     score -= 0.08;
+  }
+
+  if (subjectFamily === "humanities_history") {
+    if ((sheet.formulesCles?.length ?? 0) < 4) {
+      missingExpected.push("Des reperes chronologiques cles manquent dans la fiche.");
+      remediation.push("Ajouter 5 a 7 dates ou bascules majeures avec evenement et importance.");
+      score -= 0.16;
+    }
+    if ((sections.reperes?.length ?? 0) < 4) {
+      issues.push("La fiche d'histoire ne met pas assez en avant les dates, acteurs et bascules.");
+      remediation.push("Ajouter un bloc de reperes chronologiques structure et relier les acteurs aux evenements.");
+      score -= 0.12;
+    }
+    if (sheet.flashcards.length < 6) {
+      issues.push("La fiche d'histoire manque de cartes sur les dates, acteurs et evenements.");
+      remediation.push("Passer a 6-8 flashcards couvrant dates, acteurs, evenements et methode de document.");
+      score -= 0.08;
+    }
+  }
+
+  if (subjectFamily === "humanities_text") {
+    if ((sheet.formulesCles?.length ?? 0) < 3) {
+      missingExpected.push("La fiche devrait faire remonter des citations ou theses pivots.");
+      remediation.push("Ajouter 3 a 5 citations, theses ou positions d'auteur exploitables.");
+      score -= 0.12;
+    }
+    if (sheet.flashcards.length < 6) {
+      issues.push("La fiche de philo/litterature manque de cartes sur auteurs, oeuvres et theses.");
+      remediation.push("Ajouter des flashcards sur les auteurs, les notions et la methode de dissertation/commentaire.");
+      score -= 0.06;
+    }
+  }
+
+  if (subjectFamily === "languages") {
+    if ((sheet.formulesCles?.length ?? 0) < 3) {
+      missingExpected.push("La fiche de langue devrait contenir des regles ou structures concretes.");
+      remediation.push("Ajouter des regles grammaticales, structures syntaxiques et exemples brefs.");
+      score -= 0.12;
+    }
+  }
+
+  if (subjectFamily === "economics") {
+    if ((sheet.formulesCles?.length ?? 0) < 3) {
+      missingExpected.push("La fiche d'economie devrait contenir plus d'indicateurs, ordres de grandeur ou modeles.");
+      remediation.push("Ajouter des donnees chiffre es, indicateurs et mecanismes economiques centraux.");
+      score -= 0.12;
+    }
+    if ((sections.distinctions?.length ?? 0) + (sections.tableauSynthese?.length ?? 0) < 2) {
+      issues.push("La fiche d'economie ne compare pas assez clairement les theories, mecanismes ou acteurs.");
+      remediation.push("Ajouter un tableau comparatif ou des distinctions utiles entre notions proches.");
+      score -= 0.08;
+    }
   }
 
   if (sheet.definition.trim().length < 100) {

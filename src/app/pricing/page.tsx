@@ -1,9 +1,20 @@
 import { auth } from "@/auth";
+import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { AppTopbar } from "@/components/app-topbar";
 import { BillingActions } from "@/components/billing-actions";
 
 export default async function PricingPage() {
-  const session = await auth();
+  let session = null;
+
+  try {
+    session = await auth();
+  } catch (error) {
+    if (!isDatabaseConnectionError(error)) {
+      throw error;
+    }
+
+    console.error("Auth lookup failed on /pricing, continuing as guest.", error);
+  }
   const hasPremium = session?.user?.plan === "PREMIUM";
 
   return (

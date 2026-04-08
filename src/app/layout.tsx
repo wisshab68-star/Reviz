@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "@/styles/print.css";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 

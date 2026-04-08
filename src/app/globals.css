@@ -495,12 +495,12 @@ textarea {
 }
 
 .app-layout {
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: 164px minmax(0, 1fr);
+  grid-template-columns: 184px minmax(0, 1fr);
   gap: 0;
   align-items: start;
 }
@@ -2275,7 +2275,7 @@ textarea {
   }
 
   .app-layout {
-    width: 100vw;
+    width: 100%;
     grid-template-columns: 1fr;
     margin: 0;
   }
@@ -4164,11 +4164,8 @@ textarea {
 
 .reviz-illustration {
   display: block;
-  width: auto;
-  max-width: min(140px, 100%);
-  max-height: 140px;
+  width: 100%;
   height: auto;
-  flex-shrink: 0;
   pointer-events: none;
   transform-origin: center;
   filter: drop-shadow(0 10px 24px rgba(47, 91, 255, 0.14));
@@ -4663,110 +4660,9 @@ textarea {
 }
 
 @media (max-width: 920px) {
-.reviz-blueprint-grid,
-.reviz-classification-grid,
-.reviz-comparison-columns {
-  grid-template-columns: 1fr;
-  }
-}
-
-.fiche-logic-item-essential {
-  border-left: 3px solid var(--accent);
-  padding-left: 0.75rem;
-}
-
-/* Zoned blocks - color system */
-:root {
-  --reviz-understand-bg: #eaf0ff;
-  --reviz-understand-border: #2f5bff;
-  --reviz-understand-text: #1736b6;
-  --reviz-apply-bg: #fff7ed;
-  --reviz-apply-border: #f59e0b;
-  --reviz-apply-text: #92400e;
-  --reviz-trap-bg: #fef2f2;
-  --reviz-trap-border: #ef4444;
-  --reviz-trap-text: #991b1b;
-}
-
-.reviz-level-understand {
-  background: var(--reviz-understand-bg);
-  border-left: 4px solid var(--reviz-understand-border);
-  color: var(--reviz-understand-text);
-}
-
-.reviz-level-apply {
-  background: var(--reviz-apply-bg);
-  border-left: 4px solid var(--reviz-apply-border);
-  color: var(--reviz-apply-text);
-}
-
-.reviz-level-trap {
-  background: var(--reviz-trap-bg);
-  border-left: 4px solid var(--reviz-trap-border);
-  color: var(--reviz-trap-text);
-}
-
-.reviz-zoned-block {
-  padding: 1rem 1.2rem;
-  border-radius: 8px;
-  margin-bottom: 0.75rem;
-}
-
-.reviz-block-type-badge {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.06);
-  margin-bottom: 0.4rem;
-}
-
-.reviz-block-title {
-  font-weight: 700;
-  font-size: 1rem;
-  margin-bottom: 0.3rem;
-}
-
-.reviz-block-content {
-  font-size: 0.92rem;
-  line-height: 1.55;
-}
-
-.reviz-zone-label {
-  font-family: var(--display-font);
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin: 1.5rem 0 0.75rem;
-  text-transform: uppercase;
-}
-
-.reviz-print-btn {
-  margin-top: 1.5rem;
-}
-
-.reviz-zone-anchor,
-.reviz-zone-core,
-.reviz-zone-action {
-  display: grid;
-  gap: 1rem;
-}
-
-.reviz-zoned-core-list,
-.reviz-zoned-action-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-.reviz-zoned-action-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@media (max-width: 920px) {
-  .reviz-zoned-action-grid {
+  .reviz-blueprint-grid,
+  .reviz-classification-grid,
+  .reviz-comparison-columns {
     grid-template-columns: 1fr;
   }
 }

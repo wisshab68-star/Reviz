@@ -49,15 +49,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
   providers,
   logger: {
-    error(code, ...message) {
-      const args = message as Record<string, unknown>[];
-      console.error("[AUTH_ERROR]", code, JSON.stringify(args, null, 2));
-      if (args?.[0]?.cause) {
-        const cause = args[0].cause as Error;
-        console.error("[AUTH_CAUSE]", JSON.stringify(cause, Object.getOwnPropertyNames(cause), 2));
+    error: (error: unknown) => {
+      const err = error as Record<string, unknown>;
+      console.error("[AUTH_ERROR]", err?.type, err?.message);
+      if (err?.cause) {
+        const cause = err.cause as Record<string, unknown>;
+        console.error("[AUTH_CAUSE]", JSON.stringify(cause, null, 2));
+        if (cause?.stack) {
+          console.error("[AUTH_STACK]", cause.stack);
+        }
       }
     },
-    warn(code) {
+    warn: (code: unknown) => {
       console.warn("[AUTH_WARN]", code);
     },
   },

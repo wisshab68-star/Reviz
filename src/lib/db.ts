@@ -10,7 +10,9 @@ export const db =
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
     datasources: {
       db: {
-        url: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
+        url: process.env.DIRECT_URL
+          ? process.env.DIRECT_URL + (process.env.DIRECT_URL.includes("?") ? "&schema=public" : "?schema=public")
+          : process.env.DATABASE_URL,
       },
     },
   });

@@ -36,6 +36,7 @@ if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_HOST !== "smtp.exa
 
 console.log("[AUTH_INIT] providers registered:", providers.length,
   "| AUTH_GOOGLE_ID set:", !!process.env.AUTH_GOOGLE_ID,
+  "| AUTH_GOOGLE_SECRET set:", !!process.env.AUTH_GOOGLE_SECRET,
   "| AUTH_SECRET set:", !!process.env.AUTH_SECRET);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -47,7 +48,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers,
   logger: {
     error(code, ...message) {
-      console.error("[AUTH_ERROR]", code, JSON.stringify(message));
+      const args = message as Record<string, unknown>[];
+      console.error("[AUTH_ERROR]", code, JSON.stringify(args, null, 2));
+      if (args?.[0]?.cause) {
+        const cause = args[0].cause as Error;
+        console.error("[AUTH_CAUSE]", JSON.stringify(cause, Object.getOwnPropertyNames(cause), 2));
+      }
     },
     warn(code) {
       console.warn("[AUTH_WARN]", code);

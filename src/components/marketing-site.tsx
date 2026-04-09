@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 const sourceCards = [
   {
@@ -14,7 +15,7 @@ const sourceCards = [
     kicker: "Je pars d’une page",
     title: "PHOTO",
     copy: "Tu photographies ton cahier ou ton tableau. L’app remet tout au propre.",
-    symbol: "◉",
+    symbol: "◎",
     tone: "dark",
   },
   {
@@ -103,215 +104,443 @@ const testimonials = [
   "Parfait pour mes partiels, je gagne un temps fou. — Inès, L1 Droit",
 ] as const;
 
+const heroWords = ["REVIZ", "transforme", "tes", "cours", "en", "fiches."] as const;
+
+function formatStudentCount(value: number) {
+  return new Intl.NumberFormat("fr-FR").format(value);
+}
+
+function StepIcon({ step }: { step: (typeof steps)[number]["number"] }) {
+  if (step === "01") {
+    return (
+      <svg viewBox="0 0 80 80" aria-hidden="true" className="step-icon-svg">
+        <path d="M40 12v42" />
+        <path d="M24 39 40 55 56 39" />
+        <path d="M18 66h44" />
+      </svg>
+    );
+  }
+
+  if (step === "02") {
+    return (
+      <svg viewBox="0 0 80 80" aria-hidden="true" className="step-icon-svg">
+        <path d="m40 12 6.5 16.5L63 35l-16.5 6.5L40 58l-6.5-16.5L17 35l16.5-6.5Z" />
+        <path d="m58 14 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 80 80" aria-hidden="true" className="step-icon-svg">
+      <path d="M14 24c0-4.4 3.6-8 8-8h16v44H22c-4.4 0-8-3.6-8-8Z" />
+      <path d="M66 24c0-4.4-3.6-8-8-8H42v44h16c4.4 0 8-3.6 8-8Z" />
+      <path d="M38 20h4" />
+      <path d="M38 56h4" />
+    </svg>
+  );
+}
+
 export function MarketingSite() {
+  const socialProofRef = useRef<HTMLElement | null>(null);
+  const countStartedRef = useRef(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [studentCount, setStudentCount] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 18);
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+    );
+
+    document.querySelectorAll(".reviz-reveal").forEach((element) => {
+      observer.observe(element);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const node = socialProofRef.current;
+
+    if (!node) {
+      return;
+    }
+
+    const animateCount = () => {
+      if (countStartedRef.current) {
+        return;
+      }
+
+      countStartedRef.current = true;
+      const start = performance.now();
+      const duration = 1500;
+
+      const tick = (now: number) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - (1 - progress) ** 3;
+        setStudentCount(Math.round(2000 * eased));
+
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        }
+      };
+
+      requestAnimationFrame(tick);
+    };
+
+    const counterObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            animateCount();
+          }
+        });
+      },
+      { threshold: 0.2 },
+    );
+
+    counterObserver.observe(node);
+
+    return () => counterObserver.disconnect();
+  }, []);
+
   return (
     <div className="landing">
-      <header className="topbar">
-        <Link href="/" className="brand">REVIZ</Link>
-        <nav className="nav">
-          <a href="#hero" className="pill pill-active">Accueil</a>
-          <a href="#modes" className="pill">A propos</a>
-          <a href="#exemples" className="pill">Exemples</a>
-          <Link href="/sign-in" className="pill">Connexion</Link>
-        </nav>
+      <header className={`topbar ${isScrolled ? "topbar-scrolled" : ""}`}>
+        <div className="container topbar-inner">
+          <Link href="/" className="brand">
+            REVIZ
+          </Link>
+          <nav className="nav">
+            <a href="#hero" className="pill pill-active">
+              Accueil
+            </a>
+            <a href="#modes" className="pill">
+              A propos
+            </a>
+            <a href="#exemples" className="pill">
+              Exemples
+            </a>
+            <Link href="/sign-in" className="pill">
+              Connexion
+            </Link>
+          </nav>
+        </div>
       </header>
 
       <main className="page">
-        <section id="hero" className="panel hero">
-          <div className="hero-copy">
-            <p className="eyebrow">RÉVISION SIMPLE. VITE. BIEN.</p>
-            <h1 className="brand-mark">REVIZ</h1>
-            <h2 className="hero-title">
-              transforme tes <span className="chip">cours</span> en fiches.
-            </h2>
-            <p className="lead">
-              PDF, photo, image ou texte. Reviz AI genere une fiche claire, un schema,
-              des flashcards et un quiz sans te noyer sous le blabla.
-            </p>
-            <div className="cta-row">
-              <Link href="/app" className="btn btn-primary">Commencer</Link>
-              <a href="#steps" className="btn btn-secondary">Voir comment</a>
-            </div>
-            <div className="tag-row">
-              <span className="tag">PDF</span>
-              <span className="tag">Photo</span>
-              <span className="tag">Texte</span>
-              <span className="tag">Fiche IA</span>
-              <span className="tag">Flashcards</span>
-              <span className="tag">Quiz</span>
-            </div>
-          </div>
-
-          <div className="hero-visual">
-            <div className="hero-badge">REVISION FUN</div>
-            <div className="hero-mock">
-              <div className="mock-header">
-                <div className="dots">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <div className="mock-title">Une experience ultra visuelle, du cours brut a la revision active.</div>
+        <section id="hero" className="hero-band">
+          <div className="container hero">
+            <div className="hero-copy">
+              <p className="eyebrow">RÉVISION SIMPLE. VITE. BIEN.</p>
+              <h1 className="hero-title" aria-label="REVIZ transforme tes cours en fiches.">
+                {heroWords.map((word, index) => (
+                  <span
+                    key={word}
+                    className={`hero-word ${word === "cours" ? "chip" : ""}`}
+                    style={{ animationDelay: `${index * 0.08}s` }}
+                  >
+                    {word}
+                  </span>
+                ))}
+              </h1>
+              <p className="lead">
+                PDF, photo, image ou texte. Reviz AI genere une fiche claire, un schema,
+                des flashcards et un quiz sans te noyer sous le blabla.
+              </p>
+              <div className="cta-row">
+                <Link href="/app" className="btn btn-primary">
+                  Commencer
+                </Link>
+                <a href="#steps" className="btn btn-secondary">
+                  Voir comment
+                </a>
               </div>
-              <div className="mock-grid">
-                <div className="mock-sheet">
-                  <div className="mini-card mini-card-blue">
-                    <p className="mini-kicker">Fiches intelligentes</p>
-                    <h3>Probabilités</h3>
-                    <ul>
-                      <li>Définition précise</li>
-                      <li>Schéma mémoire</li>
-                      <li>Pièges d'examen</li>
-                    </ul>
-                  </div>
-                  <div className="mini-card">
-                    <p className="mini-kicker">Photo de cours</p>
-                    <p>Transforme une page manuscrite en fiche prete a reviser.</p>
-                  </div>
-                </div>
-                <div className="mock-side">
-                  <div className="mini-card stack-card">
-                    <div className="stack-card-inner offset-a">
-                      <strong>Recto</strong>
-                      <p>Quelle formule utiliser ?</p>
-                    </div>
-                    <div className="stack-card-inner offset-b">
-                      <strong>Verso</strong>
-                      <p>P(A ∪ B) = P(A) + P(B) - P(A ∩ B)</p>
-                    </div>
-                  </div>
-                  <div className="mini-card">
-                    <p className="mini-kicker">Sortie Reviz</p>
-                    <ul>
-                      <li>Definition precise</li>
-                      <li>Schema memoire</li>
-                      <li>Flashcards</li>
-                    </ul>
-                  </div>
-                </div>
+              <div className="tag-row reviz-reveal reviz-reveal-delay-1">
+                <span className="tag">PDF</span>
+                <span className="tag">Photo</span>
+                <span className="tag">Texte</span>
+                <span className="tag">Fiche IA</span>
+                <span className="tag">Flashcards</span>
+                <span className="tag">Quiz</span>
               </div>
             </div>
-          </div>
-        </section>
 
-        <section id="modes" className="panel section">
-          <div className="section-head">
-            <span className="section-kicker">Choisis ton entree</span>
-            <h2>importe. capture. revise.</h2>
-          </div>
-          <div className="grid grid-3">
-            {sourceCards.map((card) => (
-              <article key={card.title} className={`source-card source-card-${card.tone}`}>
-                <div>
-                  <p className="source-kicker">{card.kicker}</p>
-                  <h3>{card.title}</h3>
-                  <p className="source-copy">{card.copy}</p>
+            <div className="hero-visual" aria-hidden="true">
+              <div className="hero-badge">REVISION FUN</div>
+              <div className="hero-mock">
+                <div className="mock-header">
+                  <div className="dots">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <div className="mock-title">
+                    Une expérience ultra visuelle, du cours brut à la révision active.
+                  </div>
                 </div>
-                <div className="source-symbol">{card.symbol}</div>
-                <Link href="/app" className="btn source-btn">Utiliser</Link>
-              </article>
-            ))}
+                <div className="mock-grid">
+                  <div className="mock-sheet">
+                    <div className="mini-card mini-card-blue">
+                      <p className="mini-kicker">Fiches intelligentes</p>
+                      <h3>Probabilités</h3>
+                      <ul>
+                        <li>Définition précise</li>
+                        <li>Schéma mémoire</li>
+                        <li>Pièges d'examen</li>
+                      </ul>
+                    </div>
+                    <div className="mini-card">
+                      <p className="mini-kicker">Photo de cours</p>
+                      <p>Transforme une page manuscrite en fiche prête à réviser.</p>
+                    </div>
+                  </div>
+                  <div className="mock-side">
+                    <div className="mini-card stack-card">
+                      <div className="stack-card-inner offset-a">
+                        <strong>Recto</strong>
+                        <p>Quelle formule utiliser ?</p>
+                      </div>
+                      <div className="stack-card-inner offset-b">
+                        <strong>Verso</strong>
+                        <p>P(A ∪ B) = P(A) + P(B) - P(A ∩ B)</p>
+                      </div>
+                    </div>
+                    <div className="mini-card">
+                      <p className="mini-kicker">Sortie Reviz</p>
+                      <ul>
+                        <li>Définition précise</li>
+                        <li>Schéma mémoire</li>
+                        <li>Flashcards</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section id="steps" className="panel section section-blue">
-          <div className="section-head">
-            <span className="section-kicker section-kicker-light">Comment ca marche</span>
-            <h2>3 etapes. pas plus.</h2>
-            <p className="section-note section-note-light">
-              Reviz est volontairement simple : tu donnes ton cours, l’IA structure,
-              puis tu revises.
-            </p>
-          </div>
-          <div className="grid grid-3">
-            {steps.map((step) => (
-              <article key={step.number} className="step-card">
-                <span className="step-number">{step.number}</span>
-                <h3>{step.title}</h3>
-                <p>{step.copy}</p>
-              </article>
-            ))}
-          </div>
-          <div className="section-cta">
-            <Link href="/app" className="btn btn-secondary">Générer ma première fiche →</Link>
-          </div>
-        </section>
-
-        <section id="exemples" className="panel section">
-          <div className="section-head">
-            <span className="section-kicker">Ce que tu obtiens</span>
-            <h2>une sortie utile. pas un pavé.</h2>
-          </div>
-          <div className="grid grid-3">
-            {outputs.map((output) => (
-              <article key={output.title} className="output-card">
-                <span className="output-pill">{output.number}</span>
-                <div className="output-preview">{output.preview}</div>
-                <h3>{output.title}</h3>
-                <p>{output.copy}</p>
-              </article>
-            ))}
-          </div>
-          <div className="section-cta">
-            <Link href="/app" className="btn btn-primary">Générer ma première fiche →</Link>
+        <section id="modes" className="section-band section-band-white">
+          <div className="container section">
+            <div className="section-head">
+              <span className="section-kicker reviz-reveal reviz-reveal-delay-1">
+                Choisis ton entree
+              </span>
+              <h2 className="reviz-reveal">importe. capture. revise.</h2>
+            </div>
+            <div className="grid grid-3">
+              {sourceCards.map((card, index) => (
+                <article
+                  key={card.title}
+                  className={`source-card source-card-${card.tone} reviz-reveal reviz-reveal-delay-${index + 1}`}
+                >
+                  <div>
+                    <p className="source-kicker">{card.kicker}</p>
+                    <h3>{card.title}</h3>
+                    <p className="source-copy">{card.copy}</p>
+                  </div>
+                  <div className="source-symbol">{card.symbol}</div>
+                  <Link href="/app" className="btn source-btn">
+                    Utiliser
+                  </Link>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
-        <section className="panel section social-proof">
-          <div className="section-head">
-            <span className="section-kicker section-kicker-light">Ils révisent déjà avec Reviz</span>
-            <h2>déjà utilisé par +2 000 élèves</h2>
+        <section id="steps" className="section-band section-band-blue">
+          <div className="container section">
+            <div className="section-head">
+              <span className="section-kicker section-kicker-light reviz-reveal reviz-reveal-delay-1">
+                Comment ca marche
+              </span>
+              <h2 className="reviz-reveal">3 etapes. pas plus.</h2>
+              <p className="section-note section-note-light reviz-reveal reviz-reveal-delay-1">
+                Reviz est volontairement simple : tu donnes ton cours, l'IA structure,
+                puis tu revises.
+              </p>
+            </div>
+            <div className="grid grid-3">
+              {steps.map((step, index) => (
+                <article
+                  key={step.number}
+                  className={`step-card reviz-reveal reviz-reveal-delay-${index + 1}`}
+                >
+                  <div className="step-card-top">
+                    <span className="step-number">{step.number}</span>
+                    <StepIcon step={step.number} />
+                  </div>
+                  <h3>{step.title}</h3>
+                  <p>{step.copy}</p>
+                </article>
+              ))}
+            </div>
+            <div className="section-cta reviz-reveal reviz-reveal-delay-2">
+              <Link href="/app" className="btn btn-secondary">
+                Générer ma première fiche →
+              </Link>
+            </div>
           </div>
-          <div className="grid grid-3">
-            {testimonials.map((quote) => (
-              <article key={quote} className="testimonial-card">
-                <div className="stars">★★★★★</div>
-                <p>{quote}</p>
-              </article>
-            ))}
+        </section>
+
+        <section id="exemples" className="section-band section-band-soft">
+          <div className="container section">
+            <div className="section-head">
+              <span className="section-kicker reviz-reveal reviz-reveal-delay-1">
+                Ce que tu obtiens
+              </span>
+              <h2 className="reviz-reveal">une sortie utile. pas un pave.</h2>
+            </div>
+            <div className="grid grid-3">
+              {outputs.map((output, index) => (
+                <article
+                  key={output.title}
+                  className={`output-card reviz-reveal reviz-reveal-delay-${index + 1}`}
+                >
+                  <span className="output-pill">{output.number}</span>
+                  <div className="output-preview">{output.preview}</div>
+                  <h3>{output.title}</h3>
+                  <p>{output.copy}</p>
+                </article>
+              ))}
+            </div>
+            <div className="section-cta reviz-reveal reviz-reveal-delay-2">
+              <Link href="/app" className="btn btn-primary">
+                Générer ma première fiche →
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section ref={socialProofRef} className="section-band social-proof">
+          <div className="container section">
+            <div className="section-head">
+              <span className="section-kicker section-kicker-light reviz-reveal reviz-reveal-delay-1">
+                Ils révisent déjà avec Reviz
+              </span>
+              <h2 className="reviz-reveal">
+                déjà utilisé par +{formatStudentCount(studentCount)} élèves
+              </h2>
+            </div>
+            <div className="grid grid-3">
+              {testimonials.map((quote, index) => (
+                <article
+                  key={quote}
+                  className={`testimonial-card reviz-reveal reviz-reveal-delay-${index + 1}`}
+                >
+                  <div className="stars">★★★★★</div>
+                  <p>{quote}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
       </main>
 
-      <footer className="footer">
-        <div>
-          <div className="footer-brand">REVIZ</div>
-          <p className="footer-copy">Transforme tes cours en fiches de revision.</p>
-          <p className="footer-copy">© 2025 Reviz AI</p>
-        </div>
-        <div className="footer-links">
-          <a href="/mentions-legales">Mentions légales</a>
-          <a href="mailto:contact@reviz.ai">Contact</a>
-          <a href="/cgu">CGU</a>
+      <footer className="footer reviz-reveal">
+        <div className="container footer-inner">
+          <div>
+            <div className="footer-brand">REVIZ</div>
+            <p className="footer-copy">Transforme tes cours en fiches de revision.</p>
+            <p className="footer-copy">© 2025 Reviz AI</p>
+          </div>
+          <div className="footer-links">
+            <a href="/mentions-legales">Mentions légales</a>
+            <a href="mailto:contact@reviz.ai">Contact</a>
+            <a href="/cgu">CGU</a>
+          </div>
         </div>
       </footer>
+
+      <style jsx global>{`
+        .reviz-reveal {
+          opacity: 0;
+          transform: translateY(32px);
+          transition:
+            opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reviz-reveal.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .reviz-reveal-delay-1 {
+          transition-delay: 0.1s;
+        }
+
+        .reviz-reveal-delay-2 {
+          transition-delay: 0.2s;
+        }
+
+        .reviz-reveal-delay-3 {
+          transition-delay: 0.3s;
+        }
+      `}</style>
 
       <style jsx>{`
         .landing {
           min-height: 100vh;
           background: #ffffff;
           color: #090909;
-          padding: 18px 22px 28px;
+        }
+
+        .container {
+          width: min(100% - 48px, 1200px);
+          margin: 0 auto;
         }
 
         .topbar {
           position: sticky;
-          top: 18px;
-          z-index: 40;
+          top: 0;
+          z-index: 50;
+          padding: 18px 0;
+          transition:
+            background 0.3s ease,
+            box-shadow 0.3s ease,
+            backdrop-filter 0.3s ease,
+            border-color 0.3s ease;
+        }
+
+        .topbar-scrolled {
+          background: rgba(255, 255, 255, 0.86);
+          backdrop-filter: blur(16px);
+          box-shadow: 0 16px 48px rgba(9, 9, 9, 0.08);
+          border-bottom: 1px solid rgba(9, 9, 9, 0.08);
+        }
+
+        .topbar-inner {
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 18px;
-          margin-bottom: 18px;
         }
 
         .brand,
-        .brand-mark,
         .hero-title,
         .section-head h2,
         .source-card h3,
         .step-card h3,
         .output-card h3,
+        .mini-card h3,
         .footer-brand {
           font-family: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
           letter-spacing: -0.06em;
@@ -320,15 +549,11 @@ export function MarketingSite() {
         }
 
         .brand {
-          font-size: clamp(2.4rem, 4vw, 3.8rem);
+          font-size: clamp(2.2rem, 4vw, 3.4rem);
         }
 
         .page {
           width: 100%;
-          max-width: 1440px;
-          margin: 0 auto;
-          display: grid;
-          gap: 24px;
         }
 
         .nav {
@@ -352,6 +577,13 @@ export function MarketingSite() {
           background: #f2f3f7;
           font-weight: 700;
           font-size: 0.96rem;
+          transition:
+            transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+            background 0.3s ease;
+        }
+
+        .pill:hover {
+          transform: translateY(-2px);
         }
 
         .pill-active {
@@ -359,51 +591,50 @@ export function MarketingSite() {
           color: #ffffff;
         }
 
-        .panel {
+        .hero-band,
+        .section-band {
           width: 100%;
-          border: 3px solid #090909;
-          border-radius: 40px;
-          background: #ffffff;
-          box-shadow: 10px 10px 0 #090909;
-          padding: 28px;
         }
 
         .hero {
           display: grid;
-          grid-template-columns: minmax(0, 1.02fr) minmax(420px, 0.98fr);
-          gap: 22px;
-          min-height: 90vh;
-          align-items: stretch;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 56px;
+          align-items: center;
+          padding: 120px 0;
         }
 
         .hero-copy {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          padding: 12px 8px;
+          align-items: flex-start;
         }
 
         .eyebrow,
         .section-kicker,
         .mini-kicker,
-        .stars {
+        .stars,
+        .source-kicker {
           font-weight: 800;
           letter-spacing: 0.12em;
           text-transform: uppercase;
           font-size: 0.82rem;
         }
 
-        .brand-mark {
-          margin: 0;
-          font-size: clamp(6rem, 15vw, 12rem);
-          line-height: 0.78;
-          letter-spacing: -0.08em;
+        .hero-title {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.16em;
+          margin: 12px 0 0;
+          font-size: clamp(5rem, 7vw, 6.4rem);
+          max-width: 11ch;
         }
 
-        .hero-title {
-          margin: 10px 0 0;
-          max-width: 8.5ch;
-          font-size: clamp(3.4rem, 7vw, 6.2rem);
+        .hero-word {
+          opacity: 0;
+          transform: translateY(20px);
+          animation: hero-word-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         .chip {
@@ -426,6 +657,12 @@ export function MarketingSite() {
         .mini-card li {
           color: #585f6b;
           line-height: 1.7;
+          font-size: 1.04rem;
+        }
+
+        .lead {
+          max-width: 34rem;
+          margin-top: 24px;
         }
 
         .cta-row,
@@ -434,7 +671,7 @@ export function MarketingSite() {
           display: flex;
           gap: 14px;
           flex-wrap: wrap;
-          margin-top: 22px;
+          margin-top: 28px;
         }
 
         .tag {
@@ -446,6 +683,7 @@ export function MarketingSite() {
           align-items: center;
           justify-content: center;
           font-size: 0.92rem;
+          background: #ffffff;
         }
 
         .btn {
@@ -458,6 +696,13 @@ export function MarketingSite() {
           border: 3px solid #090909;
           font-weight: 800;
           font-size: 1rem;
+          transition:
+            transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+            box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn:hover {
+          transform: translateY(-3px);
         }
 
         .btn-primary {
@@ -474,7 +719,7 @@ export function MarketingSite() {
 
         .hero-visual {
           position: relative;
-          min-height: 720px;
+          min-height: 700px;
           border: 3px solid #090909;
           border-radius: 42px;
           background: linear-gradient(180deg, #f5f7ff 0%, #dbe4ff 100%);
@@ -484,7 +729,8 @@ export function MarketingSite() {
         }
 
         .hero-badge,
-        .output-pill {
+        .output-pill,
+        .section-kicker-light {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -613,6 +859,23 @@ export function MarketingSite() {
           background: #eaf0ff;
         }
 
+        .section-band-white {
+          background: #ffffff;
+        }
+
+        .section-band-soft {
+          background: #f4f6ff;
+        }
+
+        .section-band-blue {
+          background: #2f5bff;
+          color: #ffffff;
+        }
+
+        .section {
+          padding: 110px 0;
+        }
+
         .grid {
           display: grid;
           gap: 18px;
@@ -622,19 +885,23 @@ export function MarketingSite() {
           grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
+        .section-head {
+          max-width: 760px;
+          margin-bottom: 36px;
+        }
+
         .section-head h2 {
           margin: 14px 0 0;
           font-size: clamp(2.8rem, 5vw, 4.8rem);
         }
 
-        .section-blue {
-          background: #2f5bff;
-          color: #ffffff;
-        }
-
         .section-kicker-light {
           background: #ffffff;
           color: #090909;
+        }
+
+        .section-note {
+          margin-top: 18px;
         }
 
         .section-note-light {
@@ -646,6 +913,11 @@ export function MarketingSite() {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .source-card:hover {
+          transform: translateY(-6px) scale(1.01);
         }
 
         .source-card-dark {
@@ -663,6 +935,22 @@ export function MarketingSite() {
           line-height: 1;
         }
 
+        .step-card {
+          min-height: 340px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          color: #090909;
+        }
+
+        .step-card-top {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 18px;
+          margin-bottom: 28px;
+        }
+
         .step-number {
           display: inline-grid;
           place-items: center;
@@ -672,10 +960,26 @@ export function MarketingSite() {
           background: #090909;
           color: #ffffff;
           font-weight: 800;
+          flex: 0 0 auto;
+        }
+
+        .step-icon-svg {
+          width: 80px;
+          height: 80px;
+          stroke: #090909;
+          stroke-width: 2;
+          fill: none;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          flex: 0 0 auto;
         }
 
         .output-card {
-          padding: 22px;
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .output-card:hover {
+          transform: translateY(-6px) scale(1.01);
         }
 
         .output-preview {
@@ -764,6 +1068,11 @@ export function MarketingSite() {
           min-height: 210px;
           background: #ffffff;
           color: #090909;
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .testimonial-card:hover {
+          transform: translateY(-6px) scale(1.01);
         }
 
         .stars {
@@ -772,14 +1081,12 @@ export function MarketingSite() {
         }
 
         .footer {
-          max-width: 1440px;
-          margin: 24px auto 0;
           background: #090909;
           color: #ffffff;
-          border: 3px solid #090909;
-          border-radius: 38px;
-          box-shadow: 10px 10px 0 #090909;
-          padding: 28px;
+        }
+
+        .footer-inner {
+          padding: 100px 0 60px;
           display: grid;
           grid-template-columns: minmax(0, 1fr) auto;
           gap: 24px;
@@ -809,12 +1116,23 @@ export function MarketingSite() {
           font-weight: 700;
         }
 
+        @keyframes hero-word-in {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
         @media (max-width: 1180px) {
           .hero,
           .grid-3,
           .mock-grid,
-          .footer {
+          .footer-inner {
             grid-template-columns: 1fr;
+          }
+
+          .hero {
+            gap: 42px;
           }
 
           .hero-visual {
@@ -827,12 +1145,15 @@ export function MarketingSite() {
         }
 
         @media (max-width: 767px) {
-          .landing {
-            padding: 14px 14px 22px;
+          .container {
+            width: min(100% - 28px, 1200px);
           }
 
           .topbar {
-            position: static;
+            padding: 12px 0;
+          }
+
+          .topbar-inner {
             flex-direction: column;
             align-items: flex-start;
           }
@@ -842,47 +1163,52 @@ export function MarketingSite() {
             overflow-x: auto;
           }
 
-          .panel,
-          .footer,
-          .hero-visual,
-          .source-card,
-          .step-card,
-          .output-card,
-          .testimonial-card {
-            border-radius: 28px;
+          .hero {
+            grid-template-columns: 1fr;
+            padding: 72px 0 60px;
           }
 
-          .hero {
-            min-height: auto;
-            grid-template-columns: 1fr;
+          .hero-title {
+            font-size: min(48px, 14vw);
+            max-width: 9ch;
           }
 
           .hero-copy {
-            min-height: 78vh;
-            align-items: center;
-            text-align: center;
+            min-height: auto;
           }
 
           .lead {
-            max-width: 32rem;
+            max-width: 100%;
           }
 
           .cta-row,
           .tag-row,
           .section-cta {
-            justify-content: center;
+            width: 100%;
           }
 
           .hero-visual {
             display: none;
           }
 
-          .grid-3 {
+          .section {
+            padding: 60px 0;
+          }
+
+          .grid-3,
+          .footer-inner {
             grid-template-columns: 1fr;
           }
 
-          .footer {
-            grid-template-columns: 1fr;
+          .step-card,
+          .source-card,
+          .output-card,
+          .testimonial-card {
+            min-height: auto;
+          }
+
+          .footer-inner {
+            padding: 60px 0;
           }
         }
       `}</style>

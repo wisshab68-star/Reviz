@@ -481,12 +481,8 @@ export async function POST(request: Request) {
       const sheet = await saveGeneratedSheet(input, generated, fiche);
       sheetId = sheet.id;
       await trackUsage(input.userId, "sheet_generated");
-    } catch (error) {
-      if (!isDatabaseConnectionError(error)) {
-        throw error;
-      }
-
-      console.error("Sheet persistence failed, returning preview payload.", error);
+    } catch (dbError) {
+      console.error("[GENERATE] DB save failed (non-blocking):", dbError);
       warning = getPersistenceFallbackMessage();
     }
 
@@ -500,18 +496,14 @@ export async function POST(request: Request) {
       mode: process.env.ANTHROPIC_API_KEY ? "ai_or_fallback" : "demo",
     });
   } catch (error) {
-    console.error("POST /api/generate failed", error);
-
-    const message = error instanceof Error
-      ? error.message
-      : "Unexpected server error";
+    console.error("[GENERATE] Unhandled error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: message,
+        error: "Erreur lors de la génération. Réessaie.",
       },
-      { status: 400 },
+      { status: 500 },
     );
   }
 }

@@ -164,11 +164,19 @@ export function MarketingSite() {
           }
         });
       },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+      { threshold: 0.05, rootMargin: "0px" },
     );
 
     document.querySelectorAll(".reviz-reveal").forEach((element) => {
       observer.observe(element);
+    });
+
+    document.querySelectorAll(".reviz-reveal").forEach((element) => {
+      const rect = element.getBoundingClientRect();
+
+      if (rect.top < window.innerHeight) {
+        element.classList.add("visible");
+      }
     });
 
     return () => observer.disconnect();

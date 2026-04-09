@@ -40,6 +40,7 @@ console.log("[AUTH_INIT] providers registered:", providers.length,
   "| AUTH_SECRET set:", !!process.env.AUTH_SECRET);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   adapter: PrismaAdapter(db),
   session: {
     strategy: "database",

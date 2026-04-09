@@ -469,7 +469,7 @@ export function buildSheetUserPrompt(
 ): string {
   const family = detectSubjectFamily(profile.matiere);
   const caps = getSubjectFamilyCaps(family);
-  const sourceExcerpt = prepareTextForModel(sourceText, 60000);
+  const sourceExcerpt = prepareTextForModel(sourceText);
   const blueprintContext = blueprint
     ? `
 BLUEPRINT RETENU :

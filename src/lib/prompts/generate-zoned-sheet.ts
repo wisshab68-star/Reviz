@@ -1,27 +1,50 @@
+import type { PedagogicalBlueprint } from "@/lib/pedagogy/blueprint-selector";
+import type { ClassifiedContent } from "@/lib/prompts/classify-content";
+import type { DocumentProfile } from "@/types/generation-pipeline";
+
 /**
- * Builds prompts for the zoned sheet generation step.
- * A "zoned sheet" splits content into semantic zones before full fiche generation.
+ * Compatibility prompt for the zoned generation step.
+ * The current pipeline still calls this helper with profile, blueprint and
+ * classified metadata, so we keep that signature stable.
  */
-export function buildZonedSheetSystemPrompt(): string {
-  return `Tu es un expert en pédagogie et en création de fiches de révision.
-Ton rôle est d'analyser un contenu de cours et de le structurer en zones thématiques claires.
-Réponds uniquement en JSON valide.`;
+export function buildZonedSheetSystemPrompt(
+  profile?: DocumentProfile,
+  blueprint?: PedagogicalBlueprint,
+  classified?: ClassifiedContent,
+): string {
+  return `Tu es un expert en pedagogie et en creation de fiches de revision.
+Ton role est de structurer une fiche courte et utile avant la generation finale.
+Contexte :
+- matiere: ${profile?.matiere ?? classified?.matiere ?? "Cours"}
+- niveau: ${profile?.niveau ?? classified?.niveau ?? "General"}
+- blueprint: ${blueprint?.id ?? classified?.blueprintId ?? "concepts"}
+Reponds uniquement en JSON valide.`;
 }
 
-export function buildZonedSheetUserPrompt(content: string, matiere: string, niveau: string): string {
-  return `Analyse ce cours de ${matiere} (niveau ${niveau}) et identifie les zones thématiques principales.
+export function buildZonedSheetUserPrompt(
+  inventoryJSON: string,
+  sourceText?: string,
+  profile?: DocumentProfile,
+  blueprint?: PedagogicalBlueprint,
+  strictFormulas: string[] = [],
+  classified?: ClassifiedContent,
+): string {
+  const formulasBlock = strictFormulas.length > 0
+    ? `\nFormules strictes a conserver :\n${strictFormulas.join("\n")}`
+    : "";
 
-Contenu :
-${content}
+  return `Analyse ce cours et propose une fiche zonee exploitable.
 
-Réponds en JSON avec cette structure :
-{
-  "zones": [
-    {
-      "titre": "Titre de la zone",
-      "contenu": "Contenu résumé de la zone",
-      "type": "definition|exemple|formule|concept|application"
-    }
-  ]
-}`;
+Matiere: ${profile?.matiere ?? classified?.matiere ?? "Cours"}
+Niveau: ${profile?.niveau ?? classified?.niveau ?? "General"}
+Blueprint: ${blueprint?.id ?? classified?.blueprintId ?? "concepts"}
+
+Inventaire :
+${inventoryJSON}
+
+Extrait source :
+${sourceText ?? ""}
+${formulasBlock}
+
+Reponds en JSON.`;
 }

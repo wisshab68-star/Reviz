@@ -42,7 +42,7 @@ function classifyFlashcard(question: string, blueprintId?: string) {
 
 export function FicheFlashcards({ flashcards, blueprintId }: FicheFlashcardsProps) {
   return (
-    <div className="reviz-fiche-flashcards">
+    <div className="reviz-fiche-flashcards" data-print="flashcards-grid">
       {flashcards.map((flashcard, index) => (
         <article
           key={`${flashcard.question}-${index}`}

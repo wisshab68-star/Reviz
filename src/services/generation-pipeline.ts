@@ -987,6 +987,10 @@ export async function generateWithPipeline(input: GenerateSheetRequest): Promise
     level,
     contentType,
     cleanedText: sourceText,
+    matiere: subject,
+    niveau: level,
+    blueprintId: blueprint.id,
+    titre: inventory.titre || subject || "Fiche de revision",
   };
 
   // Etape 3 : Generation de la fiche

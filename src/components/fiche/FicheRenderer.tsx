@@ -31,9 +31,14 @@ function normalizeDisplayText(value: string) {
 function normalizeDisplayFormula(value: string) {
   // Preserve LaTeX delimiters ($$, \(, $) — normalizeFormulaText strips them.
   // Only apply light sanitization for display.
-  const cleaned = sanitizeAiText(value).trim();
+  let cleaned = sanitizeAiText(value).trim();
+  // Fix common non-LaTeX operators that the AI generates as plain text
+  cleaned = cleaned
+    .replace(/<\s*=/g, "\\leq ")
+    .replace(/>\s*=/g, "\\geq ")
+    .replace(/!=/g, "\\neq ");
   // If the formula has no LaTeX delimiters, wrap it in $$ for KaTeX rendering
-  if (!/^\$\$|^\\\(|^\$/.test(cleaned) && /[=^_]/.test(cleaned)) {
+  if (!/^\$\$|^\\\(|^\$/.test(cleaned) && /[=^_\\]/.test(cleaned)) {
     return `$$${cleaned}$$`;
   }
   return cleaned;
@@ -58,13 +63,12 @@ function normalizeDisplayFormules(
     return [];
   }
 
-  if (subjectFamily === "exact_sciences" || subjectFamily === "life_sciences") {
-    return values
-      .map((item) => normalizeDisplayFormula(item))
-      .filter((item) => isDisplayFormula(item));
-  }
-
-  return values.map((item) => normalizeDisplayText(item)).filter(Boolean);
+  // Always apply formula normalization — formulesCles always contain math-like content
+  return values
+    .map((item) => normalizeDisplayFormula(item))
+    .filter((item) => subjectFamily === "exact_sciences" || subjectFamily === "life_sciences"
+      ? isDisplayFormula(item)
+      : item.length > 0);
 }
 
 function isDisplayProperty(value: string) {
@@ -570,7 +574,7 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
           metriques={displayFiche.metriques}
         />
         <Divider />
-        <div className="reviz-zone-anchor">
+        <div className="reviz-zone-anchor" data-print="section">
           <SectionLabel>Zone ancre</SectionLabel>
           <FicheImageMentaleBlock imageMentale={displayFiche.anchorImageMentale} />
           <div className="reviz-zoned-definition">
@@ -579,7 +583,7 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
           </div>
         </div>
         <Divider />
-        <div className="reviz-zone-core">
+        <div className="reviz-zone-core" data-print="section">
           <p className="reviz-zone-label">Zone coeur</p>
           <div className="reviz-zoned-core-list">
             {displayFiche.coreBlocks.map((block) => renderZonedBlock(block))}
@@ -588,7 +592,7 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
         {displayFiche.formulesCles?.length ? (
           <>
             <Divider />
-            <div className="reviz-zone-core">
+            <div className="reviz-zone-core" data-print="section">
               <SectionLabel>{formulesLabel}</SectionLabel>
               <div className="fiche-logic-strip fiche-logic-strip-formulas">
                 <div className="fiche-logic-list fiche-logic-list-formulas">
@@ -613,9 +617,9 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
         {displayFiche.notionsCles?.length ? (
           <>
             <Divider />
-            <div className="reviz-zone-core">
+            <div className="reviz-zone-core" data-print="section">
               <SectionLabel>Points a connaitre</SectionLabel>
-              <div className="fiche-schema-legend">
+              <div className="fiche-schema-legend" data-print="points-grid">
                 {displayFiche.notionsCles.map((item) => (
                   <div key={`zoned-notion-${item}`} className="fiche-schema-legend-item">
                     <span>{item}</span>
@@ -626,7 +630,7 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
           </>
         ) : null}
         <Divider />
-        <div className="reviz-zone-action">
+        <div className="reviz-zone-action" data-print="section">
           <p className="reviz-zone-label">Zone action</p>
           <div className="reviz-zoned-action-grid">
             <div>
@@ -638,8 +642,10 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
               <FicheContentBlock type="piege" content={displayFiche.actionTrap} />
             </div>
           </div>
-          <SectionLabel>Methode Feynman - explique a un enfant de 10 ans</SectionLabel>
-          <FicheFeynman texte={displayFiche.feynman} />
+          <div data-print="feynman">
+            <SectionLabel>Methode Feynman - explique a un enfant de 10 ans</SectionLabel>
+            <FicheFeynman texte={displayFiche.feynman} />
+          </div>
           {displayFiche.schema?.elements?.length ? (
             <>
               <SectionLabel>Carte mentale</SectionLabel>
@@ -670,29 +676,29 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
   const blueprintSection = renderBlueprintContent(displayFiche);
   const sectionMap: Record<FicheSectionKey, ReactElement | null> = {
     imageMentale: (
-      <div key="imageMentale">
+      <div key="imageMentale" data-print="section">
         <SectionLabel>Image mentale - retiens ca d'abord</SectionLabel>
         <FicheImageMentaleBlock imageMentale={displayFiche.imageMentale} />
         <div className="fiche-anchor-grid">
           {anchors.map((anchor) => (
             <article key={anchor.label} className="fiche-anchor-card">
               <p className="fiche-anchor-label">{anchor.label}</p>
-              <p className="fiche-anchor-text">{anchor.content}</p>
+              <MathRenderer text={anchor.content} className="fiche-anchor-text" />
             </article>
           ))}
         </div>
       </div>
     ),
     definition: (
-      <div key="definition">
+      <div key="definition" data-print="section">
         <SectionLabel>Definition</SectionLabel>
         <FicheContentBlock type="definition" content={displayFiche.definition} />
       </div>
     ),
     notions: displayFiche.notionsCles?.length ? (
-      <div key="notions">
+      <div key="notions" data-print="section">
         <SectionLabel>Points a connaitre</SectionLabel>
-        <div className="fiche-schema-legend">
+        <div className="fiche-schema-legend" data-print="points-grid">
           {displayFiche.notionsCles.map((item) => (
             <div key={`notion-${item}`} className="fiche-schema-legend-item">
               <span>{item}</span>
@@ -702,10 +708,10 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
       </div>
     ) : null,
     blueprint: blueprintSection ? (
-      <div key="blueprint">{blueprintSection}</div>
+      <div key="blueprint" data-print="section">{blueprintSection}</div>
     ) : null,
     formules: displayFiche.formulesCles?.length ? (
-      <div key="formules">
+      <div key="formules" data-print="section">
         <SectionLabel>{formulesLabel}</SectionLabel>
         <div className="fiche-logic-strip fiche-logic-strip-formulas">
           <div className="fiche-logic-list fiche-logic-list-formulas">
@@ -721,7 +727,7 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
       </div>
     ) : null,
     proprietes: displayFiche.proprietesCles?.length ? (
-      <div key="proprietes">
+      <div key="proprietes" data-print="section">
         <SectionLabel>Points a connaitre</SectionLabel>
         <div className="fiche-logic-strip fiche-logic-strip-properties">
           <div className="fiche-logic-list fiche-logic-list-properties">
@@ -739,22 +745,22 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
       </div>
     ) : null,
     exemple: displayFiche.exemple ? (
-      <div key="exemple">
+      <div key="exemple" data-print="section">
         <SectionLabel>Exemple concret</SectionLabel>
         <FicheContentBlock type="exemple" content={displayFiche.exemple} />
       </div>
     ) : null,
     piege: (
-      <div key="piege">
+      <div key="piege" data-print="section">
         <SectionLabel>Piege classique</SectionLabel>
         <FicheContentBlock type="piege" content={displayFiche.piege} />
       </div>
     ),
     schema: (
-      <div key="schema">
+      <div key="schema" data-print="section">
         <SectionLabel>Carte mentale</SectionLabel>
         <FicheSchemaVisuel schema={displayFiche.schema} blueprintId={displayFiche.blueprintId} />
-        <div className="fiche-schema-reading-grid">
+        <div className="fiche-schema-reading-grid" data-print="etapes-wrapper">
           {schemaReadingGrid.map((item) => (
             <article key={`${item.title}-${item.content}`} className="fiche-schema-reading-card">
               <p className="fiche-anchor-label">{item.title}</p>
@@ -762,26 +768,28 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
             </article>
           ))}
         </div>
-        <div className="fiche-logic-strip">
-          <p className="fiche-logic-title">Parcours logique a retenir</p>
-          <div className="fiche-logic-list">
-            {connectionNarrative.map((item) => (
-              <p key={item} className="fiche-logic-item">
-                {item}
-              </p>
-            ))}
+        <div data-print="parcours-wrapper">
+          <div className="fiche-logic-strip" data-print="parcours-logique">
+            <p className="fiche-logic-title">Parcours logique a retenir</p>
+            <div className="fiche-logic-list">
+              {connectionNarrative.map((item) => (
+                <p key={item} className="fiche-logic-item">
+                  {item}
+                </p>
+              ))}
+            </div>
           </div>
         </div>
       </div>
     ),
     feynman: (
-      <div key="feynman">
+      <div key="feynman" data-print="feynman">
         <SectionLabel>Methode Feynman - explique a un enfant de 10 ans</SectionLabel>
         <FicheFeynman texte={displayFiche.feynman} />
       </div>
     ),
     flashcards: (
-      <div key="flashcards" className="print-page-break">
+      <div key="flashcards" data-print="section">
         <SectionLabel>Flashcards</SectionLabel>
         <FicheFlashcards flashcards={displayFiche.flashcards} blueprintId={displayFiche.blueprintId} />
       </div>
@@ -813,6 +821,7 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
           <div
             key={`section-${key}`}
             className={`reviz-print-section reviz-print-section-${key} ${printBucketClass}${printBreakClass}`}
+            data-print={key === "feynman" ? "feynman-wrapper" : "section"}
           >
           <Divider />
           {section}

@@ -27,3 +27,11 @@ export function isDatabaseConnectionError(error: unknown): boolean {
 
   return false;
 }
+
+export function getPersistenceFallbackMessage(): string {
+  return "La fiche a bien ete generee, mais l'enregistrement est temporairement indisponible.";
+}
+
+export function getUploadFallbackMessage(): string {
+  return "Le fichier a bien ete analyse, mais son enregistrement est temporairement indisponible.";
+}

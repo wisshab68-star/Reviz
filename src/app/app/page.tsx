@@ -25,6 +25,7 @@ export default async function AppPage() {
           <HomeGenerator
             isAuthenticated={Boolean(session?.user?.id)}
             plan={session?.user?.plan ?? "FREE"}
+            minimal
           />
         </section>
       </div>

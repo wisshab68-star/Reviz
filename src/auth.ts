@@ -1,21 +1,25 @@
 import NextAuth from "next-auth";
+import type { Provider } from "next-auth/providers";
 import Google from "next-auth/providers/google";
 import Email from "next-auth/providers/email";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 
 import { db } from "@/lib/db";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db),
-  session: {
-    strategy: "database",
-  },
-  secret: process.env.AUTH_SECRET,
-  providers: [
+const providers: Provider[] = [];
+
+if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
+  && process.env.AUTH_GOOGLE_ID !== "google-client-id") {
+  providers.push(
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
     }),
+  );
+}
+
+if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_HOST !== "smtp.example.com") {
+  providers.push(
     Email({
       server: {
         host: process.env.EMAIL_SERVER_HOST,
@@ -27,8 +31,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       from: process.env.EMAIL_FROM,
     }),
-  ],
+  );
+}
+
+console.log("[AUTH_INIT] providers registered:", providers.length,
+  "| AUTH_GOOGLE_ID set:", !!process.env.AUTH_GOOGLE_ID,
+  "| AUTH_SECRET set:", !!process.env.AUTH_SECRET);
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(db),
+  session: {
+    strategy: "database",
+  },
+  secret: process.env.AUTH_SECRET,
+  providers,
+  logger: {
+    error(code, ...message) {
+      console.error("[AUTH_ERROR]", code, JSON.stringify(message));
+    },
+    warn(code) {
+      console.warn("[AUTH_WARN]", code);
+    },
+  },
   callbacks: {
+    async signIn({ user, account }) {
+      console.log("[AUTH_DEBUG] signIn called", { userId: user?.id, provider: account?.provider });
+      return true;
+    },
     session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;

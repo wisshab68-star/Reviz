@@ -209,7 +209,7 @@ export function buildUserPrompt(content: string): string {
   const family = detectSubjectFamily(subject);
   const caps = getSubjectFamilyCaps(family);
   const subjectInstructions = getSubjectSpecificInstructions(family);
-  const textForModel = prepareTextForModel(cleanedContent, 60000);
+  const textForModel = prepareTextForModel(cleanedContent);
 
   return `Voici le contenu du cours a analyser :
 

@@ -2064,6 +2064,7 @@ export async function generateRichFiche(input: GenerateSheetRequest): Promise<Fi
   // (noms de profs, ISBN, copyright, titres de manuels) AVANT toute generation.
   // cleanAndClassify inclut normalizeDocumentText + removeMetadataLines.
   if (!process.env.ANTHROPIC_API_KEY) {
+    console.error("[generateRichFiche] ANTHROPIC_API_KEY is missing or empty — returning demo fiche");
     return buildDemoFiche(input);
   }
 
@@ -2083,7 +2084,7 @@ export async function generateRichFiche(input: GenerateSheetRequest): Promise<Fi
 
     return sanitizeFicheOutput(enrichFiche(input, parsed));
   } catch (pipelineError) {
-    console.warn("Pipeline generation failed, falling back to single-call.", pipelineError);
+    console.error("[generateRichFiche] Pipeline generation failed, falling back to single-call:", pipelineError);
 
     try {
       // Le fallback utilise normalizedInput.content qui est DEJA nettoye
@@ -2115,7 +2116,7 @@ export async function generateRichFiche(input: GenerateSheetRequest): Promise<Fi
       return sanitizeFicheOutput(enrichFiche(input, fallbackParsed));
     } catch (fallbackError) {
       if (isQuotaError(pipelineError) || isQuotaError(fallbackError)) {
-        console.warn("OpenAI quota exceeded, falling back to demo fiche.");
+        console.error("[generateRichFiche] Anthropic API quota/rate limit exceeded — returning demo fiche. Pipeline error:", pipelineError, "| Fallback error:", fallbackError);
         return buildDemoFiche(input);
       }
 

@@ -1,3 +1,4 @@
+import { MathRenderer } from "@/components/math-renderer";
 import type { FicheImageMentale } from "@/types/fiche-generated";
 
 interface FicheImageMentaleBlockProps {
@@ -13,7 +14,7 @@ export function FicheImageMentaleBlock({ imageMentale }: FicheImageMentaleBlockP
   return (
     <div className="reviz-fiche-mental">
       <p className="reviz-fiche-mental-kicker">{safeImageMentale.titre}</p>
-      <p className="reviz-fiche-mental-text">{safeImageMentale.texte}</p>
+      <MathRenderer text={safeImageMentale.texte} className="reviz-fiche-mental-text" />
     </div>
   );
 }

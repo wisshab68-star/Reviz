@@ -12,6 +12,7 @@ import { assertSheetQuota, trackUsage } from "@/services/usage-service";
 function cleanFilename(filename: string): string {
   return filename
     .replace(/\.[^/.]+$/, "")
+    .replace(/^\d+[\s\-_.]+/, "")
     .replace(/^[a-z0-9]+-\d+-?/i, "")
     .replace(/[-_]/g, " ")
     .replace(/\s+/g, " ")
@@ -20,13 +21,44 @@ function cleanFilename(filename: string): string {
 }
 
 function looksLikeFilenameTitle(title: string, originalFilename?: string): boolean {
-  const normalizedTitle = title.trim().toLowerCase();
-  const normalizedOriginal = (originalFilename ?? "").trim().toLowerCase();
+  const normalizeForComparison = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[-_]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+
+  const rawTitle = title.trim();
+  const normalizedTitle = normalizeForComparison(rawTitle);
+  const normalizedOriginal = normalizeForComparison(originalFilename ?? "");
+  const normalizedCleanedOriginal = normalizeForComparison(cleanFilename(originalFilename ?? ""));
+  const titleWordCount = normalizedTitle ? normalizedTitle.split(/\s+/).length : 0;
+  const originalLooksLikeFilename = Boolean(originalFilename) && (
+    /[_-]/.test(originalFilename ?? "")
+    || /^\d/.test((originalFilename ?? "").trim())
+    || /\.[a-z0-9]{2,4}$/i.test(originalFilename ?? "")
+  );
 
   return normalizedTitle.length > 0 && (
     (normalizedOriginal.length > 0 && normalizedTitle === normalizedOriginal)
+    || (normalizedCleanedOriginal.length > 0 && normalizedTitle === normalizedCleanedOriginal)
     || /^[a-z0-9]+-\d+-?/i.test(title.trim())
     || /^[a-z0-9]+(?:[-_][a-z0-9]+){2,}$/i.test(title.trim())
+    || /^\d+[\s\-_.]+/.test(rawTitle)
+    || (
+      originalLooksLikeFilename
+      && titleWordCount > 0
+      && titleWordCount < 5
+      && normalizedCleanedOriginal.length > 0
+      && (
+        normalizedTitle === normalizedCleanedOriginal
+        || normalizedCleanedOriginal.includes(normalizedTitle)
+        || normalizedTitle.includes(normalizedCleanedOriginal)
+      )
+    )
   );
 }
 
@@ -274,6 +306,7 @@ function enforceSheetLimits(data: any): any {
       "casLimitesARetenir",
       "distinctions",
       "reperes",
+      "repèresAMémoriser",
       "reperesAMemoriser",
       "reperes_a_memoriser",
       "REPERES",

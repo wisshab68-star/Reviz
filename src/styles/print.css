@@ -5,10 +5,8 @@
   }
 
   header, nav, aside,
-  [class*="sidebar"],
-  [class*="navbar"],
-  [class*="retour"],
-  [class*="apercu-label"],
+  .sidebar,
+  .navbar,
   .print-hidden {
     display: none !important;
   }
@@ -19,26 +17,265 @@
     font-size: 11pt;
   }
 
+  /* Typographie compressée */
+  body, * {
+    font-size: 9pt !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Titres compressés */
+  h1, h2, h3, h4 {
+    font-size: 11pt !important;
+    margin: 4px 0 !important;
+  }
+
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    orphans: 1 !important;
+    widows: 1 !important;
+  }
+
+  /* Supprimer tous les espacements excessifs */
+  [data-print="section"] {
+    margin: 4px 0 !important;
+    padding: 6px 8px !important;
+  }
+
+  /* Supprimer les marges entre sections */
+  .reviz-fiche-section-label,
+  .reviz-zone-label,
+  .reviz-fiche-block-label,
+  .fiche-anchor-label,
+  .fiche-logic-title {
+    margin: 2px 0 !important;
+    padding: 0 !important;
+  }
+
+  .wrapper-resume {
+    padding: 0 !important;
+    max-width: 100% !important;
   }
 
   .print-page-break {
     break-before: page;
   }
 
-  .card, [class*="flashcard"], [class*="bloc"] {
+  .card, .reviz-fiche-block {
     break-inside: avoid;
+  }
+
+  /* Flashcards et sections peuvent se couper pour éviter pages blanches */
+  .reviz-fiche-flashcard {
+    break-inside: auto;
   }
 
   svg {
     max-width: 100% !important;
   }
 
-  [class*="flashcard-grid"], [class*="flashcards-grid"] {
+  /* Carte mentale : conteneur limité + SVG contraint en hauteur+largeur */
+  [data-print="carte-mentale"] {
+    max-height: 320px !important;
+    overflow: hidden !important;
+    width: 100% !important;
+  }
+
+  [data-print="carte-mentale"] svg {
+    height: auto !important;
+    width: 100% !important;
+    max-height: 300px !important;
+    display: block !important;
+  }
+
+  /* Masquer badge, description et légende de dots sous le SVG */
+  [data-print="carte-mentale"] .reviz-schema-badge,
+  [data-print="carte-mentale"] .reviz-schema-description,
+  [data-print="carte-mentale"] .fiche-schema-legend {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Masquer sections non essentielles à l'impression */
+  [data-print="parcours-logique"],
+  [data-print="feynman"] {
+    display: none !important;
+  }
+
+  [data-print="feynman"],
+  [data-print="feynman"] * {
+    display: none !important;
+  }
+
+  [data-print="feynman-wrapper"] {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+  }
+
+  [data-print="parcours-wrapper"] {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+  }
+
+  [data-print="etapes-wrapper"] {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+  }
+
+  [data-print="points-grid"] {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
+    gap: 4px !important;
+  }
+
+  [data-print="feynman"] + * {
+    margin-top: 0 !important;
+  }
+
+  [data-print$="-wrapper"] {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* ── HEADER : supprimer illustrations décoratives ── */
+  .reviz-fiche-header-art {
+    display: none !important;
+  }
+
+  .reviz-fiche-header {
+    padding: 4px 8px !important;
+    margin: 0 !important;
+  }
+
+  .reviz-fiche-badge {
+    font-size: 7pt !important;
+    margin: 0 !important;
+  }
+
+  .reviz-fiche-title {
+    font-size: 14pt !important;
+    margin: 2px 0 !important;
+    line-height: 1.1 !important;
+  }
+
+  .reviz-fiche-meta {
+    font-size: 8pt !important;
+    margin: 0 0 2px !important;
+  }
+
+  .reviz-fiche-metrics {
+    gap: 4px !important;
+    margin: 4px 0 0 !important;
+  }
+
+  .reviz-fiche-metric {
+    padding: 2px 6px !important;
+  }
+
+  /* ── DIVIDERS : réduire au minimum ── */
+  .reviz-fiche-divider {
+    margin: 2px 0 !important;
+    border-width: 0.5px !important;
+  }
+
+  /* ── SECTIONS : espacement minimal ── */
+  .reviz-print-section {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* ── FORMULES : 2 colonnes compactes ── */
+  .fiche-logic-strip-formulas {
+    margin: 0 !important;
+    padding: 2px 0 !important;
+  }
+
+  .fiche-logic-list-formulas {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 3px !important;
+  }
+
+  .fiche-logic-item-formula {
+    margin: 0 !important;
+    padding: 3px 6px !important;
+    font-size: 8pt !important;
+  }
+
+  /* ── PROPRIETES : 2 colonnes ── */
+  .fiche-logic-strip-properties {
+    margin: 0 !important;
+    padding: 2px 0 !important;
+  }
+
+  .fiche-logic-list-properties {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 3px !important;
+  }
+
+  .fiche-logic-item-property {
+    margin: 0 !important;
+    padding: 3px 6px !important;
+    font-size: 8pt !important;
+  }
+
+  /* ── CARTES D'ANCRAGE : masquées ── */
+  .fiche-anchor-grid {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* ── IMAGE MENTALE : compacte ── */
+  .reviz-fiche-mental {
+    padding: 6px 8px !important;
+    margin: 0 !important;
+  }
+
+  /* ── BLOCS EXEMPLE/PIEGE : compacts ── */
+  .reviz-fiche-block {
+    margin: 0 !important;
+    padding: 4px 8px !important;
+  }
+
+  /* Masquer espaceurs sans contenu utile */
+  [data-print="hidden-spacer"] {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Wrapper de section feynman : écraser tout espace résiduel */
+  .reviz-print-section-feynman {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Dividers dans sections cachées */
+  .reviz-print-section-feynman .reviz-fiche-divider {
+    display: none !important;
+  }
+
+  /* Flashcards en grille 3 colonnes à l'impression */
+  [data-print="flashcards-grid"] {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 4px !important;
   }
 }

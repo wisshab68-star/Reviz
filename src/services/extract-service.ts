@@ -145,6 +145,22 @@ export function cleanExtractedText(text: string) {
         return false;
       }
 
+      const isProfConsigne =
+        /p\d{2,3}\s*n[°o]?\s*\d/i.test(trimmed)
+        || /act(ivitÃ©)?\s*conseillÃ©e/i.test(trimmed)
+        || /exercices?\s*conseillÃ©s?/i.test(trimmed)
+        || /en\s*devoir/i.test(trimmed)
+        || /Ã©dition\s*\d{4}/i.test(trimmed)
+        || /odyssÃ©e\s*\d/i.test(trimmed)
+        || /hatier|bordas|nathan|hachette|magnard/i.test(trimmed)
+        || /youtu\.be|youtube\.com/i.test(trimmed)
+        || /TP\s*(tice|algo|conseillÃ©)/i.test(trimmed)
+        || /\bact\d\b/i.test(trimmed)
+        || (/p\d{3}/.test(trimmed) && trimmed.length < 80);
+      if (isProfConsigne) {
+        return false;
+      }
+
       const startsWithConjugatedVerb =
         /^(sont|est|ont|a|était|étaient|sera|seront|peut|peuvent|doit|doivent|fait|font|va|vont|permet|permettent)\b/i
           .test(trimmed);

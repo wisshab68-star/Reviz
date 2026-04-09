@@ -1,0 +1,173 @@
+.band {
+  background: #ffffff;
+}
+
+.section {
+  display: grid;
+  gap: 32px;
+}
+
+.head {
+  max-width: 840px;
+  display: grid;
+  gap: 14px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #0d0d0d;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-family: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  font-size: clamp(2.8rem, 5vw, 4.8rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+  color: #090909;
+}
+
+.title span {
+  color: #2f5bff;
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 720px;
+  color: #585f6b;
+  font-size: 1.04rem;
+  line-height: 1.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.card {
+  width: 100%;
+  border: 1px solid rgba(9, 9, 9, 0.12);
+  border-top: 3px solid transparent;
+  border-radius: 24px;
+  background: #ffffff;
+  padding: 24px;
+  text-align: left;
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.cardActive {
+  border-color: rgba(47, 91, 255, 0.45);
+  border-top-color: #2f5bff;
+  box-shadow: 0 24px 60px rgba(47, 91, 255, 0.08);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.icon {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  font-size: 1.5rem;
+}
+
+.badge {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.cardTitle {
+  margin: 0 0 12px;
+  font-family: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  font-size: 2rem;
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+  color: #090909;
+}
+
+.cardDescription {
+  margin: 0;
+  color: #585f6b;
+  line-height: 1.7;
+}
+
+.scienceBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 0.5px solid rgba(9, 9, 9, 0.14);
+  border-radius: 14px;
+  background: #f7f7f7;
+  padding: 20px 28px;
+}
+
+.brain {
+  flex: 0 0 auto;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.scienceText {
+  margin: 0;
+  color: #4a4f58;
+  line-height: 1.7;
+}
+
+.visible {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+@media (max-width: 1080px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .section {
+    gap: 24px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scienceBar {
+    align-items: flex-start;
+    padding: 18px 20px;
+  }
+}

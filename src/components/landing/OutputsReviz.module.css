@@ -1,0 +1,302 @@
+.band {
+  background: #f4f6ff;
+}
+
+.section {
+  display: grid;
+  gap: 32px;
+}
+
+.head {
+  max-width: 820px;
+  display: grid;
+  gap: 14px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid rgba(9, 9, 9, 0.08);
+  color: #090909;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-family: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  font-size: clamp(2.8rem, 5vw, 4.8rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+  color: #090909;
+}
+
+.title s {
+  text-decoration-thickness: 2px;
+  text-decoration-color: rgba(9, 9, 9, 0.25);
+}
+
+.subtitle {
+  margin: 0;
+  max-width: 720px;
+  color: #585f6b;
+  font-size: 1.04rem;
+  line-height: 1.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.card {
+  border: 1px solid rgba(9, 9, 9, 0.12);
+  border-radius: 28px;
+  background: #ffffff;
+  padding: 22px;
+  display: grid;
+  gap: 18px;
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 40px rgba(9, 9, 9, 0.08);
+}
+
+.preview {
+  min-height: 240px;
+  border: 0.5px solid rgba(9, 9, 9, 0.12);
+  border-radius: 10px;
+  background: #f8f9ff;
+  padding: 14px;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.sheetBadge {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eeedfe;
+  color: #3c3489;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.previewLabel {
+  margin: 2px 0 0;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8a8f98;
+}
+
+.sheetList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.sheetList li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: flex-start;
+  color: #1b2230;
+  line-height: 1.55;
+}
+
+.violetDot,
+.greenDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 0.45rem;
+}
+
+.violetDot {
+  background: #6c63ff;
+}
+
+.greenDot {
+  background: #43a047;
+}
+
+.successRow {
+  border-radius: 10px;
+  background: #e8f5e9;
+  padding: 10px 12px;
+  color: #1b5e20 !important;
+}
+
+.flipCardButton {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  perspective: 1200px;
+}
+
+.flipCard {
+  position: relative;
+  min-height: 178px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.flipped {
+  transform: rotateY(180deg);
+}
+
+.flipFace {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  padding: 18px;
+  backface-visibility: hidden;
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  text-align: left;
+}
+
+.flipFront {
+  background: #0d0d0d;
+  color: #ffffff;
+}
+
+.flipBack {
+  background: #2f5bff;
+  color: #ffffff;
+  transform: rotateY(180deg);
+}
+
+.flipLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.flipFace p {
+  margin: 0;
+  font-family: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  font-size: 1.5rem;
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+.flipHint {
+  font-size: 0.78rem;
+  opacity: 0.6;
+}
+
+.helper {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: #7a7f89;
+  text-align: center;
+}
+
+.quizQuestion {
+  margin: 0;
+  color: #0d0d0d;
+  font-weight: 700;
+}
+
+.quizList {
+  display: grid;
+  gap: 10px;
+}
+
+.quizOption {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(9, 9, 9, 0.12);
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 11px 12px;
+  color: #202631;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.quizOptionLetter {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #f1f3f8;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.quizOptionCorrect {
+  border-color: #43a047;
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.quizOptionIncorrect {
+  border-color: #e53935;
+  background: #ffebee;
+  color: #7f0000;
+}
+
+.cardFooter {
+  display: grid;
+  gap: 8px;
+}
+
+.cardFooter h3 {
+  margin: 0;
+  font-family: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  font-size: 22px;
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+  color: #090909;
+}
+
+.cardFooter p {
+  margin: 0;
+  color: #585f6b;
+  line-height: 1.7;
+}
+
+.visible {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+@media (max-width: 1080px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

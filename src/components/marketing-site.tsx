@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { FAQReviz } from "@/components/landing/FAQReviz";
+import { MethodeReviz } from "@/components/landing/MethodeReviz";
+import { OutputsReviz } from "@/components/landing/OutputsReviz";
 
 const sourceCards = [
   {
@@ -407,35 +410,9 @@ export function MarketingSite() {
             </div>
           </div>
         </section>
-
-        <section id="exemples" className="section-band section-band-soft">
-          <div className="container section">
-            <div className="section-head">
-              <span className="section-kicker reviz-reveal reviz-reveal-delay-1">
-                Ce que tu obtiens
-              </span>
-              <h2 className="reviz-reveal">une sortie utile. pas un pave.</h2>
-            </div>
-            <div className="grid grid-3">
-              {outputs.map((output, index) => (
-                <article
-                  key={output.title}
-                  className={`output-card reviz-reveal reviz-reveal-delay-${index + 1}`}
-                >
-                  <span className="output-pill">{output.number}</span>
-                  <div className="output-preview">{output.preview}</div>
-                  <h3>{output.title}</h3>
-                  <p>{output.copy}</p>
-                </article>
-              ))}
-            </div>
-            <div className="section-cta reviz-reveal reviz-reveal-delay-2">
-              <Link href="/app" className="btn btn-primary">
-                Générer ma première fiche →
-              </Link>
-            </div>
-          </div>
-        </section>
+        <MethodeReviz />
+        <OutputsReviz />
+        <FAQReviz />
 
         <section ref={socialProofRef} className="section-band social-proof">
           <div className="container section">
@@ -1223,3 +1200,4 @@ export function MarketingSite() {
     </div>
   );
 }
+

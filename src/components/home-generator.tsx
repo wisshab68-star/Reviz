@@ -159,23 +159,31 @@ export function HomeGenerator({
     return message;
   }
 
+  function normalizeApiError(raw: string) {
+    const normalized = raw.trim();
+
+    if (!normalized) {
+      return "Le serveur a renvoye une reponse vide.";
+    }
+
+    if (/<(?:!DOCTYPE|html|head|body)\b/i.test(normalized)) {
+      return "Le serveur a renvoye une page d'erreur au lieu d'une reponse API. Recharge la page et reessaie dans quelques instants.";
+    }
+
+    if (/request entity too large|payload too large/i.test(normalized)) {
+      return `Le fichier est trop lourd pour l'envoi en ligne. Garde-le sous ${MAX_UPLOAD_SIZE_LABEL}.`;
+    }
+
+    return normalized;
+  }
+
   async function readApiPayload<T>(response: Response): Promise<T> {
     const raw = await response.text();
 
     try {
       return JSON.parse(raw) as T;
     } catch {
-      const normalized = raw.trim();
-
-      if (/request entity too large|payload too large/i.test(normalized)) {
-        throw new Error(`Le fichier est trop lourd pour l'envoi en ligne. Garde-le sous ${MAX_UPLOAD_SIZE_LABEL}.`);
-      }
-
-      if (!normalized) {
-        throw new Error("Le serveur a renvoye une reponse vide.");
-      }
-
-      throw new Error(normalized);
+      throw new Error(normalizeApiError(raw));
     }
   }
 
@@ -291,11 +299,11 @@ export function HomeGenerator({
           await new Promise((resolve) => window.setTimeout(resolve, 3000));
 
           const statusResponse = await fetch(`/api/sheets/${data.sheetId}/status`, { cache: "no-store" });
-          const statusData = await statusResponse.json() as {
+          const statusData = await readApiPayload<{
             success: boolean;
             data?: { id: string; status: string; title: string };
             error?: string;
-          };
+          }>(statusResponse);
 
           if (!statusResponse.ok || !statusData.success || !statusData.data) {
             throw new Error(statusData.error ?? "Impossible de suivre la generation.");

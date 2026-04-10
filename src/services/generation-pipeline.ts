@@ -42,7 +42,7 @@ type PipelineBudget = {
   reserveMs: number;
 };
 
-const PIPELINE_TOTAL_BUDGET_MS = 110_000;
+const PIPELINE_TOTAL_BUDGET_MS = 50_000;
 const PIPELINE_RESERVE_MS = 0;
 const MIN_STAGE_TIMEOUT_MS = 5_000;
 const ANTHROPIC_RETRYABLE_STATUS_CODES = new Set([429, 503, 529]);
@@ -693,7 +693,7 @@ export async function generateInventory(
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    }, 55_000, budget);
+    }, 50_000, budget);
 
     const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
     const parsed = JSON.parse(cleanJsonResponse(raw)) as ContentInventory;
@@ -728,7 +728,7 @@ Conserve les titres de parties et les formules exactement quand elles apparaisse
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    }, 55_000, budget);
+    }, 50_000, budget);
 
     const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
     const parsed = JSON.parse(cleanJsonResponse(raw)) as ContentInventory;
@@ -957,7 +957,7 @@ async function generateLegacySheetFromInventory(
       },
     ],
     messages: [{ role: "user", content: userPrompt }],
-  }, 55_000, budget);
+  }, 50_000, budget);
 
   const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
   const cleaned = cleanJsonResponse(raw);
@@ -997,7 +997,7 @@ export async function generateSheet(
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    }, 55_000, budget);
+    }, 50_000, budget);
 
     const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
     const cleaned = cleanJsonResponse(raw);

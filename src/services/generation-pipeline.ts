@@ -46,6 +46,7 @@ const PIPELINE_TOTAL_BUDGET_MS = 50_000;
 const PIPELINE_RESERVE_MS = 0;
 const MIN_STAGE_TIMEOUT_MS = 5_000;
 const ANTHROPIC_RETRYABLE_STATUS_CODES = new Set([429, 503, 529]);
+const HAIKU_GENERATION_MODEL = "claude-haiku-4-5-20251001";
 
 function createPipelineBudget(totalMs = PIPELINE_TOTAL_BUDGET_MS, reserveMs = PIPELINE_RESERVE_MS): PipelineBudget {
   return {
@@ -683,7 +684,7 @@ export async function generateInventory(
     const systemPrompt = buildInventorySystemPrompt(profile);
     const userPrompt = buildInventoryUserPrompt(sourceText);
     const message = await createAnthropicMessage("inventory", {
-      model: MODELS.MAIN,
+      model: HAIKU_GENERATION_MODEL,
       max_tokens: 8000,
       system: [
         {
@@ -718,7 +719,7 @@ Tu dois etre exhaustif sur cet extrait, sans supposer que d'autres parties seron
 Conserve les titres de parties et les formules exactement quand elles apparaissent.`;
     const userPrompt = buildInventoryUserPrompt(chunk);
     const message = await createAnthropicMessage(`inventory-chunk-${index + 1}`, {
-      model: MODELS.MAIN,
+      model: HAIKU_GENERATION_MODEL,
       max_tokens: 5000,
       system: [
         {
@@ -947,7 +948,7 @@ async function generateLegacySheetFromInventory(
   const systemPrompt = buildSheetSystemPrompt(profile, blueprint);
   const userPrompt = buildSheetUserPrompt(inventoryJSON, sourceText, profile, blueprint, strictFormulas);
   const message = await createAnthropicMessage("generate-legacy-sheet", {
-    model: MODELS.MAIN,
+    model: HAIKU_GENERATION_MODEL,
     max_tokens: 6000,
     system: [
       {
@@ -987,7 +988,7 @@ export async function generateSheet(
       classified,
     );
     const message = await createAnthropicMessage("generate-zoned-sheet", {
-      model: MODELS.MAIN,
+      model: HAIKU_GENERATION_MODEL,
       max_tokens: 6000,
       system: [
         {

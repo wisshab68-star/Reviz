@@ -2059,6 +2059,11 @@ function isQuotaError(error: unknown) {
   return /429|quota|insufficient_quota|billing|rate limit/i.test(message);
 }
 
+function isTimeoutLikeError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /request timed out|runtime timeout|task timed out|PIPELINE_BUDGET_EXCEEDED/i.test(message);
+}
+
 export async function generateRichFiche(input: GenerateSheetRequest): Promise<FicheGeneree> {
   // Nettoyage complet du texte source — supprime les metadonnees parasites
   // (noms de profs, ISBN, copyright, titres de manuels) AVANT toute generation.
@@ -2086,6 +2091,11 @@ export async function generateRichFiche(input: GenerateSheetRequest): Promise<Fi
   } catch (pipelineError) {
     console.error("[generateRichFiche] Pipeline generation failed, falling back to single-call:", pipelineError);
 
+    if (isTimeoutLikeError(pipelineError)) {
+      console.warn("[generateRichFiche] Pipeline timeout detected, returning demo fiche to avoid workflow hard-timeout.");
+      return buildDemoFiche(input);
+    }
+
     try {
       // Le fallback utilise normalizedInput.content qui est DEJA nettoye
       // par cleanAndClassify ci-dessus — plus de parasites possibles.
@@ -2101,6 +2111,8 @@ export async function generateRichFiche(input: GenerateSheetRequest): Promise<Fi
           },
         ],
         messages: [{ role: "user", content: buildUserPrompt(input.content) }],
+      }, {
+        timeout: 25_000,
       });
 
       const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
@@ -2117,6 +2129,11 @@ export async function generateRichFiche(input: GenerateSheetRequest): Promise<Fi
     } catch (fallbackError) {
       if (isQuotaError(pipelineError) || isQuotaError(fallbackError)) {
         console.error("[generateRichFiche] Anthropic API quota/rate limit exceeded — returning demo fiche. Pipeline error:", pipelineError, "| Fallback error:", fallbackError);
+        return buildDemoFiche(input);
+      }
+
+      if (isTimeoutLikeError(fallbackError)) {
+        console.warn("[generateRichFiche] Fallback timeout detected, returning demo fiche.");
         return buildDemoFiche(input);
       }
 

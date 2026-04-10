@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { FAQReviz } from "@/components/landing/FAQReviz";
 import { MethodeReviz } from "@/components/landing/MethodeReviz";
 import { OutputsReviz } from "@/components/landing/OutputsReviz";
 
@@ -295,51 +294,39 @@ export function MarketingSite() {
             <div className="hero-visual" aria-hidden="true">
               <div className="hero-badge">REVISION FUN</div>
               <div className="hero-mock">
-                <div className="mock-header">
-                  <div className="dots">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <div className="mock-title">
-                    Une expérience ultra visuelle, du cours brut à la révision active.
-                  </div>
-                </div>
-                <div className="mock-grid">
-                  <div className="mock-sheet">
-                    <div className="mini-card mini-card-blue">
-                      <p className="mini-kicker">Fiches intelligentes</p>
-                      <h3>Probabilités</h3>
-                      <ul>
-                        <li>Définition précise</li>
-                        <li>Schéma mémoire</li>
-                        <li>Pièges d'examen</li>
-                      </ul>
-                    </div>
-                    <div className="mini-card">
-                      <p className="mini-kicker">Photo de cours</p>
-                      <p>Transforme une page manuscrite en fiche prête à réviser.</p>
+                <div className="mock-topbar">REVISION FUN</div>
+                <div className="mock-sheet-card">
+                  <div className="mock-header">
+                    <span className="mock-brand-pill">REVIZ</span>
+                    <div className="mock-dots">
+                      <span />
+                      <span />
+                      <span className="mock-dot-filled" />
                     </div>
                   </div>
-                  <div className="mock-side">
-                    <div className="mini-card stack-card">
-                      <div className="stack-card-inner offset-a">
-                        <strong>Recto</strong>
-                        <p>Quelle formule utiliser ?</p>
-                      </div>
-                      <div className="stack-card-inner offset-b">
-                        <strong>Verso</strong>
-                        <p>P(A ∪ B) = P(A) + P(B) - P(A ∩ B)</p>
-                      </div>
-                    </div>
-                    <div className="mini-card">
-                      <p className="mini-kicker">Sortie Reviz</p>
-                      <ul>
-                        <li>Définition précise</li>
-                        <li>Schéma mémoire</li>
-                        <li>Flashcards</li>
-                      </ul>
-                    </div>
+
+                  <p className="mock-section-kicker">PROBABILITÉS</p>
+                  <p className="mock-sheet-title">Loi des probabilités</p>
+
+                  <div className="mock-row">
+                    <span className="mock-dot mock-dot-blue" />
+                    <span>P(A|B) = P(A∩B) / P(B)</span>
+                  </div>
+                  <div className="mock-row">
+                    <span className="mock-dot mock-dot-blue" />
+                    <span>P(A∪B) = P(A)+P(B)−P(A∩B)</span>
+                  </div>
+                  <div className="mock-row mock-row-success">
+                    <span className="mock-dot mock-dot-green" />
+                    <span>Piège : confondre P(A|B) et P(B|A)</span>
+                  </div>
+
+                  <div className="mock-divider" />
+
+                  <p className="mock-card-label">FLASHCARD</p>
+                  <div className="mock-flashcard">
+                    <p>Qu&apos;est-ce qu&apos;une v.a. discrète ?</p>
+                    <span>Touche pour retourner →</span>
                   </div>
                 </div>
               </div>
@@ -412,8 +399,6 @@ export function MarketingSite() {
         </section>
         <MethodeReviz />
         <OutputsReviz />
-        <FAQReviz />
-
         <section ref={socialProofRef} className="section-band social-proof">
           <div className="container section">
             <div className="section-head">
@@ -704,12 +689,12 @@ export function MarketingSite() {
 
         .hero-visual {
           position: relative;
-          min-height: 700px;
+          height: auto;
           border: 3px solid #090909;
           border-radius: 42px;
           background: linear-gradient(180deg, #f5f7ff 0%, #dbe4ff 100%);
           box-shadow: 10px 10px 0 #090909;
-          overflow: hidden;
+          overflow: visible;
           padding: 24px;
         }
 
@@ -729,52 +714,159 @@ export function MarketingSite() {
         .hero-mock {
           position: absolute;
           inset: 86px 24px 24px;
-          border: 3px solid #090909;
-          border-radius: 32px;
+          height: auto;
+          border: 0;
+          border-radius: 24px;
+          background: transparent;
+          box-shadow: none;
+          overflow: visible;
+          padding: 0;
+        }
+
+        .mock-topbar {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 28px;
+          padding: 0 14px;
+          border-radius: 999px;
+          background: #0d0d0d;
+          color: #ffffff;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+        }
+
+        .mock-sheet-card {
+          margin: 16px;
+          border: 2px solid #0d0d0d;
+          border-radius: 16px;
           background: #ffffff;
-          box-shadow: 10px 10px 0 #090909;
-          overflow: hidden;
+          box-shadow: 8px 8px 0 #0d0d0d;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+          padding: 20px;
         }
 
         .mock-header {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: flex-start;
           gap: 12px;
-          padding: 14px 18px;
-          border-bottom: 3px solid #090909;
-          background: #f4f6ff;
+          margin-bottom: 16px;
         }
 
-        .dots {
+        .mock-brand-pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 18px;
+          padding: 3px 10px;
+          border-radius: 999px;
+          background: #0d0d0d;
+          color: #ffffff;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+        }
+
+        .mock-dots {
           display: flex;
           gap: 8px;
         }
 
-        .dots span {
-          width: 12px;
-          height: 12px;
+        .mock-dots span {
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
           border: 2px solid #090909;
           background: #ffffff;
         }
 
-        .mock-title {
+        .mock-dot-filled {
+          background: #0d0d0d !important;
+        }
+
+        .mock-section-kicker,
+        .mock-card-label {
+          margin: 0;
+          color: #8a8f98;
+          font-size: 10px;
           font-weight: 800;
-          font-size: 0.96rem;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
         }
 
-        .mock-grid {
-          display: grid;
-          grid-template-columns: minmax(0, 1.1fr) 220px;
-          gap: 16px;
-          padding: 18px;
+        .mock-sheet-title {
+          margin: 0 0 14px;
+          color: #0d0d0d;
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 1.2;
         }
 
-        .mock-sheet,
-        .mock-side {
+        .mock-row {
           display: grid;
-          gap: 14px;
+          grid-template-columns: auto 1fr;
+          gap: 10px;
+          align-items: flex-start;
+          color: #202631;
+          font-size: 12px;
+          line-height: 1.5;
+          margin-bottom: 8px;
+        }
+
+        .mock-row-success {
+          margin-bottom: 14px;
+          padding: 8px;
+          border-radius: 8px;
+          background: #e8f5e9;
+          color: #1b5e20;
+        }
+
+        .mock-dot {
+          width: 7px;
+          height: 7px;
+          margin-top: 5px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+
+        .mock-dot-blue {
+          background: #2f5bff;
+        }
+
+        .mock-dot-green {
+          background: #43a047;
+        }
+
+        .mock-divider {
+          border-top: 1px solid #f0f0f0;
+          margin-bottom: 14px;
+        }
+
+        .mock-flashcard {
+          width: 100%;
+          padding: 14px;
+          border-radius: 10px;
+          background: #0d0d0d;
+        }
+
+        .mock-flashcard p {
+          margin: 0;
+          color: #ffffff;
+          font-size: 13px;
+          font-weight: 600;
+          line-height: 1.45;
+          margin-bottom: 4px;
+        }
+
+        .mock-flashcard span {
+          display: block;
+          margin-top: 8px;
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 11px;
         }
 
         .mini-card,
@@ -1111,7 +1203,6 @@ export function MarketingSite() {
         @media (max-width: 1180px) {
           .hero,
           .grid-3,
-          .mock-grid,
           .footer-inner {
             grid-template-columns: 1fr;
           }
@@ -1121,7 +1212,7 @@ export function MarketingSite() {
           }
 
           .hero-visual {
-            min-height: 640px;
+            height: auto;
           }
 
           .footer-links {
@@ -1200,4 +1291,3 @@ export function MarketingSite() {
     </div>
   );
 }
-

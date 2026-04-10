@@ -14,6 +14,8 @@ const PREVIEW_STORAGE_KEY = "reviz-preview-sheet";
 type GenerateResponse = {
   success: boolean;
   sheetId?: string | null;
+  status?: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+  queued?: boolean;
   mode?: "ai_or_fallback" | "demo";
   data?: GeneratedSheet;
   fiche?: FicheGeneree;
@@ -248,6 +250,46 @@ export function HomeGenerator({
 
       if (!response.ok || !data.success) {
         throw new Error(data.error ?? "La generation a echoue.");
+      }
+
+      if (data.queued && data.sheetId) {
+        setStatus("Generation en cours... Reviz prepare la fiche sans te bloquer.");
+
+        const startedAt = Date.now();
+        const timeoutMs = 10 * 60 * 1000;
+
+        while (Date.now() - startedAt < timeoutMs) {
+          await new Promise((resolve) => window.setTimeout(resolve, 3000));
+
+          const statusResponse = await fetch(`/api/sheets/${data.sheetId}/status`, { cache: "no-store" });
+          const statusData = await statusResponse.json() as {
+            success: boolean;
+            data?: { id: string; status: string; title: string };
+            error?: string;
+          };
+
+          if (!statusResponse.ok || !statusData.success || !statusData.data) {
+            throw new Error(statusData.error ?? "Impossible de suivre la generation.");
+          }
+
+          if (statusData.data.status === "COMPLETED") {
+            setStatus("Fiche generee. Redirection vers le resultat...");
+            router.push(`/sheet/${data.sheetId}`);
+            return;
+          }
+
+          if (statusData.data.status === "FAILED") {
+            throw new Error(
+              statusData.data.title && statusData.data.title !== "Fiche en generation"
+                ? statusData.data.title
+                : "La generation a echoue.",
+            );
+          }
+
+          setStatus("Generation en cours... Reviz finalise la fiche.");
+        }
+
+        throw new Error("La fiche prend plus de temps que prevu. Reviens dans quelques instants.");
       }
 
       if (data.sheetId) {

@@ -56,6 +56,94 @@ export default async function SheetPage({ params }: PageProps) {
   const keyPointsPayload = readKeyPointsPayload(sheet.keyPointsJson);
   const ficheGeneree = keyPointsPayload.fiche as FicheGeneree | null;
 
+  if (sheet.status === "PROCESSING") {
+    return (
+      <main className="app-layout">
+        <AppTopbar />
+
+        <div className="content-shell sheet-content-shell">
+          <div className="reviz-sheet-frame">
+            <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
+            <div className="reviz-sheet-orb reviz-sheet-orb-b" aria-hidden="true" />
+            <header className="reviz-sheet-page-header">
+              <div className="reviz-sheet-page-top">
+                <div>
+                  <p className="eyebrow">Generation en cours</p>
+                  <h1 className="reviz-sheet-page-title">{sheet.title}</h1>
+                </div>
+                <div className="cta-row reviz-sheet-page-actions">
+                  <Link href="/app" className="btn btn-soft">
+                    Retour
+                  </Link>
+                  <Link href="/library" className="btn btn-primary">
+                    Bibliotheque
+                  </Link>
+                </div>
+              </div>
+              <p className="reviz-sheet-page-summary">
+                Reviz prepare ta fiche en arriere-plan. Recharge cette page dans quelques instants.
+              </p>
+              <div className="reviz-sheet-page-art" aria-hidden="true">
+                <RevizNotebookDoodle className="reviz-illustration reviz-illustration-notebook" />
+                <RevizMindOrbitDoodle className="reviz-illustration reviz-illustration-orbit" />
+                <RevizMascotDoodle className="reviz-illustration reviz-illustration-mascot" />
+              </div>
+            </header>
+
+            <section style={{ paddingTop: "2rem", paddingBottom: "2rem" }}>
+              <div className="status-box">Generation en cours... la fiche apparaitra ici des qu'elle sera prete.</div>
+            </section>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (sheet.status === "FAILED") {
+    return (
+      <main className="app-layout">
+        <AppTopbar />
+
+        <div className="content-shell sheet-content-shell">
+          <div className="reviz-sheet-frame">
+            <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
+            <div className="reviz-sheet-orb reviz-sheet-orb-b" aria-hidden="true" />
+            <header className="reviz-sheet-page-header">
+              <div className="reviz-sheet-page-top">
+                <div>
+                  <p className="eyebrow">Generation interrompue</p>
+                  <h1 className="reviz-sheet-page-title">{sheet.title}</h1>
+                </div>
+                <div className="cta-row reviz-sheet-page-actions">
+                  <Link href="/app" className="btn btn-soft">
+                    Retour
+                  </Link>
+                  <Link href="/library" className="btn btn-primary">
+                    Bibliotheque
+                  </Link>
+                </div>
+              </div>
+              <p className="reviz-sheet-page-summary">
+                {sheet.summary || "La generation a echoue. Tu peux relancer une nouvelle tentative depuis l'accueil."}
+              </p>
+              <div className="reviz-sheet-page-art" aria-hidden="true">
+                <RevizNotebookDoodle className="reviz-illustration reviz-illustration-notebook" />
+                <RevizMindOrbitDoodle className="reviz-illustration reviz-illustration-orbit" />
+                <RevizMascotDoodle className="reviz-illustration reviz-illustration-mascot" />
+              </div>
+            </header>
+
+            <section style={{ paddingTop: "2rem", paddingBottom: "2rem" }}>
+              <div className="status-box error">
+                {sheet.summary || "La generation a echoue. Relance une nouvelle tentative."}
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="app-layout">
       <AppTopbar />

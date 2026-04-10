@@ -1,3 +1,4 @@
+import type Anthropic from "@anthropic-ai/sdk";
 import { MODELS } from "@/lib/models";
 import { anthropic } from "@/lib/openai";
 import { cleanAndClassify, type ClassifiedContent } from "@/lib/prompts/classify-content";
@@ -35,6 +36,76 @@ import type {
 import type { PedagogicalBlueprint } from "@/lib/pedagogy/blueprint-selector";
 
 type PipelineSheet = FicheGeneree | ZonedFiche;
+
+type PipelineBudget = {
+  deadlineAt: number;
+  reserveMs: number;
+};
+
+const PIPELINE_TOTAL_BUDGET_MS = 110_000;
+const PIPELINE_RESERVE_MS = 0;
+const MIN_STAGE_TIMEOUT_MS = 5_000;
+const ANTHROPIC_RETRYABLE_STATUS_CODES = new Set([429, 503, 529]);
+
+function createPipelineBudget(totalMs = PIPELINE_TOTAL_BUDGET_MS, reserveMs = PIPELINE_RESERVE_MS): PipelineBudget {
+  return {
+    deadlineAt: Date.now() + totalMs,
+    reserveMs,
+  };
+}
+
+function getRemainingBudgetMs(budget?: PipelineBudget): number {
+  return budget ? budget.deadlineAt - Date.now() : Number.POSITIVE_INFINITY;
+}
+
+function getStageTimeoutMs(
+  stage: string,
+  preferredMs: number,
+  budget?: PipelineBudget,
+): number {
+  if (!budget) {
+    return preferredMs;
+  }
+
+  const availableMs = getRemainingBudgetMs(budget) - budget.reserveMs;
+  if (availableMs < MIN_STAGE_TIMEOUT_MS) {
+    throw new Error(`PIPELINE_BUDGET_EXCEEDED: budget insuffisant avant ${stage}.`);
+  }
+
+  return Math.max(MIN_STAGE_TIMEOUT_MS, Math.min(preferredMs, availableMs));
+}
+
+async function createAnthropicMessage(
+  stage: string,
+  params: Parameters<typeof anthropic.messages.create>[0] & { stream?: false },
+  preferredTimeoutMs: number,
+  budget?: PipelineBudget,
+): Promise<Anthropic.Message> {
+  const timeout = getStageTimeoutMs(stage, preferredTimeoutMs, budget);
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      return await anthropic.messages.create(params, {
+        timeout,
+      }) as unknown as Anthropic.Message;
+    } catch (error) {
+      const status = typeof error === "object" && error && "status" in error
+        ? Number((error as { status?: number }).status)
+        : Number.NaN;
+      const message = error instanceof Error ? error.message : String(error);
+      const isRetryable = ANTHROPIC_RETRYABLE_STATUS_CODES.has(status)
+        || /(429|503|529|overloaded|rate limit|temporarily unavailable)/i.test(message);
+
+      if (!isRetryable || attempt === 3) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+    }
+  }
+
+  throw new Error(`Anthropic request failed for ${stage}.`);
+}
 
 function cleanJsonResponse(raw: string): string {
   const stripped = raw.replace(/```json|```/g, "").trim();
@@ -442,6 +513,52 @@ function inferPrecisionLevelFromAcademicLevel(raw: Partial<DocumentProfile>): Do
   return "standard";
 }
 
+function cleanFilename(filename: string) {
+  return filename
+    .replace(/\.[^/.]+$/, "")
+    .replace(/^\d+[\s\-_.]+/, "")
+    .replace(/^[a-z0-9]+-\d+-?/i, "")
+    .replace(/[-_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^./, (char) => char.toUpperCase());
+}
+
+export function inferDocumentProfile(
+  input: Pick<GenerateSheetRequest, "content" | "titleHint">,
+  classified: Pick<ClassifiedContent, "cleanedText" | "subject" | "level" | "contentType">,
+): DocumentProfile {
+  const sourceText = classified.cleanedText || input.content;
+  const fileHint = input.titleHint ? cleanFilename(input.titleHint) : "";
+  const inferredSubject = classified.subject || fileHint || "Cours";
+  const density = sourceText.length > 12000 ? "elevee" : sourceText.length > 5000 ? "moyenne" : "faible";
+
+  return {
+    matiere: inferredSubject,
+    sous_domaine: fileHint && fileHint !== inferredSubject ? fileHint : "",
+    niveau: classified.level || "General",
+    famille_pedagogique: inferPedagogicalFamilyFromProfile({
+      matiere: inferredSubject,
+      sous_domaine: fileHint,
+      niveau: classified.level,
+      type_contenu: [classified.contentType],
+    }),
+    niveau_precision: inferPrecisionLevelFromAcademicLevel({ niveau: classified.level }),
+    objectif_revision: inferRevisionObjective({
+      matiere: inferredSubject,
+      sous_domaine: fileHint,
+      niveau: classified.level,
+      type_contenu: [classified.contentType],
+    }),
+    type_contenu: [classified.contentType],
+    contient_formules: extractFormulaCandidates(sourceText).length > 0,
+    contient_demonstrations: /(demonstration|preuve|montrer que|demontrer)/i.test(sourceText),
+    contient_schemas: /(schema|diagramme|graphe|figure|tableau)/i.test(sourceText),
+    langue: /[a-z]/i.test(sourceText) ? "francais" : "francais",
+    densite: density,
+  };
+}
+
 function buildSheetClassification(
   profile: DocumentProfile,
   blueprint?: PedagogicalBlueprint,
@@ -453,8 +570,8 @@ function buildSheetClassification(
   };
 }
 
-async function detectProfile(sourceText: string): Promise<DocumentProfile> {
-  const message = await anthropic.messages.create({
+async function detectProfile(sourceText: string, budget?: PipelineBudget): Promise<DocumentProfile> {
+  const message = await createAnthropicMessage("detect-profile", {
     model: MODELS.FAST,
     max_tokens: 500,
     system: [
@@ -465,7 +582,7 @@ async function detectProfile(sourceText: string): Promise<DocumentProfile> {
       },
     ],
     messages: [{ role: "user", content: buildDetectProfilePrompt(sourceText) }],
-  });
+  }, 20_000, budget);
 
   const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
   const parsed = JSON.parse(cleanJsonResponse(raw)) as DocumentProfile;
@@ -495,16 +612,17 @@ async function detectProfile(sourceText: string): Promise<DocumentProfile> {
   };
 }
 
-async function generateInventory(
+export async function generateInventory(
   sourceText: string,
   profile: DocumentProfile,
+  budget?: PipelineBudget,
 ): Promise<ContentInventory> {
   const chunks = splitIntoSemanticChunks(sourceText);
 
   if (chunks.length === 1) {
     const systemPrompt = buildInventorySystemPrompt(profile);
     const userPrompt = buildInventoryUserPrompt(sourceText);
-    const message = await anthropic.messages.create({
+    const message = await createAnthropicMessage("inventory", {
       model: MODELS.MAIN,
       max_tokens: 8000,
       system: [
@@ -515,7 +633,7 @@ async function generateInventory(
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    });
+    }, 55_000, budget);
 
     const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
     const parsed = JSON.parse(cleanJsonResponse(raw)) as ContentInventory;
@@ -539,7 +657,7 @@ Tu traites seulement un extrait du document complet (${index + 1}/${chunks.lengt
 Tu dois etre exhaustif sur cet extrait, sans supposer que d'autres parties seront re-analysees plus tard.
 Conserve les titres de parties et les formules exactement quand elles apparaissent.`;
     const userPrompt = buildInventoryUserPrompt(chunk);
-    const message = await anthropic.messages.create({
+    const message = await createAnthropicMessage(`inventory-chunk-${index + 1}`, {
       model: MODELS.MAIN,
       max_tokens: 5000,
       system: [
@@ -550,7 +668,7 @@ Conserve les titres de parties et les formules exactement quand elles apparaisse
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    });
+    }, 55_000, budget);
 
     const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
     const parsed = JSON.parse(cleanJsonResponse(raw)) as ContentInventory;
@@ -566,7 +684,7 @@ Conserve les titres de parties et les formules exactement quand elles apparaisse
   return mergeInventories(inventories);
 }
 
-function countInventoryElements(inventory: ContentInventory): number {
+export function countInventoryElements(inventory: ContentInventory): number {
   let count = 0;
   for (const part of inventory.parties) {
     count += (part.definitions?.length ?? 0);
@@ -584,7 +702,7 @@ function countInventoryElements(inventory: ContentInventory): number {
   return count;
 }
 
-function isStrictFormulaCourse(
+export function isStrictFormulaCourse(
   profile: DocumentProfile,
   blueprint: PedagogicalBlueprint,
   strictFormulas: string[],
@@ -624,7 +742,7 @@ function isHighConfidenceStrictFormula(formula: string) {
   return operatorCount >= 1;
 }
 
-function collectStrictFormulas(
+export function collectStrictFormulas(
   inventory: ContentInventory,
   sourceText: string,
   profile: DocumentProfile,
@@ -668,7 +786,7 @@ function getFormulaLeftSide(formula: string) {
   return normalized.slice(0, 32).trim();
 }
 
-function collectSheetFormulaCandidates(sheet: PipelineSheet) {
+export function collectSheetFormulaCandidates(sheet: PipelineSheet) {
   const sections = "blueprintSections" in sheet ? sheet.blueprintSections : undefined;
   const textPool = [
     ...(sheet.formulesCles ?? []),
@@ -697,7 +815,7 @@ function collectSheetFormulaCandidates(sheet: PipelineSheet) {
   );
 }
 
-function evaluateStrictFormulaIntegrity(expected: string[], actual: string[]) {
+export function evaluateStrictFormulaIntegrity(expected: string[], actual: string[]) {
   const expectedFormulas = dedupeByKey(expected, (formula) => normalizeFormulaText(formula));
   const actualFormulas = dedupeByKey(actual, (formula) => normalizeFormulaText(formula));
   const actualByLeftSide = new Map<string, string[]>();
@@ -762,12 +880,13 @@ async function generateLegacySheetFromInventory(
   profile: DocumentProfile,
   blueprint: PedagogicalBlueprint,
   strictFormulas: string[] = [],
+  budget?: PipelineBudget,
 ): Promise<FicheGeneree> {
   const inventoryJSON = JSON.stringify(inventory, null, 2);
 
   const systemPrompt = buildSheetSystemPrompt(profile, blueprint);
   const userPrompt = buildSheetUserPrompt(inventoryJSON, sourceText, profile, blueprint, strictFormulas);
-  const message = await anthropic.messages.create({
+  const message = await createAnthropicMessage("generate-legacy-sheet", {
     model: MODELS.MAIN,
     max_tokens: 6000,
     system: [
@@ -778,7 +897,7 @@ async function generateLegacySheetFromInventory(
       },
     ],
     messages: [{ role: "user", content: userPrompt }],
-  });
+  }, 55_000, budget);
 
   const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
   const cleaned = cleanJsonResponse(raw);
@@ -786,13 +905,14 @@ async function generateLegacySheetFromInventory(
   return applySheetMetadata(parsed, profile, blueprint);
 }
 
-async function generateSheetFromInventory(
+export async function generateSheet(
   inventory: ContentInventory,
   sourceText: string,
   profile: DocumentProfile,
   classified: ClassifiedContent,
   blueprint = selectPedagogicalBlueprint(profile, inventory),
   strictFormulas: string[] = [],
+  budget?: PipelineBudget,
 ): Promise<PipelineSheet> {
   const inventoryJSON = JSON.stringify(inventory, null, 2);
 
@@ -806,7 +926,7 @@ async function generateSheetFromInventory(
       strictFormulas,
       classified,
     );
-    const message = await anthropic.messages.create({
+    const message = await createAnthropicMessage("generate-zoned-sheet", {
       model: MODELS.MAIN,
       max_tokens: 6000,
       system: [
@@ -817,7 +937,7 @@ async function generateSheetFromInventory(
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    });
+    }, 55_000, budget);
 
     const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
     const cleaned = cleanJsonResponse(raw);
@@ -825,26 +945,27 @@ async function generateSheetFromInventory(
 
     if (!validateZonedFicheStructure(parsed)) {
       console.warn("[Pipeline] ZonedFiche invalide, fallback vers le prompt legacy.");
-      return generateLegacySheetFromInventory(inventory, sourceText, profile, blueprint, strictFormulas);
+      return generateLegacySheetFromInventory(inventory, sourceText, profile, blueprint, strictFormulas, budget);
     }
 
     return applySheetMetadata(convertZonedToLegacy(sanitizeGeneratedSheet(parsed)), profile, blueprint);
   } catch (error) {
     console.warn("[Pipeline] Generation ZonedFiche echouee, fallback vers le prompt legacy.", error);
-    return generateLegacySheetFromInventory(inventory, sourceText, profile, blueprint, strictFormulas);
+    return generateLegacySheetFromInventory(inventory, sourceText, profile, blueprint, strictFormulas, budget);
   }
 }
 
 async function verifyCoverage(
   sheet: PipelineSheet,
   inventory: ContentInventory,
+  budget?: PipelineBudget,
 ): Promise<CoverageReport> {
   const inventoryJSON = JSON.stringify(inventory, null, 2);
   const sheetJSON = JSON.stringify(sheet, null, 2);
 
   const verifierPrompt = "Tu es un verificateur pedagogique rigoureux. Tu reponds UNIQUEMENT en JSON valide.";
   const userPrompt = buildCoveragePrompt(inventoryJSON, sheetJSON);
-  const message = await anthropic.messages.create({
+  const message = await createAnthropicMessage("verify-coverage", {
     model: MODELS.FAST,
     max_tokens: 2000,
     system: [
@@ -855,7 +976,7 @@ async function verifyCoverage(
       },
     ],
     messages: [{ role: "user", content: userPrompt }],
-  });
+  }, 10_000, budget);
 
   const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
   const parsed = JSON.parse(cleanJsonResponse(raw)) as CoverageReport;
@@ -877,6 +998,7 @@ async function completeSheet(
   classified: ClassifiedContent,
   remediation: string[] = [],
   strictFormulas: string[] = [],
+  budget?: PipelineBudget,
 ): Promise<PipelineSheet> {
   const currentSheetJSON = JSON.stringify(currentSheet, null, 2);
   const blueprint = selectPedagogicalBlueprint(profile, inventory);
@@ -891,7 +1013,7 @@ async function completeSheet(
       remediation,
       strictFormulas,
     );
-    const zonedMessage = await anthropic.messages.create({
+    const zonedMessage = await createAnthropicMessage("complete-zoned-sheet", {
       model: MODELS.MAIN,
       max_tokens: 6000,
       system: [
@@ -902,7 +1024,7 @@ async function completeSheet(
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    });
+    }, 35_000, budget);
 
     const zonedRaw = zonedMessage.content[0]?.type === "text" ? zonedMessage.content[0].text : "";
     const zonedParsed = sanitizeAiJsonValue(JSON.parse(cleanJsonResponse(zonedRaw)));
@@ -925,7 +1047,7 @@ async function completeSheet(
     remediation,
     strictFormulas,
   );
-  const legacyMessage = await anthropic.messages.create({
+  const legacyMessage = await createAnthropicMessage("complete-legacy-sheet", {
     model: MODELS.MAIN,
     max_tokens: 6000,
     system: [
@@ -936,7 +1058,7 @@ async function completeSheet(
       },
     ],
     messages: [{ role: "user", content: legacyUserPrompt }],
-  });
+  }, 35_000, budget);
 
   const legacyRaw = legacyMessage.content[0]?.type === "text" ? legacyMessage.content[0].text : "";
   const legacyParsed = sanitizeAiJsonValue(JSON.parse(cleanJsonResponse(legacyRaw))) as FicheGeneree;
@@ -952,21 +1074,17 @@ async function completeSheet(
 }
 
 export async function generateWithPipeline(input: GenerateSheetRequest): Promise<FicheGeneree> {
-  const { cleanedText: sourceText, subject, subjectFamily, level, contentType } = cleanAndClassify(input.content);
+  const budget = createPipelineBudget();
+  const classified = cleanAndClassify(input.content);
+  const sourceText = classified.cleanedText;
+  const profile = inferDocumentProfile(input, classified);
 
-  // Etape 1 : Detection du profil
-  console.log("[Pipeline] Etape 1/4 : Detection du profil...");
-  const profile = await detectProfile(sourceText);
-  profile.matiere = profile.matiere || subject;
-  profile.niveau = profile.niveau || level;
-  profile.type_contenu = profile.type_contenu.length > 0 ? profile.type_contenu : [contentType];
   console.log(
-    `[Pipeline] Profil detecte : ${profile.matiere} / ${profile.sous_domaine} / ${profile.niveau} / ${profile.famille_pedagogique} / precision=${profile.niveau_precision} / densite: ${profile.densite}`,
+    `[Pipeline] Profil infere localement : ${profile.matiere} / ${profile.sous_domaine} / ${profile.niveau} / ${profile.famille_pedagogique} / precision=${profile.niveau_precision} / densite: ${profile.densite}`,
   );
 
-  // Etape 2 : Inventaire exhaustif
-  console.log("[Pipeline] Etape 2/4 : Inventaire exhaustif...");
-  const inventory = await generateInventory(sourceText, profile);
+  console.log("[Pipeline] Etape 1/2 : Inventaire exhaustif...");
+  const inventory = await generateInventory(sourceText, profile, budget);
   const elementCount = countInventoryElements(inventory);
   console.log(`[Pipeline] Inventaire : ${inventory.parties.length} parties, ${elementCount} elements totaux`);
 
@@ -979,104 +1097,26 @@ export async function generateWithPipeline(input: GenerateSheetRequest): Promise
   profile.blueprint_recommande = blueprint.id;
   console.log(`[Pipeline] Blueprint retenu : ${blueprint.id} (${blueprint.titre})`);
   const strictFormulas = collectStrictFormulas(inventory, sourceText, profile, blueprint);
-  const strictFormulaMode = isStrictFormulaCourse(profile, blueprint, strictFormulas);
   console.log(`[Pipeline] Formules strictes retenues : ${strictFormulas.length}`);
-  const classified: ClassifiedContent = {
-    subject,
-    subjectFamily,
-    level,
-    contentType,
+  const stageClassified: ClassifiedContent = {
+    ...classified,
     cleanedText: sourceText,
-    matiere: subject,
-    niveau: level,
+    matiere: classified.subject,
+    niveau: classified.level,
     blueprintId: blueprint.id,
-    titre: inventory.titre || subject || "Fiche de revision",
+    titre: inventory.titre || classified.subject || "Fiche de revision",
   };
 
-  // Etape 3 : Generation de la fiche
-  console.log("[Pipeline] Etape 3/4 : Generation de la fiche...");
-  let sheet = await generateSheetFromInventory(inventory, sourceText, profile, classified, blueprint, strictFormulas);
+  console.log("[Pipeline] Etape 2/2 : Generation de la fiche...");
+  const sheet = await generateSheet(
+    inventory,
+    sourceText,
+    profile,
+    stageClassified,
+    blueprint,
+    strictFormulas,
+    budget,
+  );
 
-  // Etape 4 : Verification de couverture + completion
-  console.log("[Pipeline] Etape 4/4 : Verification de couverture et qualite pedagogique...");
-  let bestSheet = sheet;
-  let bestScore = 0;
-  const maxAttempts = 3;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const coverage = await verifyCoverage(sheet, inventory);
-    const pedagogy = evaluatePedagogicalQuality(profile, inventory, sheet, blueprint);
-    const formulaIntegrity = evaluateStrictFormulaIntegrity(strictFormulas, collectSheetFormulaCandidates(sheet));
-    const combinedScore = strictFormulaMode
-      ? (coverage.score * 0.5) + (pedagogy.score * 0.3) + (formulaIntegrity.score * 0.2)
-      : (coverage.score * 0.65) + (pedagogy.score * 0.35);
-    console.log(
-      `[Pipeline] Tentative ${attempt}/${maxAttempts} : couverture=${coverage.score.toFixed(2)}, qualite=${pedagogy.score.toFixed(2)}, formules=${formulaIntegrity.score.toFixed(2)}, combine=${combinedScore.toFixed(2)}, manquants=${coverage.missing.length}, incomplets=${coverage.incomplete.length}, issues=${pedagogy.issues.length}, formules-manquantes=${formulaIntegrity.missing.length}, formules-alterees=${formulaIntegrity.altered.length}`,
-    );
-
-    if (combinedScore > bestScore) {
-      bestScore = combinedScore;
-      bestSheet = sheet;
-    }
-
-    if (
-      coverage.score >= 0.88
-      && pedagogy.score >= 0.78
-      && (!strictFormulaMode || (formulaIntegrity.score >= 0.78 && formulaIntegrity.altered.length <= 1))
-    ) {
-      console.log("[Pipeline] Fiche acceptee : couverture et qualite pedagogique suffisantes.");
-      return sanitizeFicheOutput(sheet);
-    }
-
-    if (attempt === maxAttempts) {
-      if (
-        strictFormulaMode
-        && strictFormulas.length >= 3
-        && (formulaIntegrity.score < 0.45 || formulaIntegrity.altered.length >= 3)
-      ) {
-        const details = [
-          ...formulaIntegrity.altered.map((formula) => `Formule alteree : ${formula}`),
-          ...formulaIntegrity.missing.map((formula) => `Formule manquante : ${formula}`),
-        ].join(" | ");
-        throw new Error(`STRICT_FORMULA_INTEGRITY_FAILED: ${details || "Les formules du document n'ont pas ete preservees."}`);
-      }
-
-      console.warn(`[Pipeline] Score final ${bestScore.toFixed(2)} apres ${maxAttempts} tentatives. Acceptation du meilleur resultat.`);
-      return sanitizeFicheOutput(bestSheet);
-    }
-
-    const remediation = [
-      ...pedagogy.missingExpected,
-      ...pedagogy.issues,
-      ...pedagogy.remediation,
-      ...pedagogy.weakNotions.map((notion) => `Remplacer ou retirer la notion cle faible : ${notion}`),
-      ...formulaIntegrity.missing.map((formula) => `Ajouter exactement la formule source suivante, sans la re-ecrire : ${formula}`),
-      ...formulaIntegrity.altered.map((formula) => `Corriger la formule alteree en recopiant exactement la formule source : ${formula}`),
-    ];
-
-    if (coverage.score < 0.70 || pedagogy.score < 0.55 || (strictFormulaMode && formulaIntegrity.score < 0.55)) {
-      console.log("[Pipeline] Fiche trop faible, regeneration complete...");
-      sheet = await generateSheetFromInventory(inventory, sourceText, profile, classified, blueprint, strictFormulas);
-    } else {
-      console.log("[Pipeline] Completion ciblee sur les zones faibles...");
-      try {
-        sheet = await completeSheet(
-          coverage.missing,
-          coverage.incomplete,
-          sheet,
-          sourceText,
-          profile,
-          inventory,
-          classified,
-          remediation,
-          strictFormulas,
-        );
-      } catch (completionError) {
-        console.warn("[Pipeline] Completion ciblee echouee, tentative de regeneration.", completionError);
-        sheet = await generateSheetFromInventory(inventory, sourceText, profile, classified, blueprint, strictFormulas);
-      }
-    }
-  }
-
-  return sanitizeFicheOutput(bestSheet);
+  return sanitizeFicheOutput(sheet);
 }

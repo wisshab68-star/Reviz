@@ -4,7 +4,7 @@ node_modules
 dist
 coverage
 *.log
-uploads/
+/uploads/
 .claude/
 
 .vercel

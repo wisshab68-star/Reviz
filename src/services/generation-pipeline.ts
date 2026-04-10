@@ -47,6 +47,7 @@ const PIPELINE_RESERVE_MS = 0;
 const MIN_STAGE_TIMEOUT_MS = 5_000;
 const ANTHROPIC_RETRYABLE_STATUS_CODES = new Set([429, 503, 529]);
 const HAIKU_GENERATION_MODEL = "claude-haiku-4-5-20251001";
+const SONNET_GENERATION_FALLBACK_MODEL = MODELS.MAIN;
 
 function createPipelineBudget(totalMs = PIPELINE_TOTAL_BUDGET_MS, reserveMs = PIPELINE_RESERVE_MS): PipelineBudget {
   return {
@@ -117,6 +118,78 @@ function cleanJsonResponse(raw: string): string {
     .replace(/\\\\/g, "\x00DB\x00")
     .replace(/\\(?!["\\/bfnrtu])/g, "\\\\")
     .replace(/\x00DB\x00/g, "\\\\");
+}
+
+function extractLikelyJsonBlock(raw: string): string {
+  const stripped = raw.replace(/```json|```/g, "").trim();
+  const firstObject = stripped.indexOf("{");
+  const firstArray = stripped.indexOf("[");
+  const firstIndexCandidates = [firstObject, firstArray].filter((index) => index >= 0);
+
+  if (firstIndexCandidates.length === 0) {
+    return stripped;
+  }
+
+  const start = Math.min(...firstIndexCandidates);
+  const lastObject = stripped.lastIndexOf("}");
+  const lastArray = stripped.lastIndexOf("]");
+  const end = Math.max(lastObject, lastArray);
+
+  if (end <= start) {
+    return stripped.slice(start);
+  }
+
+  return stripped.slice(start, end + 1);
+}
+
+function parseAnthropicJson<T>(raw: string): T {
+  const cleaned = cleanJsonResponse(raw);
+  const extracted = cleanJsonResponse(extractLikelyJsonBlock(raw));
+  const candidates = extracted !== cleaned ? [cleaned, extracted] : [cleaned];
+  let lastError: unknown = null;
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate) as T;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Le JSON renvoye par le modele est invalide.");
+}
+
+function isRecoverableJsonError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return error instanceof SyntaxError
+    || /unterminated string|unexpected end of json input|unexpected token|json/i.test(message);
+}
+
+async function createParsedAnthropicJson<T>(
+  stage: string,
+  buildParams: (model: string) => Parameters<typeof anthropic.messages.create>[0] & { stream?: false },
+  preferredTimeoutMs: number,
+  budget?: PipelineBudget,
+): Promise<T> {
+  let lastError: unknown = null;
+
+  for (const model of [HAIKU_GENERATION_MODEL, SONNET_GENERATION_FALLBACK_MODEL]) {
+    try {
+      const message = await createAnthropicMessage(stage, buildParams(model), preferredTimeoutMs, budget);
+      const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
+      return parseAnthropicJson<T>(raw);
+    } catch (error) {
+      lastError = error;
+
+      if (model === SONNET_GENERATION_FALLBACK_MODEL || !isRecoverableJsonError(error)) {
+        throw error;
+      }
+
+      console.warn(`[Pipeline] ${stage} a renvoye un JSON invalide avec Haiku, fallback vers Sonnet.`, error);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(`Le stage ${stage} a echoue.`);
 }
 
 function normalizeKey(value: string) {
@@ -683,8 +756,8 @@ export async function generateInventory(
   if (chunks.length === 1) {
     const systemPrompt = buildInventorySystemPrompt(profile);
     const userPrompt = buildInventoryUserPrompt(sourceText);
-    const message = await createAnthropicMessage("inventory", {
-      model: HAIKU_GENERATION_MODEL,
+    const parsed = await createParsedAnthropicJson<ContentInventory>("inventory", (model) => ({
+      model,
       max_tokens: 8000,
       system: [
         {
@@ -694,10 +767,7 @@ export async function generateInventory(
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    }, 50_000, budget);
-
-    const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
-    const parsed = JSON.parse(cleanJsonResponse(raw)) as ContentInventory;
+    }), 50_000, budget);
 
     return {
       titre: parsed.titre || "",
@@ -718,8 +788,8 @@ Tu traites seulement un extrait du document complet (${index + 1}/${chunks.lengt
 Tu dois etre exhaustif sur cet extrait, sans supposer que d'autres parties seront re-analysees plus tard.
 Conserve les titres de parties et les formules exactement quand elles apparaissent.`;
     const userPrompt = buildInventoryUserPrompt(chunk);
-    const message = await createAnthropicMessage(`inventory-chunk-${index + 1}`, {
-      model: HAIKU_GENERATION_MODEL,
+    const parsed = await createParsedAnthropicJson<ContentInventory>(`inventory-chunk-${index + 1}`, (model) => ({
+      model,
       max_tokens: 5000,
       system: [
         {
@@ -729,10 +799,7 @@ Conserve les titres de parties et les formules exactement quand elles apparaisse
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    }, 50_000, budget);
-
-    const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
-    const parsed = JSON.parse(cleanJsonResponse(raw)) as ContentInventory;
+    }), 50_000, budget);
     inventories.push({
       titre: parsed.titre || "",
       parties: Array.isArray(parsed.parties) ? parsed.parties : [],
@@ -947,8 +1014,8 @@ async function generateLegacySheetFromInventory(
 
   const systemPrompt = buildSheetSystemPrompt(profile, blueprint);
   const userPrompt = buildSheetUserPrompt(inventoryJSON, sourceText, profile, blueprint, strictFormulas);
-  const message = await createAnthropicMessage("generate-legacy-sheet", {
-    model: HAIKU_GENERATION_MODEL,
+  const parsed = sanitizeAiJsonValue(await createParsedAnthropicJson<FicheGeneree>("generate-legacy-sheet", (model) => ({
+    model,
     max_tokens: 6000,
     system: [
       {
@@ -958,11 +1025,7 @@ async function generateLegacySheetFromInventory(
       },
     ],
     messages: [{ role: "user", content: userPrompt }],
-  }, 50_000, budget);
-
-  const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
-  const cleaned = cleanJsonResponse(raw);
-  const parsed = sanitizeAiJsonValue(JSON.parse(cleaned)) as FicheGeneree;
+  }), 50_000, budget)) as FicheGeneree;
   return applySheetMetadata(parsed, profile, blueprint);
 }
 
@@ -987,8 +1050,8 @@ export async function generateSheet(
       strictFormulas,
       classified,
     );
-    const message = await createAnthropicMessage("generate-zoned-sheet", {
-      model: HAIKU_GENERATION_MODEL,
+    const parsed = sanitizeAiJsonValue(await createParsedAnthropicJson<unknown>("generate-zoned-sheet", (model) => ({
+      model,
       max_tokens: 6000,
       system: [
         {
@@ -998,11 +1061,7 @@ export async function generateSheet(
         },
       ],
       messages: [{ role: "user", content: userPrompt }],
-    }, 50_000, budget);
-
-    const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
-    const cleaned = cleanJsonResponse(raw);
-    const parsed = sanitizeAiJsonValue(JSON.parse(cleaned));
+    }), 50_000, budget));
 
     if (!validateZonedFicheStructure(parsed)) {
       console.warn("[Pipeline] ZonedFiche invalide, fallback vers le prompt legacy.");

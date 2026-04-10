@@ -524,13 +524,70 @@ function cleanFilename(filename: string) {
     .replace(/^./, (char) => char.toUpperCase());
 }
 
+function inferSubjectFromSourceText(sourceText: string): string {
+  const lower = sourceText.toLowerCase();
+
+  if (
+    /\b(fonction|fonctions|derivee|derivees|primitive|primitives|integrale|integrales|limite|limites|suite|suites|vecteur|vecteurs|matrice|matrices|equation|equations|polynome|polynomes|trinome|trigonometr|probabilite|probabilites|statistique|statistiques|tableau de variation|ensemble de definition)\b/.test(lower)
+  ) {
+    return "Mathematiques";
+  }
+  if (
+    /\b(force|energie|tension|courant|atome|molecule|reaction chimique|chimie|physique|cellule|photosynthese)\b/.test(lower)
+  ) {
+    return "Sciences";
+  }
+  if (/\b(guerre|revolution|empire|siecle|traite|constitution|croissance|inflation)\b/.test(lower)) {
+    return "Histoire-Geographie";
+  }
+  if (/\b(algorithme|boucle|fonction informatique|variable|tableau|classe|objet|complexite)\b/.test(lower)) {
+    return "Informatique";
+  }
+  if (/\b(philosophe|etre|conscience|liberte|verite|connaissance)\b/.test(lower)) {
+    return "Philosophie";
+  }
+  if (/\b(anglais|espagnol|allemand|italien|grammar|vocabulary|conjugaison)\b/.test(lower)) {
+    return "Langues";
+  }
+
+  return "General";
+}
+
+function inferSubjectFromFileHint(fileHint: string): string {
+  const lower = fileHint.toLowerCase();
+
+  if (/\b(fonction|derivee|integrale|suite|vecteur|matrice|probabilite|statistique)\b/.test(lower)) {
+    return "Mathematiques";
+  }
+  if (/\b(photosynthese|cellule|atome|molecule|energie|reaction|chimie|physique)\b/.test(lower)) {
+    return "Sciences";
+  }
+  if (/\b(guerre|revolution|constitution|empire|croissance|inflation)\b/.test(lower)) {
+    return "Histoire-Geographie";
+  }
+  if (/\b(algorithme|variable|classe|objet|complexite|automate)\b/.test(lower)) {
+    return "Informatique";
+  }
+
+  return "General";
+}
+
 export function inferDocumentProfile(
   input: Pick<GenerateSheetRequest, "content" | "titleHint">,
   classified: Pick<ClassifiedContent, "cleanedText" | "subject" | "level" | "contentType">,
 ): DocumentProfile {
-  const sourceText = classified.cleanedText || input.content;
+  const sourceText = classified.cleanedText.trim() || input.content.trim();
   const fileHint = input.titleHint ? cleanFilename(input.titleHint) : "";
-  const inferredSubject = classified.subject || fileHint || "Cours";
+  const sourceSubject = inferSubjectFromSourceText(sourceText);
+  const hintSubject = inferSubjectFromFileHint(fileHint);
+  const inferredSubject =
+    sourceSubject !== "General"
+      ? sourceSubject
+      : classified.subject && classified.subject !== "General"
+        ? classified.subject
+        : hintSubject !== "General"
+          ? hintSubject
+          : fileHint || "Cours";
   const density = sourceText.length > 12000 ? "elevee" : sourceText.length > 5000 ? "moyenne" : "faible";
 
   return {
@@ -1076,7 +1133,7 @@ async function completeSheet(
 export async function generateWithPipeline(input: GenerateSheetRequest): Promise<FicheGeneree> {
   const budget = createPipelineBudget();
   const classified = cleanAndClassify(input.content);
-  const sourceText = classified.cleanedText;
+  const sourceText = classified.cleanedText.trim() || input.content.trim();
   const profile = inferDocumentProfile(input, classified);
 
   console.log(

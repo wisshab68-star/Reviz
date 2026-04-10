@@ -26,6 +26,13 @@ type WorkflowClassifiedInput = Pick<
   "cleanedText" | "subject" | "subjectFamily" | "level" | "contentType"
 >;
 
+function resolveWorkflowSourceText(input: GenerateSheetRequest, classifiedInput: WorkflowClassifiedInput) {
+  const cleanedText = classifiedInput.cleanedText.trim();
+  const rawText = input.content.trim();
+
+  return cleanedText || rawText;
+}
+
 function resolveSubjectFamily(data: any) {
   const families = [
     "exact_sciences",
@@ -289,18 +296,27 @@ export async function generateSheetWorkflow(sheetId: string, input: GenerateShee
   "use workflow";
 
   const classifiedInput = buildWorkflowClassifiedInput(input);
+  const sourceText = resolveWorkflowSourceText(input, classifiedInput);
   const profile = inferDocumentProfile(input, classifiedInput);
 
   try {
+    if (!sourceText) {
+      throw new Error("Le contenu du document est vide apres extraction.");
+    }
+
+    console.log(
+      `[WORKFLOW] sheetId=${sheetId} sourceLength=${sourceText.length} titleHint="${input.titleHint ?? ""}" subject="${profile.matiere}"`,
+    );
+
     const inventory = await step1_inventory({
-      sourceText: classifiedInput.cleanedText,
+      sourceText,
       profile,
     });
 
     return await step2_generate({
       sheetId,
       request: input,
-      sourceText: classifiedInput.cleanedText,
+      sourceText,
       profile,
       inventory,
       classifiedInput,

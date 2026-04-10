@@ -71,6 +71,10 @@ export async function POST(request: Request) {
       ...parsed,
       userId: session?.user?.id ?? parsed.userId,
     };
+    const contentLength = input.content.trim().length;
+    console.log(
+      `[GENERATE][payload] sourceType=${input.sourceType} contentLength=${contentLength} titleHint="${input.titleHint ?? ""}"`,
+    );
 
     let quota = null;
     let warning: string | undefined;

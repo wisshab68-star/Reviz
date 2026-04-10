@@ -67,6 +67,7 @@ const quickActions: QuickAction[] = [
 ];
 
 const sampleText = `La photosynthese est le processus par lequel les plantes vertes produisent leur matiere organique. Elles utilisent l'energie lumineuse captee par la chlorophylle, ainsi que l'eau absorbee par les racines et le dioxyde de carbone present dans l'air. Ce mecanisme permet la fabrication de glucose, qui sert de reserve d'energie, et rejette de l'oxygene. La photosynthese a lieu principalement dans les feuilles et joue un role essentiel dans l'equilibre de l'atmosphere et des ecosystemes.`;
+const sampleTitle = "La photosynthese";
 
 const heroMetrics = [
   { value: "12 s", label: "pour lancer une fiche" },
@@ -112,10 +113,10 @@ export function HomeGenerator({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [content, setContent] = useState(sampleText);
+  const [content, setContent] = useState("");
   const [isActivated, setIsActivated] = useState(false);
   const [textMode, setTextMode] = useState(false);
-  const [titleHint, setTitleHint] = useState("La photosynthese");
+  const [titleHint, setTitleHint] = useState("");
   const [sourceType, setSourceType] = useState("TEXT");
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -589,7 +590,7 @@ export function HomeGenerator({
               setDocumentId(null);
               setFileName(null);
               setSourceType("TEXT");
-              setTitleHint("La photosynthese");
+              setTitleHint(sampleTitle);
             }}
             disabled={isSubmitting || isUploading}
           >

@@ -153,9 +153,10 @@ function buildHeaderMetrics(data: any) {
 
 function buildWorkflowClassifiedInput(input: GenerateSheetRequest): WorkflowClassifiedInput {
   const classified = cleanAndClassify(input.content);
+  const resolvedSubject = input.subject?.trim() || classified.subject;
   return {
     cleanedText: classified.cleanedText,
-    subject: classified.subject,
+    subject: resolvedSubject,
     subjectFamily: classified.subjectFamily,
     level: classified.level,
     contentType: classified.contentType,
@@ -163,16 +164,20 @@ function buildWorkflowClassifiedInput(input: GenerateSheetRequest): WorkflowClas
 }
 
 function buildStageClassification(
+  request: Pick<GenerateSheetRequest, "subject">,
   classifiedInput: WorkflowClassifiedInput,
   inventory: ContentInventory,
   blueprintId: string,
 ): ClassifiedContent {
+  const resolvedSubject = request.subject?.trim() || classifiedInput.subject;
+
   return {
     ...classifiedInput,
-    matiere: classifiedInput.subject,
+    subject: resolvedSubject,
+    matiere: resolvedSubject,
     niveau: classifiedInput.level,
     blueprintId,
-    titre: inventory.titre || classifiedInput.subject || "Fiche de revision",
+    titre: inventory.titre || resolvedSubject || "Fiche de revision",
   };
 }
 
@@ -233,7 +238,7 @@ async function step2_generate(input: {
       input.profile,
       blueprint,
     );
-    const classified = buildStageClassification(input.classifiedInput, input.inventory, blueprint.id);
+    const classified = buildStageClassification(input.request, input.classifiedInput, input.inventory, blueprint.id);
     const rawSheet = await generateSheet(
       input.inventory,
       input.sourceText,
@@ -305,7 +310,7 @@ export async function generateSheetWorkflow(sheetId: string, input: GenerateShee
     }
 
     console.log(
-      `[WORKFLOW] sheetId=${sheetId} sourceLength=${sourceText.length} titleHint="${input.titleHint ?? ""}" subject="${profile.matiere}"`,
+      `[WORKFLOW] sheetId=${sheetId} sourceLength=${sourceText.length} titleHint="${input.titleHint ?? ""}" selectedSubject="${input.subject ?? ""}" subject="${profile.matiere}"`,
     );
 
     const inventory = await step1_inventory({

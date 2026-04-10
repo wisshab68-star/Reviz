@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     };
     const contentLength = input.content.trim().length;
     console.log(
-      `[GENERATE][payload] sourceType=${input.sourceType} contentLength=${contentLength} titleHint="${input.titleHint ?? ""}"`,
+      `[GENERATE][payload] sourceType=${input.sourceType} contentLength=${contentLength} titleHint="${input.titleHint ?? ""}" subject="${input.subject ?? ""}"`,
     );
 
     let quota = null;

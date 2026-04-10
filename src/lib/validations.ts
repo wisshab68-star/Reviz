@@ -4,6 +4,7 @@ export const generateSheetRequestSchema = z.object({
   userId: z.string().cuid().optional(),
   documentId: z.string().cuid().optional(),
   sourceType: z.enum(["TEXT", "PDF", "IMAGE", "DOCX", "AUDIO"]).default("TEXT"),
+  subject: z.string().trim().min(2).max(80).optional(),
   titleHint: z.string().trim().min(1).max(160).optional(),
   content: z.string().trim().min(80, "Le contenu doit contenir au moins 80 caracteres."),
 });

@@ -573,15 +573,18 @@ function inferSubjectFromFileHint(fileHint: string): string {
 }
 
 export function inferDocumentProfile(
-  input: Pick<GenerateSheetRequest, "content" | "titleHint">,
+  input: Pick<GenerateSheetRequest, "content" | "titleHint" | "subject">,
   classified: Pick<ClassifiedContent, "cleanedText" | "subject" | "level" | "contentType">,
 ): DocumentProfile {
   const sourceText = classified.cleanedText.trim() || input.content.trim();
+  const selectedSubject = input.subject?.trim() ?? "";
   const fileHint = input.titleHint ? cleanFilename(input.titleHint) : "";
   const sourceSubject = inferSubjectFromSourceText(sourceText);
   const hintSubject = inferSubjectFromFileHint(fileHint);
   const inferredSubject =
-    sourceSubject !== "General"
+    selectedSubject
+      ? selectedSubject
+      : sourceSubject !== "General"
       ? sourceSubject
       : classified.subject && classified.subject !== "General"
         ? classified.subject
@@ -1157,11 +1160,12 @@ export async function generateWithPipeline(input: GenerateSheetRequest): Promise
   console.log(`[Pipeline] Formules strictes retenues : ${strictFormulas.length}`);
   const stageClassified: ClassifiedContent = {
     ...classified,
+    subject: input.subject?.trim() || classified.subject,
     cleanedText: sourceText,
-    matiere: classified.subject,
+    matiere: input.subject?.trim() || classified.subject,
     niveau: classified.level,
     blueprintId: blueprint.id,
-    titre: inventory.titre || classified.subject || "Fiche de revision",
+    titre: inventory.titre || input.subject?.trim() || classified.subject || "Fiche de revision",
   };
 
   console.log("[Pipeline] Etape 2/2 : Generation de la fiche...");

@@ -42,6 +42,11 @@ type QuickAction = {
   capture?: "environment";
 };
 
+type SubjectOption = {
+  value: string;
+  label: string;
+};
+
 const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_UPLOAD_SIZE_LABEL = "10 Mo";
 const MINIMAL_UPLOAD_INPUT_ID = "reviz-minimal-upload-input";
@@ -68,6 +73,21 @@ const quickActions: QuickAction[] = [
 
 const sampleText = `La photosynthese est le processus par lequel les plantes vertes produisent leur matiere organique. Elles utilisent l'energie lumineuse captee par la chlorophylle, ainsi que l'eau absorbee par les racines et le dioxyde de carbone present dans l'air. Ce mecanisme permet la fabrication de glucose, qui sert de reserve d'energie, et rejette de l'oxygene. La photosynthese a lieu principalement dans les feuilles et joue un role essentiel dans l'equilibre de l'atmosphere et des ecosystemes.`;
 const sampleTitle = "La photosynthese";
+const OTHER_SUBJECT_VALUE = "__other__";
+const subjectOptions: SubjectOption[] = [
+  { value: "Maths", label: "📐 Maths" },
+  { value: "Physique-Chimie", label: "⚗️ Physique-Chimie" },
+  { value: "SVT", label: "🌿 SVT" },
+  { value: "Histoire-Géo", label: "🌍 Histoire-Géo" },
+  { value: "Français", label: "📖 Français" },
+  { value: "Philosophie", label: "🧠 Philosophie" },
+  { value: "Anglais", label: "🇬🇧 Anglais" },
+  { value: "Langues vivantes", label: "🗣️ Langues vivantes" },
+  { value: "SES", label: "📊 SES" },
+  { value: "Technologie", label: "💻 Technologie" },
+  { value: "Arts / Musique", label: "🎨 Arts / Musique" },
+  { value: OTHER_SUBJECT_VALUE, label: "✏️ Autre (précise)" },
+];
 
 const heroMetrics = [
   { value: "12 s", label: "pour lancer une fiche" },
@@ -123,6 +143,13 @@ export function HomeGenerator({
   const [fileAccept, setFileAccept] = useState(".pdf,.txt,image/*");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [customSubject, setCustomSubject] = useState("");
+
+  const resolvedSubject = selectedSubject === OTHER_SUBJECT_VALUE ? customSubject.trim() : selectedSubject;
+  const isOtherSubject = selectedSubject === OTHER_SUBJECT_VALUE;
+  const isSubjectValid = resolvedSubject.trim().length > 0;
+  const isGenerateDisabled = isSubmitting || isUploading || content.trim().length < 80 || !isSubjectValid;
 
   function formatGenerationError(message: string) {
     if (/429|quota|insufficient_quota|billing/i.test(message)) {
@@ -241,6 +268,7 @@ export function HomeGenerator({
         },
         body: JSON.stringify({
           content,
+          subject: resolvedSubject,
           titleHint,
           sourceType,
           documentId: documentId ?? undefined,
@@ -361,6 +389,47 @@ export function HomeGenerator({
     input.click();
   }
 
+  function renderSubjectSelector() {
+    return (
+      <div className="reviz-subject-selector">
+        <p className="reviz-subject-label">C&apos;est pour quelle matière ? 🎯</p>
+        <div className="reviz-subject-pills" role="radiogroup" aria-label="Choix de la matière">
+          {subjectOptions.map((option) => {
+            const isSelected = selectedSubject === option.value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className="reviz-subject-pill"
+                data-selected={isSelected}
+                aria-pressed={isSelected}
+                onClick={() => {
+                  setSelectedSubject(option.value);
+                  if (option.value !== OTHER_SUBJECT_VALUE) {
+                    setCustomSubject("");
+                  }
+                }}
+                disabled={isSubmitting || isUploading}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="reviz-subject-other" data-open={isOtherSubject}>
+          <input
+            type="text"
+            value={customSubject}
+            onChange={(event) => setCustomSubject(event.target.value)}
+            placeholder="Ex : NSI, Droit, Cinéma..."
+            disabled={!isOtherSubject || isSubmitting || isUploading}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (minimal) {
     return (
       <>
@@ -431,11 +500,13 @@ export function HomeGenerator({
             </label>
           </div>
 
+          {renderSubjectSelector()}
+
           <button
             type="button"
             className="btn btn-primary reviz-generate-button"
             onClick={() => void handleSubmit()}
-            disabled={isSubmitting || isUploading || content.trim().length < 80}
+            disabled={isGenerateDisabled}
           >
             {isUploading ? "Extraction..." : isSubmitting ? "Generation..." : "Generer ma fiche"}
           </button>
@@ -579,6 +650,8 @@ export function HomeGenerator({
           </div>
         </div>
 
+        {renderSubjectSelector()}
+
         <div className="composer-footer">
           <button
             type="button"
@@ -591,6 +664,8 @@ export function HomeGenerator({
               setFileName(null);
               setSourceType("TEXT");
               setTitleHint(sampleTitle);
+              setSelectedSubject("SVT");
+              setCustomSubject("");
             }}
             disabled={isSubmitting || isUploading}
           >
@@ -601,7 +676,7 @@ export function HomeGenerator({
             type="button"
             className="btn btn-primary btn-large"
             onClick={() => void handleSubmit()}
-            disabled={isSubmitting || isUploading || content.trim().length < 80}
+            disabled={isGenerateDisabled}
           >
             {isUploading ? "Extraction..." : isSubmitting ? "Generation..." : "Generer ma fiche"}
           </button>

@@ -445,6 +445,26 @@ function splitIntoSemanticChunks(sourceText: string, maxChars = 9000) {
   return chunks.filter(Boolean);
 }
 
+function prepareModelInputText(sourceText: string): string {
+  const lines = sourceText
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => line.length >= 15)
+    .filter((line) => !/^https?:\/\//i.test(line))
+    .filter((line) => !/^www\./i.test(line))
+    .filter((line) => !/^\d{1,4}$/.test(line))
+    .filter((line) => {
+      const letters = (line.match(/[a-zA-ZÀ-ÿ]/g) ?? []).length;
+      return letters >= Math.max(8, Math.floor(line.length * 0.35));
+    })
+    .filter((line) => !/[|]{2,}/.test(line));
+
+  const text = lines.join("\n");
+  const MAX_CHARS = 4000 * 4; // ~4000 tokens estimes
+  return text.slice(0, MAX_CHARS).trim();
+}
+
 function mergeStringLists(primary: string[], secondary: string[]) {
   return dedupeByKey([...primary, ...secondary], (item) => item);
 }
@@ -751,11 +771,12 @@ export async function generateInventory(
   profile: DocumentProfile,
   budget?: PipelineBudget,
 ): Promise<ContentInventory> {
-  const chunks = splitIntoSemanticChunks(sourceText);
+  const preparedSourceText = prepareModelInputText(sourceText);
+  const chunks = splitIntoSemanticChunks(preparedSourceText);
 
   if (chunks.length === 1) {
     const systemPrompt = buildInventorySystemPrompt(profile);
-    const userPrompt = buildInventoryUserPrompt(sourceText);
+    const userPrompt = buildInventoryUserPrompt(preparedSourceText);
     const parsed = await createParsedAnthropicJson<ContentInventory>("inventory", (model) => ({
       model,
       max_tokens: 8000,
@@ -1038,13 +1059,14 @@ export async function generateSheet(
   strictFormulas: string[] = [],
   budget?: PipelineBudget,
 ): Promise<PipelineSheet> {
+  const preparedSourceText = prepareModelInputText(sourceText);
   const inventoryJSON = JSON.stringify(inventory, null, 2);
 
   try {
     const systemPrompt = buildZonedSheetSystemPrompt(profile, blueprint, classified);
     const userPrompt = buildZonedSheetUserPrompt(
       inventoryJSON,
-      sourceText,
+      preparedSourceText,
       profile,
       blueprint,
       strictFormulas,
@@ -1065,13 +1087,13 @@ export async function generateSheet(
 
     if (!validateZonedFicheStructure(parsed)) {
       console.warn("[Pipeline] ZonedFiche invalide, fallback vers le prompt legacy.");
-      return generateLegacySheetFromInventory(inventory, sourceText, profile, blueprint, strictFormulas, budget);
+      return generateLegacySheetFromInventory(inventory, preparedSourceText, profile, blueprint, strictFormulas, budget);
     }
 
     return applySheetMetadata(convertZonedToLegacy(sanitizeGeneratedSheet(parsed)), profile, blueprint);
   } catch (error) {
     console.warn("[Pipeline] Generation ZonedFiche echouee, fallback vers le prompt legacy.", error);
-    return generateLegacySheetFromInventory(inventory, sourceText, profile, blueprint, strictFormulas, budget);
+    return generateLegacySheetFromInventory(inventory, preparedSourceText, profile, blueprint, strictFormulas, budget);
   }
 }
 

@@ -1,10 +1,13 @@
 import { NextRequest } from "next/server";
 
-import { deriveClassicSheetFromFiche } from "@/lib/fiche-storage";
+import { Prisma } from "@prisma/client";
+import { db } from "@/lib/db";
+import { deriveClassicSheetFromFiche, wrapKeyPointsPayload } from "@/lib/fiche-storage";
 import { detectSubjectFamily, getFlashcardCap, getSubjectFamilyCaps } from "@/lib/subject-families";
+import { sanitizeAiJsonValue, sanitizeText } from "@/lib/text";
 import { generateRichFiche } from "@/services/fiche-generator-service";
-import { finalizePendingSheet, failPendingSheet } from "@/services/sheet-service";
 import { trackUsage } from "@/services/usage-service";
+import type { FicheGeneree } from "@/types/fiche-generated";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -140,8 +143,22 @@ export async function POST(req: NextRequest) {
     fiche.titre = finalTitle;
     fiche.metriques = buildHeaderMetrics(fiche);
     const generated = deriveClassicSheetFromFiche(fiche);
+    const safeGenerated = sanitizeAiJsonValue(generated);
+    const safeFiche = sanitizeAiJsonValue(fiche) as FicheGeneree;
 
-    await finalizePendingSheet(sheetId, generated, fiche);
+    await db.studySheet.update({
+      where: { id: sheetId },
+      data: {
+        title: sanitizeText(safeGenerated.title),
+        summary: sanitizeText(safeGenerated.summary),
+        keyPointsJson: wrapKeyPointsPayload(safeGenerated.keyPoints, safeFiche) as unknown as Prisma.InputJsonValue,
+        definitionsJson: safeGenerated.definitions,
+        flashcardsJson: safeGenerated.flashcards,
+        quizJson: safeGenerated.quiz,
+        status: "COMPLETED",
+        updatedAt: new Date(),
+      },
+    });
     await trackUsage(input.userId, "sheet_generated");
 
     return Response.json({ success: true });
@@ -149,10 +166,14 @@ export async function POST(req: NextRequest) {
     console.error("[WORKFLOW ERROR]", error);
 
     try {
-      await failPendingSheet(
-        sheetId,
-        error instanceof Error ? error.message : "La generation a echoue.",
-      );
+      await db.studySheet.update({
+        where: { id: sheetId },
+        data: {
+          status: "FAILED",
+          summary: error instanceof Error ? error.message : "La generation a echoue.",
+          updatedAt: new Date(),
+        },
+      });
     } catch (statusError) {
       console.error("[WORKFLOW] Failed to mark sheet as FAILED:", statusError);
     }

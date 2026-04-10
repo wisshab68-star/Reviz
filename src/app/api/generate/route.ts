@@ -6,8 +6,11 @@ import { deriveClassicSheetFromFiche } from "@/lib/fiche-storage";
 import { detectSubjectFamily, getFlashcardCap, getSubjectFamilyCaps } from "@/lib/subject-families";
 import { generateSheetRequestSchema } from "@/lib/validations";
 import { generateRichFiche } from "@/services/fiche-generator-service";
-import { saveGeneratedSheet } from "@/services/sheet-service";
+import { createPendingSheet, saveGeneratedSheet } from "@/services/sheet-service";
 import { assertSheetQuota, trackUsage } from "@/services/usage-service";
+
+export const runtime = "nodejs";
+export const maxDuration = 30;
 
 function cleanFilename(filename: string): string {
   return filename
@@ -461,39 +464,83 @@ export async function POST(request: Request) {
       }
     }
 
-    const fiche = enforceSheetLimits(await generateRichFiche(input));
-    fiche.subjectFamily = fiche.subjectFamily ?? resolveSubjectFamily(fiche);
-    const generatedModelTitle = typeof fiche.titre === "string" ? fiche.titre.trim() : "";
-    const cleanedFallbackTitle = input.titleHint ? cleanFilename(input.titleHint) : "";
-    const finalTitle = (
-      generatedModelTitle && !looksLikeFilenameTitle(generatedModelTitle, input.titleHint)
-        ? generatedModelTitle
-        : cleanedFallbackTitle
-    ) || generatedModelTitle || "Fiche de revision";
+    const runImmediateGeneration = async (extraWarning?: string) => {
+      const fiche = enforceSheetLimits(await generateRichFiche(input));
+      fiche.subjectFamily = fiche.subjectFamily ?? resolveSubjectFamily(fiche);
+      const generatedModelTitle = typeof fiche.titre === "string" ? fiche.titre.trim() : "";
+      const cleanedFallbackTitle = input.titleHint ? cleanFilename(input.titleHint) : "";
+      const finalTitle = (
+        generatedModelTitle && !looksLikeFilenameTitle(generatedModelTitle, input.titleHint)
+          ? generatedModelTitle
+          : cleanedFallbackTitle
+      ) || generatedModelTitle || "Fiche de revision";
 
-    fiche.titre = finalTitle;
-    fiche.metriques = buildHeaderMetrics(fiche);
-    const generated = deriveClassicSheetFromFiche(fiche);
+      fiche.titre = finalTitle;
+      fiche.metriques = buildHeaderMetrics(fiche);
+      const generated = deriveClassicSheetFromFiche(fiche);
 
-    let sheetId: string | null = null;
+      let sheetId: string | null = null;
+      let localWarning = extraWarning ?? warning;
+
+      try {
+        const sheet = await saveGeneratedSheet(input, generated, fiche);
+        sheetId = sheet.id;
+        await trackUsage(input.userId, "sheet_generated");
+      } catch (dbError) {
+        console.error("[GENERATE] DB save failed (non-blocking):", dbError);
+        localWarning = [localWarning, getPersistenceFallbackMessage()].filter(Boolean).join(" ");
+      }
+
+      return NextResponse.json({
+        success: true,
+        sheetId,
+        quota,
+        data: generated,
+        fiche,
+        warning: localWarning,
+        mode: process.env.ANTHROPIC_API_KEY ? "ai_or_fallback" : "demo",
+      });
+    };
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return runImmediateGeneration();
+    }
+
+    const pendingTitle = input.titleHint ? cleanFilename(input.titleHint) : "Fiche en generation";
+    let pendingSheet: Awaited<ReturnType<typeof createPendingSheet>> | null = null;
 
     try {
-      const sheet = await saveGeneratedSheet(input, generated, fiche);
-      sheetId = sheet.id;
-      await trackUsage(input.userId, "sheet_generated");
-    } catch (dbError) {
-      console.error("[GENERATE] DB save failed (non-blocking):", dbError);
-      warning = getPersistenceFallbackMessage();
+      pendingSheet = await createPendingSheet(input, pendingTitle);
+    } catch (pendingError) {
+      if (!isDatabaseConnectionError(pendingError)) {
+        throw pendingError;
+      }
+
+      console.error("[GENERATE] Pending sheet creation failed, falling back to immediate flow:", pendingError);
+      return runImmediateGeneration(getPersistenceFallbackMessage());
     }
+
+    // Fire-and-forget to the long-running workflow route
+    const baseUrl = process.env.NEXTAUTH_URL
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+    fetch(`${baseUrl}/api/workflows/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sheetId: pendingSheet.id,
+        input,
+      }),
+    }).catch((err) => console.error("[WORKFLOW TRIGGER ERROR]", err));
 
     return NextResponse.json({
       success: true,
-      sheetId,
+      sheetId: pendingSheet.id,
       quota,
-      data: generated,
-      fiche,
       warning,
-      mode: process.env.ANTHROPIC_API_KEY ? "ai_or_fallback" : "demo",
+      queued: true,
+      status: pendingSheet.status,
+      mode: "ai_or_fallback",
     });
   } catch (error) {
     console.error("[GENERATE] Unhandled error:", error);

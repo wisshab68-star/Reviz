@@ -1,14 +1,11 @@
-import { after, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { DocumentType, Prisma } from "@prisma/client";
 
 import { auth } from "@/auth";
-import { getPersistenceFallbackMessage, isDatabaseConnectionError } from "@/lib/database-fallback";
+import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { db } from "@/lib/db";
-import { deriveClassicSheetFromFiche } from "@/lib/fiche-storage";
 import { generateSheetRequestSchema } from "@/lib/validations";
-import { generateRichFiche } from "@/services/fiche-generator-service";
-import { saveGeneratedSheet } from "@/services/sheet-service";
-import { assertSheetQuota, trackUsage } from "@/services/usage-service";
+import { assertSheetQuota } from "@/services/usage-service";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -42,7 +39,6 @@ function cleanFilename(filename: string): string {
 
 export async function POST(request: Request) {
   const startedAt = Date.now();
-  const requestUrl = new URL(request.url);
   const logStage = (stage: string) => {
     console.log(`[GENERATE][${stage}] +${Date.now() - startedAt}ms`);
   };
@@ -77,7 +73,6 @@ export async function POST(request: Request) {
     );
 
     let quota = null;
-    let warning: string | undefined;
 
     if (session?.user?.id) {
       try {
@@ -97,38 +92,7 @@ export async function POST(request: Request) {
         }
 
         console.error("Quota lookup failed, continuing without persistence.", error);
-        warning = getPersistenceFallbackMessage();
       }
-    }
-
-    const runImmediateGeneration = async (extraWarning?: string) => {
-      const fiche = await generateRichFiche(input);
-      const generated = deriveClassicSheetFromFiche(fiche);
-      let sheetId: string | null = null;
-      let localWarning = extraWarning ?? warning;
-
-      try {
-        const sheet = await saveGeneratedSheet(input, generated, fiche);
-        sheetId = sheet.id;
-        await trackUsage(input.userId, "sheet_generated");
-      } catch (dbError) {
-        console.error("[GENERATE] DB save failed (non-blocking):", dbError);
-        localWarning = [localWarning, getPersistenceFallbackMessage()].filter(Boolean).join(" ");
-      }
-
-      return NextResponse.json({
-        success: true,
-        sheetId,
-        quota,
-        data: generated,
-        fiche,
-        warning: localWarning,
-        mode: process.env.ANTHROPIC_API_KEY ? "ai_or_fallback" : "demo",
-      });
-    };
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return runImmediateGeneration();
     }
 
     let resolvedDocumentId = input.documentId;
@@ -163,8 +127,8 @@ export async function POST(request: Request) {
           throw documentError;
         }
 
-        console.error("[GENERATE] Document creation failed, falling back to immediate flow:", documentError);
-        return runImmediateGeneration(getPersistenceFallbackMessage());
+        console.error("[GENERATE] Document creation failed:", documentError);
+        throw new Error("Impossible de preparer le document pour la generation.");
       }
     }
 
@@ -205,104 +169,16 @@ export async function POST(request: Request) {
         throw pendingError;
       }
 
-      console.error("[GENERATE] Pending sheet creation failed, falling back to immediate flow:", pendingError);
-      return runImmediateGeneration(getPersistenceFallbackMessage());
-    }
-
-    try {
-      logStage("inventory:start");
-      const inventoryResponse = await withStageTimeout(
-        "inventory:start",
-        fetch(new URL("/api/generate/inventory", requestUrl), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sheetId: pendingSheet.id,
-            content: input.content,
-            subject: input.subject,
-            titleHint: input.titleHint,
-            userId: input.userId,
-          }),
-          cache: "no-store",
-        }),
-        58_000,
-      );
-      const inventoryData = await inventoryResponse.json() as { success: boolean; error?: string };
-      if (!inventoryResponse.ok || !inventoryData.success) {
-        throw new Error(inventoryData.error ?? "La generation de l'inventaire a echoue.");
-      }
-      logStage("inventory:done");
-
-      after(async () => {
-        try {
-          const sheetResponse = await fetch(new URL("/api/generate/sheet", requestUrl), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ sheetId: pendingSheet.id }),
-            cache: "no-store",
-          });
-
-          if (!sheetResponse.ok) {
-            const sheetData = await sheetResponse.json().catch(() => null) as { error?: string } | null;
-            console.error("[GENERATE] Sheet route returned an error:", sheetData?.error ?? sheetResponse.statusText);
-          }
-        } catch (sheetTriggerError) {
-          console.error("[GENERATE] Failed to trigger sheet generation route:", sheetTriggerError);
-
-          try {
-            await db.studySheet.update({
-              where: { id: pendingSheet.id },
-              data: {
-                status: "FAILED",
-                summary: "Le demarrage de la generation de fiche a echoue.",
-                updatedAt: new Date(),
-              },
-            });
-          } catch (updateError) {
-            console.error("[GENERATE] Failed to mark pending sheet as FAILED after sheet trigger error:", updateError);
-          }
-        }
-      });
-      logStage("sheet:scheduled");
-    } catch (pipelineError) {
-      console.error("[GENERATE] Pipeline start failed:", pipelineError);
-
-      try {
-        await db.studySheet.update({
-          where: { id: pendingSheet.id },
-          data: {
-            status: "FAILED",
-            summary: "Le demarrage de la generation a echoue.",
-            updatedAt: new Date(),
-          },
-        });
-      } catch (updateError) {
-        console.error("[GENERATE] Failed to mark pending sheet as FAILED after pipeline start error:", updateError);
-      }
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: pipelineError instanceof GenerateStageTimeoutError
-            ? `Diagnostic: blocage sur ${pipelineError.stage} apres ${pipelineError.timeoutMs / 1000}s.`
-            : "Le demarrage de la generation a echoue. Reessaie dans quelques instants.",
-        },
-        { status: 500 },
-      );
+      console.error("[GENERATE] Pending sheet creation failed:", pendingError);
+      throw new Error("Impossible de creer la fiche en attente de generation.");
     }
 
     return NextResponse.json({
       success: true,
       sheetId: pendingSheet.id,
       quota,
-      warning,
       queued: true,
       status: pendingSheet.status,
-      mode: "ai_or_fallback",
     });
   } catch (error) {
     console.error("[GENERATE] Unhandled error:", error);

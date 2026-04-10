@@ -23,6 +23,14 @@ type GenerateResponse = {
   error?: string;
 };
 
+type StepResponse = {
+  success: boolean;
+  sheetId?: string;
+  inventoryId?: string;
+  status?: "PROCESSING" | "COMPLETED" | "FAILED";
+  error?: string;
+};
+
 type UploadResponse = {
   success: boolean;
   data?: {
@@ -265,11 +273,11 @@ export function HomeGenerator({
 
   async function handleSubmit() {
     setError(null);
-    setStatus("Analyse du contenu et generation de la fiche...");
+    setStatus("Preparation de la fiche...");
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/generate", {
+      const generateResponse = await fetch("/api/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -283,50 +291,56 @@ export function HomeGenerator({
         }),
       });
 
-      const data = await readApiPayload<GenerateResponse>(response);
+      const data = await readApiPayload<GenerateResponse>(generateResponse);
 
-      if (!response.ok || !data.success) {
+      if (!generateResponse.ok || !data.success) {
         throw new Error(data.error ?? "La generation a echoue.");
       }
 
       if (data.queued && data.sheetId) {
-        setStatus("Generation en cours... Reviz prepare la fiche sans te bloquer.");
+        setStatus("Analyse du document...");
 
-        const startedAt = Date.now();
-        const timeoutMs = 10 * 60 * 1000;
+        const inventoryResponse = await fetch("/api/generate/inventory", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sheetId: data.sheetId,
+            content,
+            subject: resolvedSubject,
+            titleHint,
+            userId: undefined,
+          }),
+        });
 
-        while (Date.now() - startedAt < timeoutMs) {
-          await new Promise((resolve) => window.setTimeout(resolve, 3000));
+        const inventoryData = await readApiPayload<StepResponse>(inventoryResponse);
 
-          const statusResponse = await fetch(`/api/sheets/${data.sheetId}/status`, { cache: "no-store" });
-          const statusData = await readApiPayload<{
-            success: boolean;
-            data?: { id: string; status: string; title: string };
-            error?: string;
-          }>(statusResponse);
-
-          if (!statusResponse.ok || !statusData.success || !statusData.data) {
-            throw new Error(statusData.error ?? "Impossible de suivre la generation.");
-          }
-
-          if (statusData.data.status === "COMPLETED") {
-            setStatus("Fiche generee. Redirection vers le resultat...");
-            router.push(`/sheet/${data.sheetId}`);
-            return;
-          }
-
-          if (statusData.data.status === "FAILED") {
-            throw new Error(
-              statusData.data.title && statusData.data.title !== "Fiche en generation"
-                ? statusData.data.title
-                : "La generation a echoue.",
-            );
-          }
-
-          setStatus("Generation en cours... Reviz finalise la fiche.");
+        if (!inventoryResponse.ok || !inventoryData.success) {
+          throw new Error(inventoryData.error ?? "La generation de l'inventaire a echoue.");
         }
 
-        throw new Error("La fiche prend plus de temps que prevu. Reviens dans quelques instants.");
+        setStatus("Generation de la fiche...");
+
+        const sheetResponse = await fetch("/api/generate/sheet", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sheetId: data.sheetId,
+          }),
+        });
+
+        const sheetData = await readApiPayload<StepResponse>(sheetResponse);
+
+        if (!sheetResponse.ok || !sheetData.success) {
+          throw new Error(sheetData.error ?? "La generation de la fiche a echoue.");
+        }
+
+        setStatus("Fiche generee. Redirection vers le resultat...");
+        router.push(`/sheet/${data.sheetId}`);
+        return;
       }
 
       if (data.sheetId) {

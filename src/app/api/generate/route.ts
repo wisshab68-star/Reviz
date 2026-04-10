@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { getPersistenceFallbackMessage, isDatabaseConnectionError } from "@/lib/database-fallback";
+import { db } from "@/lib/db";
 import { deriveClassicSheetFromFiche } from "@/lib/fiche-storage";
 import { detectSubjectFamily, getFlashcardCap, getSubjectFamilyCaps } from "@/lib/subject-families";
 import { generateSheetRequestSchema } from "@/lib/validations";
 import { generateRichFiche } from "@/services/fiche-generator-service";
-import { createPendingSheet, saveGeneratedSheet } from "@/services/sheet-service";
+import { saveGeneratedSheet } from "@/services/sheet-service";
 import { assertSheetQuota, trackUsage } from "@/services/usage-service";
 
 export const runtime = "nodejs";
@@ -507,10 +508,27 @@ export async function POST(request: Request) {
     }
 
     const pendingTitle = input.titleHint ? cleanFilename(input.titleHint) : "Fiche en generation";
-    let pendingSheet: Awaited<ReturnType<typeof createPendingSheet>> | null = null;
+    let pendingSheet: { id: string; status: string } | null = null;
 
     try {
-      pendingSheet = await createPendingSheet(input, pendingTitle);
+      pendingSheet = await db.studySheet.create({
+        data: {
+          userId: session?.user?.id ?? input.userId,
+          documentId: input.documentId,
+          sourceType: input.sourceType,
+          title: pendingTitle || "Generation en cours...",
+          summary: "Generation en cours...",
+          keyPointsJson: [],
+          definitionsJson: [],
+          flashcardsJson: [],
+          quizJson: [],
+          status: "PROCESSING",
+        },
+        select: {
+          id: true,
+          status: true,
+        },
+      });
     } catch (pendingError) {
       if (!isDatabaseConnectionError(pendingError)) {
         throw pendingError;

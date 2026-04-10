@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { start } from "workflow/api";
+import { after, NextResponse } from "next/server";
+import { DocumentType, Prisma } from "@prisma/client";
 
 import { auth } from "@/auth";
 import { getPersistenceFallbackMessage, isDatabaseConnectionError } from "@/lib/database-fallback";
@@ -9,10 +9,9 @@ import { generateSheetRequestSchema } from "@/lib/validations";
 import { generateRichFiche } from "@/services/fiche-generator-service";
 import { saveGeneratedSheet } from "@/services/sheet-service";
 import { assertSheetQuota, trackUsage } from "@/services/usage-service";
-import { generateSheetWorkflow } from "@/workflows/generate-sheet";
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 class GenerateStageTimeoutError extends Error {
   constructor(public readonly stage: string, public readonly timeoutMs: number) {
@@ -43,6 +42,7 @@ function cleanFilename(filename: string): string {
 
 export async function POST(request: Request) {
   const startedAt = Date.now();
+  const requestUrl = new URL(request.url);
   const logStage = (stage: string) => {
     console.log(`[GENERATE][${stage}] +${Date.now() - startedAt}ms`);
   };
@@ -131,6 +131,43 @@ export async function POST(request: Request) {
       return runImmediateGeneration();
     }
 
+    let resolvedDocumentId = input.documentId;
+
+    if (!resolvedDocumentId) {
+      try {
+        logStage("document:create:start");
+        const generatedDocument = await withStageTimeout(
+          "document:create",
+          db.document.create({
+            data: {
+              userId: session?.user?.id ?? input.userId,
+              type: (input.sourceType || "TEXT") as DocumentType,
+              filename: input.titleHint ?? "Texte saisi",
+              rawText: input.content,
+              extractedText: input.content,
+              processingStatus: "COMPLETED",
+            },
+            select: {
+              id: true,
+            },
+          }),
+          8000,
+        );
+        resolvedDocumentId = generatedDocument.id;
+        logStage("document:create:done");
+      } catch (documentError) {
+        if (!isDatabaseConnectionError(documentError)) {
+          if (documentError instanceof GenerateStageTimeoutError) {
+            throw documentError;
+          }
+          throw documentError;
+        }
+
+        console.error("[GENERATE] Document creation failed, falling back to immediate flow:", documentError);
+        return runImmediateGeneration(getPersistenceFallbackMessage());
+      }
+    }
+
     const pendingTitle = input.titleHint ? cleanFilename(input.titleHint) : "Generation en cours...";
     let pendingSheet: { id: string; status: string } | null = null;
 
@@ -141,7 +178,7 @@ export async function POST(request: Request) {
         db.studySheet.create({
           data: {
             userId: session?.user?.id ?? input.userId,
-            documentId: input.documentId,
+            documentId: resolvedDocumentId,
             sourceType: input.sourceType,
             title: pendingTitle,
             summary: "Generation en cours...",
@@ -149,6 +186,7 @@ export async function POST(request: Request) {
             definitionsJson: [],
             flashcardsJson: [],
             quizJson: [],
+            inventoryJson: Prisma.JsonNull,
             status: "PROCESSING",
           },
           select: {
@@ -172,15 +210,66 @@ export async function POST(request: Request) {
     }
 
     try {
-      logStage("workflow:start");
-      await withStageTimeout(
-        "workflow:start",
-        start(generateSheetWorkflow, [pendingSheet.id, input]),
-        8000,
+      logStage("inventory:start");
+      const inventoryResponse = await withStageTimeout(
+        "inventory:start",
+        fetch(new URL("/api/generate/inventory", requestUrl), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sheetId: pendingSheet.id,
+            content: input.content,
+            subject: input.subject,
+            titleHint: input.titleHint,
+            userId: input.userId,
+          }),
+          cache: "no-store",
+        }),
+        58_000,
       );
-      logStage("workflow:queued");
-    } catch (workflowError) {
-      console.error("[GENERATE] Workflow start failed:", workflowError);
+      const inventoryData = await inventoryResponse.json() as { success: boolean; error?: string };
+      if (!inventoryResponse.ok || !inventoryData.success) {
+        throw new Error(inventoryData.error ?? "La generation de l'inventaire a echoue.");
+      }
+      logStage("inventory:done");
+
+      after(async () => {
+        try {
+          const sheetResponse = await fetch(new URL("/api/generate/sheet", requestUrl), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ sheetId: pendingSheet.id }),
+            cache: "no-store",
+          });
+
+          if (!sheetResponse.ok) {
+            const sheetData = await sheetResponse.json().catch(() => null) as { error?: string } | null;
+            console.error("[GENERATE] Sheet route returned an error:", sheetData?.error ?? sheetResponse.statusText);
+          }
+        } catch (sheetTriggerError) {
+          console.error("[GENERATE] Failed to trigger sheet generation route:", sheetTriggerError);
+
+          try {
+            await db.studySheet.update({
+              where: { id: pendingSheet.id },
+              data: {
+                status: "FAILED",
+                summary: "Le demarrage de la generation de fiche a echoue.",
+                updatedAt: new Date(),
+              },
+            });
+          } catch (updateError) {
+            console.error("[GENERATE] Failed to mark pending sheet as FAILED after sheet trigger error:", updateError);
+          }
+        }
+      });
+      logStage("sheet:scheduled");
+    } catch (pipelineError) {
+      console.error("[GENERATE] Pipeline start failed:", pipelineError);
 
       try {
         await db.studySheet.update({
@@ -192,14 +281,14 @@ export async function POST(request: Request) {
           },
         });
       } catch (updateError) {
-        console.error("[GENERATE] Failed to mark pending sheet as FAILED after workflow start error:", updateError);
+        console.error("[GENERATE] Failed to mark pending sheet as FAILED after pipeline start error:", updateError);
       }
 
       return NextResponse.json(
         {
           success: false,
-          error: workflowError instanceof GenerateStageTimeoutError
-            ? `Diagnostic: blocage sur ${workflowError.stage} apres ${workflowError.timeoutMs / 1000}s.`
+          error: pipelineError instanceof GenerateStageTimeoutError
+            ? `Diagnostic: blocage sur ${pipelineError.stage} apres ${pipelineError.timeoutMs / 1000}s.`
             : "Le demarrage de la generation a echoue. Reessaie dans quelques instants.",
         },
         { status: 500 },

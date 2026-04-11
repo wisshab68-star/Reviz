@@ -2249,6 +2249,209 @@ textarea {
   align-items: stretch;
 }
 
+.signin-shell-clean {
+  grid-template-columns: minmax(320px, 460px) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.signin-panel-clean {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 1.4rem 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.signin-brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 2rem;
+}
+
+.signin-brand-mark {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: grid;
+  place-items: center;
+  border: 3px solid #050505;
+  border-radius: 18px;
+  background: #ffffff;
+  color: #050505;
+  font-family: var(--display-font);
+  font-size: 2rem;
+  line-height: 1;
+  box-shadow: 6px 6px 0 #050505;
+}
+
+.signin-brand-copy p {
+  margin: 0;
+}
+
+.signin-brand-name {
+  font-family: var(--display-font);
+  font-size: 1.4rem;
+  letter-spacing: -0.04em;
+}
+
+.signin-brand-tag {
+  color: #6b7280;
+  font-size: 0.92rem;
+}
+
+.signin-card-head-clean h1 {
+  margin: 0;
+  font-family: var(--display-font);
+  font-size: clamp(2.9rem, 5vw, 4.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.07em;
+  text-transform: none;
+}
+
+.signin-card-copy-clean {
+  max-width: 30rem;
+  margin-top: 1rem;
+  font-size: 1rem;
+}
+
+.signin-form-grid-clean {
+  gap: 1.1rem;
+}
+
+.signin-google-button-clean {
+  width: 100%;
+  min-height: 58px;
+  border: 1.5px solid #d9dee7;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: none;
+  justify-content: center;
+}
+
+.signin-google-button-clean:hover {
+  background: #f9fafb;
+  transform: none;
+}
+
+.signin-email-button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.signin-under-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  color: #6b7280;
+  font-size: 0.96rem;
+}
+
+.signin-under-note strong {
+  color: #050505;
+}
+
+.signin-visual-panel {
+  min-width: 0;
+}
+
+.signin-visual-surface {
+  position: relative;
+  min-height: 760px;
+  height: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(5, 5, 5, 0.04), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(47, 91, 255, 0.06), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.signin-visual-surface::before,
+.signin-visual-surface::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(5, 5, 5, 0.03);
+}
+
+.signin-visual-surface::before {
+  width: 520px;
+  height: 520px;
+  top: -120px;
+  left: -100px;
+}
+
+.signin-visual-surface::after {
+  width: 680px;
+  height: 680px;
+  right: -240px;
+  bottom: -280px;
+}
+
+.signin-floating-pill {
+  position: absolute;
+  padding: 1rem 1.2rem;
+  border-radius: 20px;
+  font-family: var(--display-font);
+  font-size: clamp(1.2rem, 2vw, 1.7rem);
+  line-height: 0.95;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.06);
+}
+
+.signin-floating-pill-green {
+  top: 22%;
+  left: 24%;
+  background: #8ee79c;
+  color: #111827;
+}
+
+.signin-floating-pill-pink {
+  top: 40%;
+  right: 18%;
+  background: #f4a8ea;
+  color: #111827;
+}
+
+.signin-mascot-stage {
+  position: relative;
+  z-index: 1;
+  width: min(340px, 62%);
+}
+
+.signin-visual-copy {
+  position: absolute;
+  bottom: 16%;
+  text-align: center;
+  z-index: 1;
+}
+
+.signin-visual-copy p,
+.signin-visual-copy h2 {
+  margin: 0;
+  font-family: var(--display-font);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+}
+
+.signin-visual-copy p {
+  font-size: clamp(2.4rem, 4vw, 3.8rem);
+  color: #111827;
+}
+
+.signin-visual-copy h2 {
+  font-size: clamp(3rem, 5vw, 4.8rem);
+  color: #111827;
+}
+
 .signin-story {
   position: relative;
   border: 3px solid #050505;
@@ -2751,9 +2954,26 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .signin-shell-clean {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
   .signin-mascot-card,
   .signin-method-steps {
     grid-template-columns: 1fr;
+  }
+
+  .signin-visual-surface {
+    min-height: 420px;
+  }
+
+  .signin-floating-pill-green {
+    left: 10%;
+  }
+
+  .signin-floating-pill-pink {
+    right: 10%;
   }
 
   .fiche-anchor-grid,
@@ -2835,6 +3055,10 @@ textarea {
   .signin-panel-reviz {
     padding: 1.4rem;
     box-shadow: 8px 8px 0 #050505;
+  }
+
+  .signin-panel-clean {
+    padding: 0;
   }
 }
 

@@ -63,68 +63,31 @@ export default async function SignInPage() {
 
       <div className="content-shell">
         <section className="section-block">
-          <div className="signin-shell signin-shell-reviz">
-            <div className="signin-story">
-              <div className="signin-story-badge">methode de revision</div>
-              <h1>la methode reviz</h1>
-              <p className="workspace-copy signin-story-copy">
-                Entre dans ton espace Reviz pour sauvegarder tes fiches, retrouver ta bibliotheque
-                et reviser avec une methode plus claire, plus visuelle et plus fun.
-              </p>
-
-              <div className="signin-mascot-card">
-                <SkeletonProfessorMascot />
-                <div className="signin-mascot-copy">
-                  <p className="signin-mascot-label">Le prof squelette Reviz</p>
-                  <p>
-                    Il remet les notions en ordre, souligne les pieges classiques et t&apos;aide
-                    a retenir l&apos;essentiel sans stress.
-                  </p>
+          <div className="signin-shell signin-shell-clean">
+            <div className="workspace-panel signin-panel signin-panel-clean">
+              <div className="signin-brand-lockup">
+                <div className="signin-brand-mark">R</div>
+                <div className="signin-brand-copy">
+                  <p className="signin-brand-name">REVIZ</p>
+                  <p className="signin-brand-tag">la methode reviz</p>
                 </div>
               </div>
 
-              <div className="signin-method-steps" aria-label="Promesse Reviz">
-                <div className="signin-method-step">
-                  <span>1</span>
-                  <strong>importe ton cours</strong>
-                  <p>PDF, photo ou texte, tu pars de ce que tu as deja.</p>
-                </div>
-                <div className="signin-method-step">
-                  <span>2</span>
-                  <strong>reviz organise</strong>
-                  <p>La fiche prend forme avec schema, notions, flashcards et quiz.</p>
-                </div>
-                <div className="signin-method-step">
-                  <span>3</span>
-                  <strong>toi, tu retiens</strong>
-                  <p>Tu sauvegardes, tu retrouves tout et tu revises plus vite.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="workspace-panel signin-panel signin-panel-reviz">
-              <div className="signin-card-head">
-                <p className="eyebrow">Compte Reviz</p>
-                <h2>Creer un compte ou se connecter</h2>
-                <p className="signin-card-copy">
-                  Avec Google ou ton email. Si ton compte existe deja, Reviz te reconnecte
-                  directement. Sinon, ton espace se cree en quelques secondes.
+              <div className="signin-card-head signin-card-head-clean">
+                <h1>la methode reviz</h1>
+                <p className="signin-card-copy signin-card-copy-clean">
+                  Cree ton espace pour sauvegarder tes fiches et retrouver ta bibliotheque.
                 </p>
               </div>
 
-              <div className="signin-mode-switch" aria-hidden="true">
-                <span className="signin-mode-pill signin-mode-pill-active">Creer un compte</span>
-                <span className="signin-mode-pill">Se connecter</span>
-              </div>
-
-              <div className="form-grid signin-form-grid">
+              <div className="form-grid signin-form-grid signin-form-grid-clean">
                 <form
                   action={async () => {
                     "use server";
                     await signIn("google", { redirectTo: "/app" });
                   }}
                 >
-                  <button className="btn btn-primary signin-google-button" type="submit">
+                  <button className="btn signin-google-button signin-google-button-clean" type="submit">
                     <span className="signin-google-mark" aria-hidden="true">G</span>
                     Continuer avec Google
                   </button>
@@ -165,18 +128,25 @@ export default async function SignInPage() {
                   </button>
                 </form>
 
-                <div className="signin-helper-box">
-                  <p className="signin-helper-title">Comment ca marche ?</p>
-                  <p>
-                    Entre ton email et Reviz t&apos;envoie un lien de connexion securise pour
-                    creer ton compte ou retrouver ton espace.
-                  </p>
+                <div className="signin-under-note">
+                  <span>Tu as deja un compte ?</span>
+                  <strong>Se connecter</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="signin-visual-panel">
+              <div className="signin-visual-surface">
+                <div className="signin-floating-pill signin-floating-pill-green">ton coach revision</div>
+                <div className="signin-floating-pill signin-floating-pill-pink">booste par l&apos;IA</div>
+
+                <div className="signin-mascot-stage">
+                  <SkeletonProfessorMascot />
                 </div>
 
-                <div className="signin-trust-row">
-                  <span>Sans carte bancaire</span>
-                  <span>Connexion securisee</span>
-                  <span>Bibliotheque perso</span>
+                <div className="signin-visual-copy">
+                  <p>ton allie</p>
+                  <h2>pour reviser</h2>
                 </div>
               </div>
             </div>

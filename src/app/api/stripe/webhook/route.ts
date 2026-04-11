@@ -6,11 +6,6 @@ import { stripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-} as const;
 
 function mapSubscriptionStatus(status: Stripe.Subscription.Status) {
   if (status === "active" || status === "trialing") {

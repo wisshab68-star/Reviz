@@ -6,7 +6,7 @@ interface FicheFeynmanProps {
 
 export function FicheFeynman({ texte }: FicheFeynmanProps) {
   return (
-    <div className="reviz-fiche-feynman" data-print="feynman">
+    <div className="reviz-fiche-feynman" data-print="feynman" style={{ background: "#FFFFFF", color: "#000000" }}>
       <p className="reviz-fiche-feynman-kicker">Comme si tu l'expliquais a un ami</p>
       <div className="reviz-fiche-feynman-text">
         &ldquo;<MathRenderer text={texte} />&rdquo;

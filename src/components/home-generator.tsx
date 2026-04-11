@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 
 import { FREE_MONTHLY_SHEET_LIMIT } from "@/lib/plans";
-import { RevizMascotDoodle, RevizMindOrbitDoodle, RevizNotebookDoodle } from "@/components/reviz-illustrations";
 import type { FicheGeneree } from "@/types/fiche-generated";
 import type { GeneratedSheet } from "@/types/sheet";
 
@@ -21,6 +20,7 @@ type GenerateResponse = {
   fiche?: FicheGeneree;
   warning?: string;
   error?: string;
+  message?: string;
 };
 
 type StepResponse = {
@@ -91,18 +91,18 @@ const sampleText = `La photosynthese est le processus par lequel les plantes ver
 const sampleTitle = "La photosynthese";
 const OTHER_SUBJECT_VALUE = "__other__";
 const subjectOptions: SubjectOption[] = [
-  { value: "Maths", label: "📐 Maths" },
-  { value: "Physique-Chimie", label: "⚗️ Physique-Chimie" },
-  { value: "SVT", label: "🌿 SVT" },
-  { value: "Histoire-Géo", label: "🌍 Histoire-Géo" },
-  { value: "Français", label: "📖 Français" },
-  { value: "Philosophie", label: "🧠 Philosophie" },
-  { value: "Anglais", label: "🇬🇧 Anglais" },
-  { value: "Langues vivantes", label: "🗣️ Langues vivantes" },
-  { value: "SES", label: "📊 SES" },
-  { value: "Technologie", label: "💻 Technologie" },
-  { value: "Arts / Musique", label: "🎨 Arts / Musique" },
-  { value: OTHER_SUBJECT_VALUE, label: "✏️ Autre (précise)" },
+  { value: "Maths", label: "Maths" },
+  { value: "Physique-Chimie", label: "Physique-Chimie" },
+  { value: "SVT", label: "SVT" },
+  { value: "Histoire-Géo", label: "Histoire-Géo" },
+  { value: "Français", label: "Français" },
+  { value: "Philosophie", label: "Philosophie" },
+  { value: "Anglais", label: "Anglais" },
+  { value: "Langues vivantes", label: "Langues vivantes" },
+  { value: "SES", label: "SES" },
+  { value: "Technologie", label: "Technologie" },
+  { value: "Arts / Musique", label: "Arts / Musique" },
+  { value: OTHER_SUBJECT_VALUE, label: "Autre (précise)" },
 ];
 
 const heroMetrics = [
@@ -135,15 +135,21 @@ const featureCards = [
 type HomeGeneratorProps = {
   isAuthenticated: boolean;
   plan: "FREE" | "PREMIUM";
+  subscriptionStatus?: string | null;
+  sheetCount?: number;
   launchMode?: "file" | "photo";
   minimal?: boolean;
+  welcomeName?: string | null;
 };
 
 export function HomeGenerator({
   isAuthenticated,
   plan,
+  subscriptionStatus = null,
+  sheetCount = 0,
   launchMode,
   minimal = false,
+  welcomeName = null,
 }: HomeGeneratorProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -163,6 +169,7 @@ export function HomeGenerator({
   const [fileAccept, setFileAccept] = useState(".pdf,.txt,image/*");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState("");
   const [customSubject, setCustomSubject] = useState("");
   const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0]?.text ?? "Lecture de ton cours...");
@@ -175,6 +182,8 @@ export function HomeGenerator({
   const isStepOneDone = hasUploadedFile;
   const isStepTwoDone = isSubjectValid;
   const currentStep = isStepTwoDone ? 3 : isStepOneDone ? 2 : 1;
+  const isSubscriptionActive = subscriptionStatus === "active";
+  const hasReachedFreeLimit = isAuthenticated && !isSubscriptionActive && sheetCount >= 1;
 
   function formatFileSize(sizeInBytes: number) {
     if (sizeInBytes >= 1024 * 1024) {
@@ -222,7 +231,7 @@ export function HomeGenerator({
 
   function formatGenerationError(message: string) {
     if (/FUNCTION_INVOCATION_TIMEOUT|timeout|timed out|erreur serveur|server error|500|502|503|504/i.test(message)) {
-      return "Ton fichier est difficile a analyser (mise en page complexe ou trop d'images). 💡 Essaie avec un cours plus simple ou copie-colle le texte directement.";
+      return "Ton fichier est difficile a analyser (mise en page complexe ou trop d'images). ?? Essaie avec un cours plus simple ou copie-colle le texte directement.";
     }
 
     if (/429|quota|insufficient_quota|billing/i.test(message)) {
@@ -391,7 +400,7 @@ export function HomeGenerator({
       const data = await readApiPayload<GenerateResponse>(generateResponse);
 
       if (!generateResponse.ok || !data.success) {
-        throw new Error(data.error ?? "La generation a echoue.");
+        throw new Error(data.message ?? data.error ?? "La generation a echoue.");
       }
 
       if (data.queued && data.sheetId) {
@@ -478,6 +487,31 @@ export function HomeGenerator({
     }
   }
 
+  async function handleUpgradeCheckout() {
+    try {
+      setIsCheckoutLoading(true);
+
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+      });
+      const data = (await response.json()) as { url?: string; error?: string };
+
+      if (!response.ok || !data.url) {
+        throw new Error(data.error ?? "Impossible de lancer le paiement.");
+      }
+
+      window.location.href = data.url;
+    } catch (checkoutError) {
+      console.error("Stripe checkout failed.", checkoutError);
+      setError(
+        checkoutError instanceof Error
+          ? checkoutError.message
+          : "Impossible de lancer le paiement pour le moment.",
+      );
+      setIsCheckoutLoading(false);
+    }
+  }
+
   function openFilePicker(accept: string, capture?: "environment") {
     setIsActivated(true);
     setFileAccept(accept);
@@ -540,45 +574,81 @@ export function HomeGenerator({
   }
 
   function renderStepper() {
-    const steps = [
-      {
-        key: "import",
-        number: "①",
-        label: "Importe ton cours",
-        done: isStepOneDone,
-        active: currentStep === 1,
-      },
-      {
-        key: "subject",
-        number: "②",
-        label: "Choisis la matiere",
-        done: isStepTwoDone,
-        active: currentStep === 2,
-      },
-      {
-        key: "generate",
-        number: "③",
-        label: "Genere",
-        done: false,
-        active: currentStep === 3,
-      },
+      const steps = [
+        {
+          key: "import",
+          label: "Importe ton cours",
+          done: isStepOneDone,
+          active: currentStep === 1,
+        },
+        {
+          key: "subject",
+          label: "Choisis la matiere",
+          done: isStepTwoDone,
+          active: currentStep === 2,
+        },
+        {
+          key: "generate",
+          label: "Genere",
+          done: false,
+          active: currentStep === 3,
+        },
     ];
 
     return (
-      <div className="reviz-stepper" aria-label="Etapes pour generer ta fiche">
+      <div
+        className="reviz-stepper"
+        aria-label="Etapes pour generer ta fiche"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "0.45rem",
+          margin: "0 auto 20px",
+          maxWidth: 400,
+          flexWrap: "nowrap",
+          whiteSpace: "nowrap",
+          overflowX: "auto",
+        }}
+      >
         {steps.map((step, index) => (
-          <div key={step.key} className="reviz-stepper-segment">
+          <div
+            key={step.key}
+            className="reviz-stepper-segment"
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem", flex: "0 0 auto" }}
+          >
             <div
               className={`reviz-step${step.done ? " done" : ""}${step.active ? " active" : ""}`}
               aria-current={step.active ? "step" : undefined}
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
             >
-              <span className="step-num" aria-hidden="true">
-                {step.done ? "✓" : step.number}
+              <span
+                className="step-num"
+                aria-hidden="true"
+                style={{
+                  fontFamily: "var(--display-font)",
+                  fontSize: "12px",
+                  width: "24px",
+                  height: "24px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "999px",
+                  background: step.active ? "#3B5BDB" : "#1E1E2A",
+                  color: "#FFFFFF",
+                }}
+              >
+                {index + 1}
               </span>
-              <span className="step-label">{step.label}</span>
+              <span
+                className="step-label"
+                style={{ fontFamily: "var(--display-font)", fontSize: "12px", fontWeight: step.active ? 700 : 600, color: step.active ? "#FFFFFF" : "#2A2A38" }}
+              >
+                {step.label}
+              </span>
             </div>
             {index < steps.length - 1 ? (
-              <div className="step-arrow" aria-hidden="true">
+              <div className="step-arrow" aria-hidden="true" style={{ color: "#2A2A38", fontFamily: "var(--display-font)", fontSize: "12px", lineHeight: 1 }}>
                 →
               </div>
             ) : null}
@@ -594,9 +664,19 @@ export function HomeGenerator({
     }
 
     return (
-      <div className="reviz-file-confirm" role="status" aria-live="polite">
+      <div
+        className="reviz-file-confirm"
+        role="status"
+        aria-live="polite"
+        style={{
+          background: "#252532",
+          border: "1px solid #2A2A38",
+          color: "#FFFFFF",
+          borderRadius: "12px",
+        }}
+      >
         <span className="confirm-icon" aria-hidden="true">
-          ✓
+          ?
         </span>
         <span className="confirm-name">{truncateFileName(fileName)}</span>
         <span className="confirm-size">{fileSizeLabel ?? ""}</span>
@@ -607,42 +687,22 @@ export function HomeGenerator({
           onClick={clearSelectedFile}
           disabled={isSubmitting || isUploading}
         >
-          ✕
+          ?
         </button>
       </div>
     );
   }
 
-  function renderPreviewPanel() {
-    return (
-      <aside className="reviz-preview-panel" aria-label="Exemple de fiche generee">
-        <p className="preview-label">Exemple de fiche generee ✨</p>
-        <div className="preview-card">
-          <div className="preview-subject-badge">📐 Maths · Terminale</div>
-          <h3 className="preview-title">Derivees et primitives</h3>
-          <div className="preview-section">
-            <span className="preview-tag">Points cles</span>
-            <ul>
-              <li>La derivee de x² est 2x</li>
-              <li>f&apos;(x) = 0 indique un extremum local</li>
-              <li>∫f&apos;(x)dx = f(x) + C</li>
-            </ul>
-          </div>
-          <div className="preview-flash">
-            <span className="flash-q">Q : Derivee de sin(x) ?</span>
-            <span className="flash-a">R : cos(x)</span>
-          </div>
-          <p className="preview-cta">Ta fiche sera comme ca →</p>
-        </div>
-      </aside>
-    );
-  }
-
   function renderSubjectSelector() {
     return (
-      <div className="reviz-subject-selector">
-        <p className="reviz-subject-label">C&apos;est pour quelle matière ? 🎯</p>
-        <div className="reviz-subject-pills" role="radiogroup" aria-label="Choix de la matière">
+      <div className="reviz-subject-selector" style={{ display: "grid", gap: "20px", width: "100%", justifyItems: "center" }}>
+        <div style={{ borderTop: "1px solid #1E1E2A", marginBottom: 0, width: "100%" }} />
+        <div
+          className="reviz-subject-pills"
+          role="radiogroup"
+          aria-label="Choix de la matiere"
+          style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px", width: "100%" }}
+        >
           {subjectOptions.map((option) => {
             const isSelected = selectedSubject === option.value;
 
@@ -660,6 +720,17 @@ export function HomeGenerator({
                   }
                 }}
                 disabled={isSubmitting || isUploading}
+                style={{
+                  fontFamily: "var(--display-font)",
+                  background: isSelected ? "#3B5BDB" : "#1E1E2A",
+                  border: `1px solid ${isSelected ? "#3B5BDB" : "#2A2A38"}`,
+                  color: "#FFFFFF",
+                  borderRadius: "20px",
+                  padding: "6px 14px",
+                  fontSize: "13px",
+                  boxShadow: "none",
+                  cursor: "pointer",
+                }}
               >
                 {option.label}
               </button>
@@ -673,6 +744,13 @@ export function HomeGenerator({
             onChange={(event) => setCustomSubject(event.target.value)}
             placeholder="Ex : NSI, Droit, Cinéma..."
             disabled={!isOtherSubject || isSubmitting || isUploading}
+            style={{
+              fontFamily: "var(--display-font)",
+              background: "#1E1E2A",
+              border: "1px solid #2A2A38",
+              color: "#FFFFFF",
+              borderRadius: "12px",
+            }}
           />
         </div>
       </div>
@@ -709,35 +787,167 @@ export function HomeGenerator({
         style={hiddenFileInputStyle}
         disabled={isUploading || isSubmitting}
       />
-      <section className="reviz-generator-home">
-        <div className="reviz-generator-shell">
-        <div className="reviz-generator-card">
+      <section
+        className="reviz-generator-home"
+        style={{
+          background: "#0F0F13",
+          color: "#FFFFFF",
+          width: "100%",
+          minHeight: 0,
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+        }}
+      >
+        <div
+          className="reviz-generator-shell"
+          style={{
+            width: "100%",
+            justifyContent: "center",
+            padding: 0,
+            background: "#0F0F13",
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+          }}
+        >
+        <div
+          className="reviz-generator-card"
+          style={{
+            maxWidth: "600px",
+            margin: "0 auto",
+            width: "100%",
+            background: "#0F0F13",
+            border: "none",
+            boxShadow: "none",
+            borderRadius: 0,
+            padding: "32px 24px",
+            color: "#FFFFFF",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 0,
+            textAlign: "center",
+          }}
+        >
           {isSubmitting ? (
-            <div className="reviz-loading-overlay" id="reviz-loading">
-              <div className="loading-mascot" aria-hidden="true">
-                <RevizMindOrbitDoodle className="reviz-illustration reviz-illustration-orbit" />
-              </div>
+            <div
+              className="reviz-loading-overlay"
+              id="reviz-loading"
+              style={{ background: "#0F0F13", color: "#FFFFFF", borderRadius: 0, minHeight: "420px" }}
+            >
               <div className="loading-progress-bar" aria-hidden="true">
                 <div className="loading-progress-fill" id="reviz-progress" />
               </div>
-              <p className="loading-message" id="reviz-loading-msg">{loadingMessage}</p>
-              <p className="loading-sub">Ca prend environ 30 secondes ☕</p>
+              <p className="loading-message" id="reviz-loading-msg" style={{ color: "#FFFFFF" }}>{loadingMessage}</p>
+              <p className="loading-sub" style={{ color: "#8B8B9E" }}>Ca prend environ 30 secondes.</p>
+            </div>
+          ) : hasReachedFreeLimit ? (
+            <div
+              style={{
+                width: "100%",
+                minHeight: "420px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+              }}
+            >
+              <h2
+                style={{
+                  margin: 0,
+                  fontFamily: "var(--display-font)",
+                  fontSize: "clamp(28px, 4vw, 44px)",
+                  color: "#FFFFFF",
+                  textAlign: "center",
+                }}
+              >
+                Tu as utilisé ta fiche gratuite
+              </h2>
+              <p
+                style={{
+                  color: "#8B8B9E",
+                  fontSize: "15px",
+                  textAlign: "center",
+                  margin: "16px 0 8px",
+                }}
+              >
+                Tu as vu ce que Reviz peut faire sur ton propre cours.
+              </p>
+              <p
+                style={{
+                  color: "#8B8B9E",
+                  fontSize: "15px",
+                  textAlign: "center",
+                  margin: "0 0 32px",
+                }}
+              >
+                Passe Premium pour générer en illimité.
+              </p>
+              <button
+                type="button"
+                onClick={() => void handleUpgradeCheckout()}
+                disabled={isCheckoutLoading}
+                style={{
+                  background: "#3B5BDB",
+                  borderRadius: "50px",
+                  padding: "16px 48px",
+                  fontSize: "15px",
+                  fontWeight: 700,
+                  boxShadow: "0 0 32px rgba(59,91,219,0.4)",
+                  border: "none",
+                  color: "#FFFFFF",
+                  cursor: isCheckoutLoading ? "wait" : "pointer",
+                }}
+              >
+                {isCheckoutLoading ? "Redirection..." : "Passer Premium — 4,99€/mois"}
+              </button>
+              {error ? <div className="status-box error" style={{ background: "#252532", color: "#FFFFFF", border: "1px solid #2A2A38", marginTop: "20px" }}>{error}</div> : null}
             </div>
           ) : (
             <>
-          <p className="reviz-app-eyebrow">REVIZ AI</p>
-          <h1>
-            transforme ton cours
-            <br />
-            en fiche.
-          </h1>
-          <p className="reviz-generator-support">(PDF, TXT, PNG, JPG, JPEG, WEBP, photo)</p>
-
-          <div className="reviz-generator-illustrations" aria-hidden="true">
-            <RevizNotebookDoodle className="reviz-illustration reviz-illustration-notebook" />
-            <RevizMindOrbitDoodle className="reviz-illustration reviz-illustration-orbit" />
-            <RevizMascotDoodle className="reviz-illustration reviz-illustration-mascot" />
-          </div>
+          {welcomeName ? (
+            <p
+              style={{
+                width: "100%",
+                display: "block",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "#8B8B9E",
+                textAlign: "center",
+                margin: "0 0 16px",
+                letterSpacing: "0.02em",
+              }}
+            >
+              {`Bon retour, ${welcomeName}`}
+            </p>
+          ) : null}
+          <p
+            style={{
+              fontFamily: "var(--display-font)",
+              fontSize: "clamp(48px, 6vw, 80px)",
+              fontWeight: 900,
+              lineHeight: 1,
+              letterSpacing: "-0.03em",
+              textAlign: "center",
+              margin: "0 0 8px 0",
+            }}
+          >
+            <span style={{ color: "#FFFFFF" }}>Transforme ton cours </span>
+            <span style={{ color: "#3B5BDB" }}>en fiche.</span>
+          </p>
+          <p
+            style={{
+              color: "#8B8B9E",
+              fontSize: "15px",
+              textAlign: "center",
+              margin: "0 0 16px 0",
+            }}
+          >
+            Importe un cours. Choisis la matiere. Genere en 30s.
+          </p>
 
           {renderStepper()}
 
@@ -746,37 +956,114 @@ export function HomeGenerator({
             onDragOver={handleUploadZoneDragOver}
             onDragLeave={handleUploadZoneDragLeave}
             onDrop={(event) => void handleUploadZoneDrop(event)}
+            style={{
+              background: "#0F0F13",
+              border: "none",
+              borderRadius: 0,
+              padding: "0",
+            }}
           >
-          <div className="reviz-generator-actions">
+          <div
+            className="reviz-generator-actions"
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "12px",
+              marginBottom: "20px",
+            }}
+          >
             <label
               htmlFor={MINIMAL_UPLOAD_INPUT_ID}
               className="reviz-icon-action"
-              style={{ opacity: isUploading || isSubmitting ? 0.55 : 1 }}
+              style={{
+                opacity: isUploading || isSubmitting ? 0.55 : 1,
+                background: "#3B5BDB",
+                border: "none",
+                color: "#FFFFFF",
+                borderRadius: "12px",
+                boxShadow: "none",
+                fontFamily: "var(--display-font)",
+                minHeight: "unset",
+                padding: "18px 36px",
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                fontSize: "14px",
+                fontWeight: 700,
+              }}
               aria-disabled={isUploading || isSubmitting}
+              onMouseEnter={(event) => {
+                if (!isUploading && !isSubmitting) {
+                  event.currentTarget.style.background = "#2946c4";
+                }
+              }}
+              onMouseLeave={(event) => {
+                event.currentTarget.style.background = "#3B5BDB";
+              }}
             >
-              <span className="reviz-icon-action-mark" aria-hidden="true">
-                ↓
+              <span aria-hidden="true" style={{ display: "inline-flex" }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
+                  <path d="M12 5v14M5 12l7 7 7-7" />
+                </svg>
               </span>
-              <span>Importer un fichier</span>
+              <span style={{ color: "#FFFFFF", fontSize: "14px", fontWeight: 700 }}>Importer</span>
             </label>
 
             <label
               htmlFor={MINIMAL_CAMERA_INPUT_ID}
               className="reviz-icon-action"
-              style={{ opacity: isUploading || isSubmitting ? 0.55 : 1 }}
+              style={{
+                opacity: isUploading || isSubmitting ? 0.55 : 1,
+                background: "transparent",
+                border: "1px solid #2A2A38",
+                color: "#8B8B9E",
+                borderRadius: "12px",
+                boxShadow: "none",
+                fontFamily: "var(--display-font)",
+                minHeight: "unset",
+                padding: "18px 36px",
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                fontSize: "14px",
+                fontWeight: 600,
+              }}
               aria-disabled={isUploading || isSubmitting}
+              onMouseEnter={(event) => {
+                if (!isUploading && !isSubmitting) {
+                  event.currentTarget.style.borderColor = "#3B5BDB";
+                  event.currentTarget.style.color = "#FFFFFF";
+                }
+              }}
+              onMouseLeave={(event) => {
+                event.currentTarget.style.borderColor = "#2A2A38";
+                event.currentTarget.style.color = "#8B8B9E";
+              }}
             >
-              <span className="reviz-icon-action-mark" aria-hidden="true">
-                ○
+              <span aria-hidden="true" style={{ display: "inline-flex" }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
               </span>
-              <span>Prendre une photo</span>
+              <span style={{ color: "currentColor", fontSize: "14px", fontWeight: 600 }}>Photo</span>
             </label>
           </div>
 
           {renderFileConfirmation()}
           </div>
 
-          {renderSubjectSelector()}
+          <div style={{ padding: 0 }}>
+            {renderSubjectSelector()}
+          </div>
 
           <button
             type="button"
@@ -784,19 +1071,48 @@ export function HomeGenerator({
             onClick={() => void handleSubmit()}
             disabled={isGenerateDisabled}
             title={isGenerateDisabled ? "Selectionne un fichier et une matiere d'abord" : undefined}
+            style={{
+              background: isGenerateDisabled ? "#1E1E2A" : "#3B5BDB",
+              color: isGenerateDisabled ? "#8B8B9E" : "#FFFFFF",
+              borderRadius: "50px",
+              padding: "16px 0",
+              width: "320px",
+              fontFamily: "var(--display-font)",
+              fontSize: "14px",
+              fontWeight: 700,
+              border: "none",
+              boxShadow: isGenerateDisabled ? "none" : "0 0 32px rgba(59, 91, 219, 0.35)",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              cursor: isGenerateDisabled ? "not-allowed" : "pointer",
+              display: "block",
+              margin: "20px auto 0",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(event) => {
+              if (!isGenerateDisabled) {
+                event.currentTarget.style.background = "#2946c4";
+                event.currentTarget.style.boxShadow = "0 0 48px rgba(59, 91, 219, 0.5)";
+              }
+            }}
+            onMouseLeave={(event) => {
+              if (!isGenerateDisabled) {
+                event.currentTarget.style.background = "#3B5BDB";
+                event.currentTarget.style.boxShadow = "0 0 32px rgba(59, 91, 219, 0.35)";
+              }
+            }}
           >
             {isUploading ? "Extraction..." : "Generer ma fiche"}
           </button>
 
-          {fileName ? <p className="reviz-generator-file">Pret : {fileName}</p> : null}
-          {status ? <div className="status-box success">{status}</div> : null}
-          {error ? <div className="status-box error">{error}</div> : null}
+          {fileName ? <p className="reviz-generator-file" style={{ color: "#8B8B9E" }}>Pret : {fileName}</p> : null}
+          {status ? <div className="status-box success" style={{ background: "#252532", color: "#FFFFFF", border: "1px solid #2A2A38" }}>{status}</div> : null}
+          {error ? <div className="status-box error" style={{ background: "#252532", color: "#FFFFFF", border: "1px solid #2A2A38" }}>{error}</div> : null}
           </>
           )}
         </div>
-        {renderPreviewPanel()}
-        </div>
-      </section>
+          </div>
+        </section>
       </>
     );
   }
@@ -1089,3 +1405,4 @@ export function HomeGenerator({
     </section>
   );
 }
+

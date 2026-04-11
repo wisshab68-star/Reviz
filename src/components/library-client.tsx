@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { RevizMascotDoodle, RevizMindOrbitDoodle, RevizNotebookDoodle } from "@/components/reviz-illustrations";
 
 type SheetSourceType = "TEXT" | "PDF" | "IMAGE" | "DOCX" | "AUDIO";
 
@@ -23,18 +23,30 @@ type SheetsResponse = {
   error?: string;
 };
 
-const SOURCE_BADGE_CONFIG: Record<
-  SheetSourceType,
-  { label: string; bg: string; color: string }
-> = {
-  TEXT: { label: "Texte", bg: "#eaf0ff", color: "#1736b6" },
-  PDF: { label: "PDF", bg: "#eaf0ff", color: "#1736b6" },
-  IMAGE: { label: "Image", bg: "#eaf0ff", color: "#1736b6" },
-  DOCX: { label: "Word", bg: "#eaf0ff", color: "#1736b6" },
-  AUDIO: { label: "Audio", bg: "#eaf0ff", color: "#1736b6" },
-};
+function getSubjectTheme(title: string, summary: string) {
+  const haystack = `${title} ${summary}`.toLowerCase();
+
+  if (haystack.includes("math")) {
+    return { label: "Maths", color: "#3B5BDB" };
+  }
+
+  if (haystack.includes("svt") || haystack.includes("biologie") || haystack.includes("science de la vie")) {
+    return { label: "SVT", color: "#16a34a" };
+  }
+
+  if (haystack.includes("histoire") || haystack.includes("geo") || haystack.includes("géographie")) {
+    return { label: "Histoire-Géo", color: "#d97706" };
+  }
+
+  if (haystack.includes("physique") || haystack.includes("chimie")) {
+    return { label: "Physique-Chimie", color: "#9333ea" };
+  }
+
+  return { label: "Autres", color: "#6b7280" };
+}
 
 export function LibraryClient() {
+  const router = useRouter();
   const [items, setItems] = useState<SheetListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,131 +77,194 @@ export function LibraryClient() {
   }, []);
 
   if (loading) {
-    return <div className="status-box">Chargement des fiches...</div>;
+    return (
+      <div
+        style={{
+          minHeight: "calc(100vh - 80px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#8B8B9E",
+          background: "#0F0F13",
+        }}
+      >
+        Chargement des fiches...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="status-box error">{error}</div>;
+    return (
+      <div
+        style={{
+          minHeight: "calc(100vh - 80px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#FFFFFF",
+          background: "#0F0F13",
+          border: "1px solid #2A2A38",
+          borderRadius: 12,
+          padding: "24px",
+        }}
+      >
+        {error}
+      </div>
+    );
   }
 
   if (items.length === 0) {
     return (
-      <div className="card empty-state">
-        <div className="reviz-empty-art" aria-hidden="true">
-          <RevizNotebookDoodle className="reviz-illustration reviz-illustration-notebook" />
-          <RevizMascotDoodle className="reviz-illustration reviz-illustration-mascot" />
-        </div>
-        <p>Aucune fiche pour le moment.</p>
-        <div className="cta-row" style={{ justifyContent: "center", marginTop: "1rem" }}>
-          <Link href="/app" className="btn btn-primary">
-            Nouvelle fiche
-          </Link>
-          <Link href="/sign-in" className="btn btn-soft">
-            Connexion
-          </Link>
-        </div>
+      <div
+        style={{
+          minHeight: "calc(100vh - 80px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "16px",
+          textAlign: "center",
+          background: "#0F0F13",
+        }}
+      >
+        <svg
+          width="80"
+          height="80"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#2A2A38"
+          strokeWidth="1.5"
+          aria-hidden="true"
+        >
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        </svg>
+        <h2
+          style={{
+            margin: "24px 0 0",
+            color: "#FFFFFF",
+            fontFamily: "var(--font-heading)",
+            fontSize: "24px",
+          }}
+        >
+          Aucune fiche pour le moment
+        </h2>
+        <p
+          style={{
+            margin: 0,
+            color: "#8B8B9E",
+            fontSize: "14px",
+          }}
+        >
+          Génère ta première fiche en 30 secondes.
+        </p>
+        <Link
+          href="/app"
+          style={{
+            marginTop: "8px",
+            background: "#3B5BDB",
+            color: "#FFFFFF",
+            borderRadius: "50px",
+            padding: "14px 32px",
+            fontFamily: "var(--font-heading)",
+            textDecoration: "none",
+          }}
+        >
+          Créer ma première fiche
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="library-workspace">
-      <div className="library-toolbar">
-        <div>
-          <p className="eyebrow">Reviz</p>
-          <h2 className="workspace-title">bibliotheque</h2>
-        </div>
-        <div className="reviz-library-art" aria-hidden="true">
-          <RevizMindOrbitDoodle className="reviz-illustration reviz-illustration-orbit" />
-          <RevizMascotDoodle className="reviz-illustration reviz-illustration-mascot" />
-          <RevizNotebookDoodle className="reviz-illustration reviz-illustration-notebook" />
-        </div>
-        <Link href="/app" className="btn btn-primary">
-          Ajouter
-        </Link>
-      </div>
+    <div
+      style={{
+        background: "#0F0F13",
+        display: "grid",
+        gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+        gap: "16px",
+      }}
+    >
+      {items.map((item) => {
+        const subjectTheme = getSubjectTheme(item.title, item.summary);
 
-      <div className="library-ledger">
-        <div className="library-ledger-head">
-          <span>Titre</span>
-          <span>Source</span>
-          <span>Date</span>
-          <span>Actions</span>
-        </div>
+        return (
+          <article
+            key={item.id}
+            onClick={() => router.push(`/sheet/${item.id}`)}
+            style={{
+              background: "#1E1E2A",
+              border: "0.5px solid #2A2A38",
+              borderRadius: "12px",
+              padding: "20px",
+              cursor: "pointer",
+              transition: "border-color 0.2s ease, transform 0.2s ease",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              minHeight: "180px",
+            }}
+            onMouseEnter={(event) => {
+              event.currentTarget.style.borderColor = "#3B5BDB";
+              event.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(event) => {
+              event.currentTarget.style.borderColor = "#2A2A38";
+              event.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <div
+              style={{
+                display: "inline-flex",
+                alignSelf: "flex-start",
+                padding: "6px 10px",
+                borderRadius: "999px",
+                background: subjectTheme.color,
+                color: "#FFFFFF",
+                fontSize: "12px",
+                fontWeight: 700,
+                fontFamily: "var(--font-heading)",
+              }}
+            >
+              {subjectTheme.label}
+            </div>
 
-        <div className="library-ledger-body">
-          {items.map((item) => {
-            const badge = SOURCE_BADGE_CONFIG[item.sourceType] ?? {
-              label: item.sourceType,
-              bg: "#f5f5f5",
-              color: "#111111",
-            };
-            const derivedMastery =
-              item.masteryScore ?? Math.min(92, Math.max(28, 45 + item.summary.length / 12));
+            <div style={{ display: "grid", gap: "8px" }}>
+              <h3
+                style={{
+                  margin: 0,
+                  color: "#FFFFFF",
+                  fontFamily: "var(--font-heading)",
+                  fontSize: "20px",
+                  lineHeight: 1.2,
+                }}
+              >
+                {item.title}
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  color: "#8B8B9E",
+                  fontSize: "14px",
+                  lineHeight: 1.5,
+                }}
+              >
+                {item.summary}
+              </p>
+            </div>
 
-            return (
-              <article key={item.id} className="library-row">
-                <div className="library-row-main">
-                  <div className="library-row-heading">
-                    <h3>{item.title}</h3>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        padding: "3px 10px",
-                        borderRadius: 20,
-                        background: badge.bg,
-                        color: badge.color,
-                      }}
-                    >
-                      {badge.label}
-                    </span>
-                  </div>
-                  <p>{item.summary}</p>
-                  {(item.masteryScore !== undefined || item.summary.length > 0) ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                      <div
-                        style={{
-                          flex: 1,
-                          height: 4,
-                          background: "#e9e9e9",
-                          borderRadius: 2,
-                          overflow: "hidden",
-                        }}
-                      >
-                        <div
-                          style={{
-                            height: "100%",
-                            borderRadius: 2,
-                            background: "#111111",
-                            width: `${derivedMastery}%`,
-                            transition: "width 0.4s ease",
-                          }}
-                        />
-                      </div>
-                      <span style={{ fontSize: 12, color: "#6a6a6a", whiteSpace: "nowrap" }}>
-                        {Math.round(derivedMastery)}%
-                      </span>
-                    </div>
-                  ) : null}
-                </div>
-                <span className="library-row-meta">{item.sourceType}</span>
-                <span className="library-row-meta">
-                  {new Date(item.createdAt).toLocaleDateString("fr-FR")}
-                </span>
-                <div className="cta-row">
-                  <Link href={`/sheet/${item.id}`} className="btn btn-primary">
-                    Ouvrir
-                  </Link>
-                  <Link href={`/review/${item.id}`} className="btn btn-soft">
-                    Reviser
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
+            <span
+              style={{
+                marginTop: "auto",
+                color: "#8B8B9E",
+                fontSize: "12px",
+              }}
+            >
+              {new Date(item.createdAt).toLocaleDateString("fr-FR")}
+            </span>
+          </article>
+        );
+      })}
     </div>
   );
 }

@@ -566,7 +566,7 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
 
   if (isZonedFiche(displayFiche)) {
     return (
-      <div className="reviz-fiche-page fiche-container">
+      <div className="reviz-fiche-page fiche-container" style={{ background: "#FFFFFF", color: "#000000" }}>
         <FicheHeader
           titre={displayFiche.titre}
           matiere={displayFiche.matiere}
@@ -799,7 +799,7 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
   const firstVersoKey = orderedSectionKeys.find((key) => PRINT_VERSO_KEYS.includes(key));
 
   return (
-    <div className="reviz-fiche-page fiche-container">
+    <div className="reviz-fiche-page fiche-container" style={{ background: "#FFFFFF", color: "#000000" }}>
       <FicheHeader
         titre={displayFiche.titre}
         matiere={displayFiche.matiere}

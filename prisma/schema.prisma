@@ -39,6 +39,7 @@ model User {
   stripeCustomerId   String?        @unique
   subscriptionStatus String?
   subscriptionId     String?        @unique
+  hasSeenDemo        Boolean        @default(false)
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   accounts           Account[]

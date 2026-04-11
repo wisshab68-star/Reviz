@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
-import { isDatabaseConnectionError } from "@/lib/database-fallback";
-import { AppTopbar } from "@/components/app-topbar";
 import { HomeGenerator } from "@/components/home-generator";
 import { PremiumUpgradeBanner } from "@/components/premium-upgrade-banner";
+import { getCurrentUserAccess } from "@/lib/user-access";
 
 export const metadata: Metadata = {
-  title: "G\u00e9n\u00e9rer une fiche \u2014 Reviz",
-  description: "Transforme ton cours en fiche de r\u00e9vision intelligente en 30 secondes.",
+  title: "Generer une fiche - Reviz",
+  description: "Transforme ton cours en fiche de revision intelligente en 30 secondes.",
 };
 
 type AppPageProps = {
@@ -18,32 +17,50 @@ type AppPageProps = {
 };
 
 export default async function AppPage({ searchParams }: AppPageProps) {
-  let session = null;
+  const access = await getCurrentUserAccess();
 
-  try {
-    session = await auth();
-  } catch (error) {
-    if (!isDatabaseConnectionError(error)) {
-      throw error;
-    }
-
-    console.error("Auth lookup failed on /app, continuing as guest.", error);
+  if (!access) {
+    redirect("/sign-in");
   }
 
   const resolvedSearchParams = await searchParams;
   const upgraded = resolvedSearchParams?.upgraded === "true";
 
   return (
-    <main className="app-layout">
-      <AppTopbar />
-
-      <div className="content-shell content-shell-home content-shell-home-marketing">
+    <main
+      className="app-layout"
+      style={{
+        background: "#0F0F13",
+        minHeight: "100vh",
+        width: "100%",
+        color: "#FFFFFF",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        className="content-shell content-shell-home content-shell-home-marketing"
+        style={{
+          width: "100%",
+          maxWidth: 1080,
+          margin: "0 auto",
+          padding: "32px 40px",
+          background: "#0F0F13",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+        }}
+      >
         <PremiumUpgradeBanner active={upgraded} />
-        <section className="landing-stage landing-stage-marketing">
+
+        <section className="landing-stage landing-stage-marketing" style={{ width: "100%", background: "#0F0F13" }}>
           <HomeGenerator
-            isAuthenticated={Boolean(session?.user?.id)}
-            plan={session?.user?.plan ?? "FREE"}
+            isAuthenticated
+            plan={access.plan}
+            subscriptionStatus={access.subscriptionStatus}
+            sheetCount={access.sheetCount}
             minimal
+            welcomeName={access.welcomeName}
           />
         </section>
       </div>

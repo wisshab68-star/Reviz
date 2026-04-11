@@ -1,36 +1,27 @@
-import { auth } from "@/auth";
-import { isDatabaseConnectionError } from "@/lib/database-fallback";
+import { redirect } from "next/navigation";
+
 import { AppTopbar } from "@/components/app-topbar";
 import { LibraryClient } from "@/components/library-client";
+import { getCurrentUserAccess } from "@/lib/user-access";
 
 export default async function LibraryPage() {
-  let session = null;
+  const access = await getCurrentUserAccess();
 
-  try {
-    session = await auth();
-  } catch (error) {
-    if (!isDatabaseConnectionError(error)) {
-      throw error;
-    }
-
-    console.error("Auth lookup failed on /library, continuing as guest.", error);
+  if (!access) {
+    redirect("/sign-in");
   }
 
   return (
-    <main className="app-layout">
+    <main className="app-layout" style={{ background: "#0F0F13", minHeight: "100vh" }}>
       <AppTopbar />
 
-      <div className="content-shell library-content-shell">
-        <section className="section-block library-section-block">
+      <div
+        className="content-shell library-content-shell"
+        style={{ maxWidth: 1120, margin: "0 auto", padding: "24px 1.5rem 40px", background: "#0F0F13", width: "100%" }}
+      >
+        <section className="section-block library-section-block" style={{ background: "transparent" }}>
           <div className="section-title library-section-title">
-            <p className="eyebrow">REVIZ</p>
-            <h1>tes fiches.</h1>
-            <p>
-              {session?.user?.id
-                ? "Retrouve tes fiches et relance une revision en un clic."
-                : "Mode demo actif. Tu peux consulter les fiches deja generees."}
-            </p>
-            <p className="library-support-note">(PDF, TXT, PNG, JPG, JPEG, WEBP, photo)</p>
+            <h1 style={{ color: "#FFFFFF", fontFamily: "var(--font-heading)" }}>tes fiches.</h1>
           </div>
 
           <LibraryClient />

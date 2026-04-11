@@ -15,7 +15,11 @@ interface FicheContentBlockProps {
 
 export function FicheContentBlock({ type, content }: FicheContentBlockProps) {
   return (
-    <div className={`reviz-fiche-block reviz-fiche-block-${type}`} data-print="section">
+    <div
+      className={`reviz-fiche-block reviz-fiche-block-${type}`}
+      data-print="section"
+      style={{ background: "#FFFFFF", color: "#000000" }}
+    >
       <p className="reviz-fiche-block-label">{LABELS[type]}</p>
       <MathRenderer text={content} className="reviz-fiche-block-content" />
     </div>

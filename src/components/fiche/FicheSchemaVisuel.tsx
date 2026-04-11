@@ -184,7 +184,7 @@ export function FicheSchemaVisuel({ schema, blueprintId }: FicheSchemaVisuelProp
   const positions = buildNodePositions(elements, svgWidth, svgHeight, blueprintId);
 
   return (
-    <div className="reviz-schema-shell" data-print="carte-mentale">
+    <div className="reviz-schema-shell" data-print="carte-mentale" style={{ background: "#FFFFFF", color: "#000000" }}>
       <div className="reviz-schema-badge">{getSchemaBadge(blueprintId)}</div>
       <p className="reviz-schema-description">{schema.description}</p>
       <svg

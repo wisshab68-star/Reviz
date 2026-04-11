@@ -10,7 +10,7 @@ interface FicheHeaderProps {
 
 export function FicheHeader({ titre, matiere, niveau, metriques }: FicheHeaderProps) {
   return (
-    <div className="reviz-fiche-header">
+    <div className="reviz-fiche-header" style={{ background: "#FFFFFF", color: "#000000" }}>
       <span className="reviz-fiche-badge">Fiche Reviz</span>
       <h1 className="reviz-fiche-title">{titre}</h1>
       <p className="reviz-fiche-meta">{matiere} - {niveau}</p>

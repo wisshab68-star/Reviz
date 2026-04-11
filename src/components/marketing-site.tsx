@@ -1,33 +1,59 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { MethodeReviz } from "@/components/landing/MethodeReviz";
-import { OutputsReviz } from "@/components/landing/OutputsReviz";
 
 const sourceCards = [
-  { kicker: "Je pars d'un cours", title: "PDF", copy: "Un poly, un chapitre, un support de cours. Reviz te fait gagner du temps.", symbol: "?", tone: "light" },
-  { kicker: "Je pars d'une page", title: "PHOTO", copy: "Tu photographies ton cahier ou ton tableau. L'app remet tout au propre.", symbol: "?", tone: "dark" },
-  { kicker: "Je pars de l'essentiel", title: "TEXTE", copy: "Tu colles ton contenu et Reviz construit directement la fiche de revision.", symbol: "?", tone: "blue" },
-] as const;
-
-const steps = [
-  { number: "01", title: "importe", copy: "PDF, photo, image ou texte. Tu commences avec ce que tu as deja." },
-  { number: "02", title: "transforme", copy: "Reviz genere une fiche claire avec schema, notions, flashcards et quiz." },
-  { number: "03", title: "retiens", copy: "Tu ouvres la fiche, tu revises mieux, tu passes a la suite sans te perdre." },
+  {
+    kicker: "Je pars d'un cours",
+    title: "PDF",
+    copy: "Un poly, un chapitre, un support de cours. Reviz te fait gagner du temps.",
+    symbol: "↓",
+    tone: "light",
+  },
+  {
+    kicker: "Je pars d'une page",
+    title: "PHOTO",
+    copy: "Tu photographies ton cahier ou ton tableau. L'app remet tout au propre.",
+    symbol: "⊙",
+    tone: "dark",
+  },
+  {
+    kicker: "Je pars de l'essentiel",
+    title: "TEXTE",
+    copy: "Tu colles ton contenu et Reviz construit directement la fiche de revision.",
+    symbol: "✦",
+    tone: "blue",
+  },
 ] as const;
 
 const testimonials = [
-  { initial: "L", colorClass: "avatar-blue", quote: "J'ai eu 16 en SVT apres avoir revise avec Reviz.", author: "Lea, Terminale S · SVT" },
-  { initial: "A", colorClass: "avatar-green", quote: "En 10 minutes j'avais une fiche complete sur la Revolution francaise.", author: "Adam, 3eme · Histoire" },
-  { initial: "I", colorClass: "avatar-violet", quote: "Parfait pour mes partiels, je gagne un temps fou.", author: "Ines, L1 Droit · Cours magistral" },
+  {
+    initial: "L",
+    colorClass: "avatar-blue",
+    quote: "J'ai eu 16 en SVT apres avoir revise avec Reviz.",
+    author: "Lea, Terminale S · SVT",
+  },
+  {
+    initial: "A",
+    colorClass: "avatar-green",
+    quote: "En 10 minutes j'avais une fiche complete sur la Revolution francaise.",
+    author: "Adam, 3eme · Histoire",
+  },
+  {
+    initial: "I",
+    colorClass: "avatar-violet",
+    quote: "Parfait pour mes partiels, je gagne un temps fou.",
+    author: "Ines, L1 Droit · Cours magistral",
+  },
 ] as const;
 
 const pricingPlans = [
   {
     badge: "Le plus populaire",
-    name: "PRO ?",
+    name: "PRO",
     price: "4,99€/mois",
     items: [
       "Fiches illimitees",
@@ -41,12 +67,44 @@ const pricingPlans = [
   },
 ] as const;
 
+const freePlan = {
+  badge: "GRATUIT",
+  price: "0€",
+  subtitle: "Pour commencer",
+  items: [
+    "1 fiche générée offerte",
+    "Toutes les matières",
+    "Flashcards incluses",
+    "Accès à ta bibliothèque",
+  ],
+  cta: "Essayer gratuitement",
+} as const;
+
 const faqItems = [
-  { question: "Reviz fonctionne pour le college et le lycee ?", answer: "Oui, Reviz couvre toutes les matieres du college (6eme-3eme) et du lycee (Seconde-Terminale), ainsi que le BTS et la Licence." },
-  { question: "Comment fonctionne la fiche gratuite ?", answer: "Tu importes ton cours PDF ou tu prends une photo de ton cahier, tu choisis ta matiere, et Reviz genere ta fiche en 30 secondes. Aucune carte bancaire requise pour commencer." },
-  { question: "Mes cours restent-ils confidentiels ?", answer: "Oui. Tes documents sont traites uniquement pour generer ta fiche et ne sont ni stockes ni partages avec des tiers." },
-  { question: "Comment annuler mon abonnement ?", answer: "En un clic depuis ton espace compte. Aucune periode d'engagement, aucun frais d'annulation." },
-  { question: "Reviz fonctionne-t-il sur telephone ?", answer: "Oui, Reviz est optimise mobile. Tu peux meme prendre une photo de ton cahier ou tableau directement depuis l'app." },
+  {
+    question: "Reviz fonctionne pour le college et le lycee ?",
+    answer:
+      "Oui, Reviz couvre toutes les matieres du college (6eme-3eme) et du lycee (Seconde-Terminale), ainsi que le BTS et la Licence.",
+  },
+  {
+    question: "Comment fonctionne la fiche gratuite ?",
+    answer:
+      "Tu importes ton cours PDF ou tu prends une photo de ton cahier, tu choisis ta matiere, et Reviz genere ta fiche en 30 secondes. Aucune carte bancaire requise pour commencer.",
+  },
+  {
+    question: "Mes cours restent-ils confidentiels ?",
+    answer:
+      "Oui. Tes documents sont traites uniquement pour generer ta fiche et ne sont ni stockes ni partages avec des tiers.",
+  },
+  {
+    question: "Comment annuler mon abonnement ?",
+    answer: "En un clic depuis ton espace compte. Aucune periode d'engagement, aucun frais d'annulation.",
+  },
+  {
+    question: "Reviz fonctionne-t-il sur telephone ?",
+    answer:
+      "Oui, Reviz est optimise mobile. Tu peux meme prendre une photo de ton cahier ou tableau directement depuis l'app.",
+  },
 ] as const;
 
 const heroWords = ["REVIZ", "transforme", "tes", "cours", "en", "fiches."] as const;
@@ -55,32 +113,18 @@ function formatStudentCount(value: number) {
   return new Intl.NumberFormat("fr-FR").format(value);
 }
 
-function StepIcon({ step }: { step: (typeof steps)[number]["number"] }) {
-  if (step === "01") {
-    return (
-      <svg viewBox="0 0 80 80" aria-hidden="true" className="step-icon-svg">
-        <path d="M40 12v42" />
-        <path d="M24 39 40 55 56 39" />
-        <path d="M18 66h44" />
-      </svg>
-    );
-  }
-
-  if (step === "02") {
-    return (
-      <svg viewBox="0 0 80 80" aria-hidden="true" className="step-icon-svg">
-        <path d="m40 12 6.5 16.5L63 35l-16.5 6.5L40 58l-6.5-16.5L17 35l16.5-6.5Z" />
-        <path d="m58 14 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" />
-      </svg>
-    );
-  }
-
+function LightningIcon() {
   return (
-    <svg viewBox="0 0 80 80" aria-hidden="true" className="step-icon-svg">
-      <path d="M14 24c0-4.4 3.6-8 8-8h16v44H22c-4.4 0-8-3.6-8-8Z" />
-      <path d="M66 24c0-4.4-3.6-8-8-8H42v44h16c4.4 0 8-3.6 8-8Z" />
-      <path d="M38 20h4" />
-      <path d="M38 56h4" />
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="badge-icon">
+      <path d="M9.2 1 3.8 8h3l-1 7L12.2 8h-3L9.2 1Z" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="star-icon">
+      <path d="M8 1.2 10.02 5.3l4.52.66-3.27 3.18.78 4.5L8 11.52 3.95 13.64l.78-4.5L1.46 5.96l4.52-.66Z" />
     </svg>
   );
 }
@@ -100,13 +144,16 @@ export function MarketingSite() {
   }, []);
 
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
-        }
-      });
-    }, { threshold: 0.05, rootMargin: "0px" });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+          }
+        });
+      },
+      { threshold: 0.05, rootMargin: "0px" },
+    );
 
     document.querySelectorAll(".reviz-reveal").forEach((element) => observer.observe(element));
     document.querySelectorAll(".reviz-reveal").forEach((element) => {
@@ -139,11 +186,14 @@ export function MarketingSite() {
       requestAnimationFrame(tick);
     };
 
-    const counterObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) animateCount();
-      });
-    }, { threshold: 0.2 });
+    const counterObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) animateCount();
+        });
+      },
+      { threshold: 0.2 },
+    );
 
     counterObserver.observe(node);
     return () => counterObserver.disconnect();
@@ -156,7 +206,7 @@ export function MarketingSite() {
           <Link href="/" className="brand">REVIZ</Link>
           <nav className="nav">
             <a href="#hero" className="pill pill-active">Accueil</a>
-            <a href="#modes" className="pill">A propos</a>
+            <a href="#steps" className="pill">A propos</a>
             <a href="#exemples" className="pill">Exemples</a>
             <Link href="/sign-in" className="pill">Connexion</Link>
           </nav>
@@ -168,17 +218,27 @@ export function MarketingSite() {
           <div className="container hero">
             <div className="hero-copy">
               <p className="eyebrow">REVISION SIMPLE. VITE. BIEN.</p>
-              <div className="hero-speed-badge">? Fiche generee en 30 secondes</div>
+              <div className="hero-speed-badge">
+                <LightningIcon />
+                <span>Fiche generee en 30 secondes</span>
+              </div>
               <h1 className="hero-title" aria-label="REVIZ transforme tes cours en fiches.">
                 {heroWords.map((word, index) => (
-                  <span key={word} className={`hero-word ${word === "cours" ? "chip" : ""}`} style={{ animationDelay: `${index * 0.08}s` }}>
+                  <span
+                    key={word}
+                    className={`hero-word ${word === "cours" ? "chip" : ""}`}
+                    style={{ animationDelay: `${index * 0.08}s` }}
+                  >
                     {word}
                   </span>
                 ))}
               </h1>
-              <p className="lead">PDF, photo, image ou texte. Reviz AI genere une fiche claire, un schema, des flashcards et un quiz sans te noyer sous le blabla.</p>
+              <p className="lead">
+                PDF, photo, image ou texte. Reviz AI genere une fiche claire, un schema, des flashcards et un quiz
+                sans te noyer sous le blabla.
+              </p>
               <div className="cta-row">
-                <Link href="/sign-in" className="btn btn-primary">Commencer</Link>
+                <Link href="/demo" className="btn btn-primary">Commencer</Link>
                 <a href="#steps" className="btn btn-secondary">Voir comment</a>
               </div>
               <p className="hero-cta-note">1 fiche gratuite · Sans carte bancaire · Sans inscription</p>
@@ -186,73 +246,21 @@ export function MarketingSite() {
 
             <div className="hero-visual" aria-hidden="true">
               <div className="hero-badge">REVISION FUN</div>
-              <div className="hero-mock">
-                <div className="fichePreview">
-                  <div className="fichePreviewHeader">
-                    <div className="fichePreviewHeaderLeft">
-                      <span className="ficheBadgeViolet">fiche reviz</span>
-                      <span className="ficheHashtag">#revise</span>
-                    </div>
-                    <span className="ficheMatiereLabel">MATHS · TERMINALE</span>
-                  </div>
-
-                  <div className="fichePreviewBody">
-                    <p className="ficheKicker">NOTIONS CLÉS</p>
-                    <h3 className="ficheTitre">Probabilités</h3>
-
-                    <div className="ficheCounters">
-                      <div className="ficheCounter ficheCounterViolet">
-                        <span className="ficheCounterNum">6</span>
-                        <span className="ficheCounterLabel">FORMULES</span>
-                      </div>
-                      <div className="ficheCounter ficheCounterCoral">
-                        <span className="ficheCounterNum">4</span>
-                        <span className="ficheCounterLabel">PROPRIÉTÉS</span>
-                      </div>
-                      <div className="ficheCounter ficheCounterGreen">
-                        <span className="ficheCounterNum">3</span>
-                        <span className="ficheCounterLabel">PIÈGES</span>
-                      </div>
-                    </div>
-                    <div className="ficheImageMentale">
-                      <span className="ficheSectionKicker">IMAGE MENTALE</span>
-                      <p className="ficheImageMentaleText">
-                        "L'univers probabiliste : la toile de fond de tous les possibles."
-                      </p>
-                    </div>
-
-                    <div className="ficheNotions">
-                      <span className="ficheSectionKicker">À RETENIR</span>
-                      <ul className="ficheNotionsList">
-                        <li><span className="ficheDot ficheDotBlue"></span>Expérience aléatoire : résultat imprévisible</li>
-                        <li><span className="ficheDot ficheDotBlue"></span>P(E) = issues favorables / total</li>
-                        <li><span className="ficheDot ficheDotBlue"></span>P(A?B) = P(A) + P(B) - P(AnB)</li>
-                      </ul>
-                    </div>
-
-                    <div className="fichePiege">
-                      <span className="ficheDot ficheDotRed"></span>
-                      <div>
-                        <p className="fichePiegeLabel">PIÈGE CLASSIQUE</p>
-                        <p className="fichePiegeText">Confondre P(A|B) et P(B|A) — deux probabilités conditionnelles inverses.</p>
-                      </div>
-                    </div>
-
-                    <div className="ficheFlashcard">
-                      <span className="ficheFlashcardLabel">FLASHCARD</span>
-                      <p className="ficheFlashcardQuestion">Qu'est-ce qu'une expérience aléatoire ?</p>
-                      <div className="ficheFlashcardSeparator"></div>
-                      <p className="ficheFlashcardAnswer">
-                        Un processus dont on ne peut pas prédire le résultat à l'avance.
-                        L'ensemble des issues forme l'univers O.
-                      </p>
+              <div className="hero-mascot-shell">
+                <div className="hero-mascot-ring"></div>
+                <div className="hero-mascot-card">Fiche générée ✓</div>
+                <div className="hero-mascot">
+                  <div className="hero-mascot-image">
+                    <div className="hero-mascot-frame">
+                      <img
+                        src="/mascotte.png"
+                        alt="Mascotte Reviz"
+                        style={{ width: "100%", height: "auto", objectFit: "contain", display: "block" }}
+                      />
                     </div>
                   </div>
-
-                  <div className="fichePreviewFooter">
-                    <button className="ficheBtnOutline">Voir la fiche</button>
-                    <button className="ficheBtnDark">Générer la mienne</button>
-                  </div>
+                  <div className="hero-mascot-note note-left">La puissance comme répétition mécanique</div>
+                  <div className="hero-mascot-note note-bottom">6 formules · 4 flashcards</div>
                 </div>
               </div>
             </div>
@@ -273,7 +281,7 @@ export function MarketingSite() {
                     <h3>{card.title}</h3>
                     <p className="source-copy">{card.copy}</p>
                   </div>
-                  <div className="source-symbol">{card.symbol}</div>
+                  <div className="source-symbol" aria-hidden="true">{card.symbol}</div>
                   <Link href="/app" className="btn source-btn">Utiliser</Link>
                 </article>
               ))}
@@ -285,29 +293,30 @@ export function MarketingSite() {
           <div className="container section">
             <div className="section-head">
               <span className="section-kicker section-kicker-light reviz-reveal reviz-reveal-delay-1">Comment ca marche</span>
-              <h2 className="reviz-reveal">3 etapes. pas plus.</h2>
-              <p className="section-note section-note-light reviz-reveal reviz-reveal-delay-1">Reviz est volontairement simple : tu donnes ton cours, l'IA structure, puis tu revises.</p>
+              <h2 className="reviz-reveal">3 entrees. un rendu net.</h2>
+              <p className="section-note section-note-light reviz-reveal reviz-reveal-delay-1">
+                Reviz est volontairement simple : tu donnes ton cours, l'IA structure, puis tu revises.
+              </p>
             </div>
             <div className="grid grid-3">
-              {steps.map((step, index) => (
-                <article key={step.number} className={`step-card reviz-reveal reviz-reveal-delay-${index + 1}`}>
+              {sourceCards.map((card, index) => (
+                <article key={card.title} className={`step-card reviz-reveal reviz-reveal-delay-${index + 1}`}>
                   <div className="step-card-top">
-                    <span className="step-number">{step.number}</span>
-                    <StepIcon step={step.number} />
+                    <span className="step-number">{`0${index + 1}`}</span>
+                    <div className="source-symbol" aria-hidden="true">{card.symbol}</div>
                   </div>
-                  <h3>{step.title}</h3>
-                  <p>{step.copy}</p>
+                  <h3>{card.title}</h3>
+                  <p>{card.copy}</p>
                 </article>
               ))}
             </div>
             <div className="section-cta reviz-reveal reviz-reveal-delay-2">
-              <Link href="/app" className="btn btn-secondary">Generer ma premiere fiche ?</Link>
+              <Link href="/demo" className="btn btn-secondary">Generer ma premiere fiche</Link>
             </div>
           </div>
         </section>
 
         <MethodeReviz />
-        <OutputsReviz />
 
         <section className="section-band pricing-proof">
           <div className="container section">
@@ -317,21 +326,34 @@ export function MarketingSite() {
               <p className="section-note reviz-reveal reviz-reveal-delay-1">Le prix d'un cahier de fiches. Zero heure de boulot.</p>
             </div>
             <div className="pricing-grid">
+              <article className="pricing-card pricing-card-free reviz-reveal reviz-reveal-delay-1">
+                <div className="pricing-badge pricing-badge-free">{freePlan.badge}</div>
+                <h3 className="pricing-title pricing-title-free">Gratuit</h3>
+                <p className="pricing-price pricing-price-free">{freePlan.price}</p>
+                <p className="pricing-subtitle">{freePlan.subtitle}</p>
+                <ul className="pricing-list pricing-list-free">
+                  {freePlan.items.map((item) => <li key={item}>• {item}</li>)}
+                </ul>
+                <Link href="/sign-in" className="pricing-free-cta">
+                  {freePlan.cta}
+                </Link>
+              </article>
               {pricingPlans.map((plan, index) => (
-                <article key={plan.name} className={`pricing-card ${plan.className} reviz-reveal reviz-reveal-delay-${index + 1}`}>
+                <article key={plan.name} className={`pricing-card ${plan.className} reviz-reveal reviz-reveal-delay-${index + 2}`}>
                   <div className="pricing-badge">{plan.badge}</div>
                   <h3 className="pricing-title">{plan.name}</h3>
                   <p className="pricing-price">{plan.price}</p>
                   <ul className="pricing-list">
-                    {plan.items.map((item) => <li key={item}>? {item}</li>)}
+                    {plan.items.map((item) => <li key={item}>• {item}</li>)}
                   </ul>
                   <Link href="/sign-in" className={plan.ctaClass}>{plan.cta}</Link>
                 </article>
               ))}
             </div>
-            <p className="pricing-footnote">?? Paiement securise Stripe · Annulation a tout moment · Sans engagement</p>
+            <p className="pricing-footnote">Paiement securise Stripe · Annulation a tout moment · Sans engagement</p>
           </div>
         </section>
+
         <section className="section-band faq-band">
           <div className="container section">
             <div className="section-head">
@@ -347,7 +369,7 @@ export function MarketingSite() {
                       type="button"
                       className="faq-trigger"
                       aria-expanded={isOpen}
-                      onClick={() => setOpenFaq((current) => current === index ? null : index)}
+                      onClick={() => setOpenFaq((current) => (current === index ? null : index))}
                     >
                       <span>{item.question}</span>
                       <span className="faq-icon" aria-hidden="true">{isOpen ? "-" : "+"}</span>
@@ -371,10 +393,16 @@ export function MarketingSite() {
             <div className="grid grid-3">
               {testimonials.map((testimonial, index) => (
                 <article key={testimonial.author} className={`testimonial-card reviz-reveal reviz-reveal-delay-${index + 1}`}>
-                  <div className="stars">?????</div>
                   <div className="testimonial-meta">
                     <div className={`testimonial-avatar ${testimonial.colorClass}`}>{testimonial.initial}</div>
                     <div>
+                      <div className="stars" aria-label="5 etoiles">
+                        <StarIcon />
+                        <StarIcon />
+                        <StarIcon />
+                        <StarIcon />
+                        <StarIcon />
+                      </div>
                       <p>{testimonial.quote}</p>
                       <span className="testimonial-author">— {testimonial.author}</span>
                     </div>
@@ -401,7 +429,7 @@ export function MarketingSite() {
         </div>
       </footer>
 
-      <Link href="/app" className="mobile-sticky-cta">Essayer gratuitement ?</Link>
+      <Link href="/demo" className="mobile-sticky-cta">Essayer gratuitement →</Link>
 
       <style jsx global>{`
         .reviz-reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -417,7 +445,7 @@ export function MarketingSite() {
         .topbar { position: sticky; top: 0; z-index: 50; padding: 18px 0; transition: background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease; }
         .topbar-scrolled { background: rgba(255,255,255,0.86); backdrop-filter: blur(16px); box-shadow: 0 16px 48px rgba(9,9,9,0.08); border-bottom: 1px solid rgba(9,9,9,0.08); }
         .topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-        .brand, .hero-title, .section-head h2, .source-card h3, .step-card h3, .footer-brand, .pricing-title, .pricing-price { font-family: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif; letter-spacing: -0.06em; line-height: 0.88; font-weight: 800; }
+        .brand, .hero-title, .section-head h2, .step-card h3, .footer-brand, .pricing-title, .pricing-price { font-family: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif; letter-spacing: -0.06em; line-height: 0.88; font-weight: 800; }
         .brand { font-size: clamp(2.2rem, 4vw, 3.4rem); }
         .nav { display: inline-flex; align-items: center; gap: 10px; padding: 8px; border-radius: 999px; background: rgba(255,255,255,0.94); box-shadow: 0 24px 60px rgba(9,9,9,0.08); border: 1px solid rgba(9,9,9,0.08); }
         .pill { min-height: 50px; padding: 0 22px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: #f2f3f7; font-weight: 700; font-size: 0.96rem; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), background 0.3s ease; }
@@ -425,67 +453,32 @@ export function MarketingSite() {
         .pill-active { background: #141414; color: #ffffff; }
         .hero { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 56px; align-items: center; padding: 120px 0; }
         .hero-copy { display: flex; flex-direction: column; align-items: flex-start; }
-        .eyebrow, .section-kicker, .stars, .source-kicker { font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.82rem; }
-        .hero-speed-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 16px; margin-top: 14px; border-radius: 999px; background: #090909; color: #ffffff; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.03em; }
+        .eyebrow, .section-kicker, .source-kicker { font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.82rem; }
+        .hero-speed-badge { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 38px; padding: 0 16px; margin-top: 14px; border-radius: 999px; background: #090909; color: #ffffff; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.03em; }
+        .badge-icon { width: 15px; height: 15px; fill: currentColor; flex: 0 0 auto; }
         .hero-title { display: flex; flex-wrap: wrap; gap: 0.16em; margin: 12px 0 0; font-size: clamp(5rem,7vw,6.4rem); max-width: 11ch; }
         .hero-word { opacity: 0; transform: translateY(20px); animation: hero-word-in 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
         .chip { display: inline-block; padding: 0.02em 0.18em; border-radius: 0.26em; background: #2f5bff; color: #ffffff; box-shadow: 4px 4px 0 #090909; }
-        .lead, .section-note, .source-copy, .step-card p, .testimonial-card p, .footer-copy { color: #585f6b; line-height: 1.7; font-size: 1.04rem; }
+        .lead, .section-note, .step-card p, .testimonial-card p, .footer-copy { color: #585f6b; line-height: 1.7; font-size: 1.04rem; }
         .lead { max-width: 34rem; margin-top: 24px; }
         .hero-cta-note { margin: 12px 0 0; color: #767d88; font-size: 0.92rem; line-height: 1.5; }
         .cta-row, .section-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
         .btn { min-height: 62px; padding: 0 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border: 3px solid #090909; font-weight: 800; font-size: 1rem; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s cubic-bezier(0.16,1,0.3,1); }
         .btn:hover { transform: translateY(-3px); }
         .btn-primary { background: #2f5bff; color: #ffffff; box-shadow: 8px 8px 0 #090909; }
-        .btn-secondary, .source-btn { background: #ffffff; color: #090909; }
-        .hero-visual { position: relative; border: 3px solid #090909; border-radius: 42px; background: linear-gradient(180deg,#f5f7ff 0%,#dbe4ff 100%); box-shadow: 10px 10px 0 #090909; padding: 24px; }
+        .btn-secondary { background: #ffffff; color: #090909; }
+        .hero-visual { position: relative; border: 3px solid #090909; border-radius: 42px; background: #edf2ff; box-shadow: 10px 10px 0 #090909; padding: 24px; overflow: hidden; min-height: 720px; display: flex; flex-direction: column; }
         .hero-badge, .section-kicker-light, .pricing-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 800; }
         .hero-badge, .section-kicker-light { border: 2px solid #090909; }
-        .hero-mock { margin-top: 20px; display: flex; justify-content: center; }
-        .fichePreview { width: 320px; background: #ffffff; border-radius: 16px; border: 1.5px solid #e5e7eb; overflow: hidden; font-family: inherit; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07); }
-        .fichePreviewHeader { background: #f8f7ff; border-bottom: 1px solid #ede9fe; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
-        .fichePreviewHeaderLeft { display: flex; align-items: center; gap: 8px; }
-        .ficheBadgeViolet { font-size: 10px; font-weight: 700; color: #534AB7; background: #EEEDFE; padding: 3px 9px; border-radius: 100px; }
-        .ficheHashtag { font-size: 11px; color: #7F77DD; }
-        .ficheMatiereLabel { font-size: 9px; font-weight: 600; color: #9ca3af; letter-spacing: 0.5px; }
-        .fichePreviewBody { padding: 14px; }
-        .ficheKicker, .ficheSectionKicker { font-size: 9px; font-weight: 700; color: #9ca3af; letter-spacing: 0.6px; text-transform: uppercase; display: block; margin: 0 0 4px; }
-        .ficheTitre { font-size: 19px; font-weight: 900; color: #1a1a2e; margin: 0 0 12px; letter-spacing: -0.3px; }
-        .ficheCounters { display: flex; gap: 6px; margin-bottom: 12px; }
-        .ficheCounter { flex: 1; border-radius: 8px; padding: 5px 0; text-align: center; }
-        .ficheCounterNum { display: block; font-size: 17px; font-weight: 900; line-height: 1; }
-        .ficheCounterLabel { display: block; font-size: 8px; font-weight: 700; letter-spacing: 0.4px; margin-top: 2px; }
-        .ficheCounterViolet { background: #f0f0ff; }
-        .ficheCounterViolet .ficheCounterNum { color: #534AB7; }
-        .ficheCounterViolet .ficheCounterLabel { color: #7F77DD; }
-        .ficheCounterCoral { background: #fff4f0; }
-        .ficheCounterCoral .ficheCounterNum { color: #993C1D; }
-        .ficheCounterCoral .ficheCounterLabel { color: #D85A30; }
-        .ficheCounterGreen { background: #f0fdf4; }
-        .ficheCounterGreen .ficheCounterNum { color: #3B6D11; }
-        .ficheCounterGreen .ficheCounterLabel { color: #639922; }
-        .ficheImageMentale { background: #faf9ff; border: 0.5px solid #CECBF6; border-radius: 10px; padding: 10px 12px; margin-bottom: 11px; }
-        .ficheImageMentaleText { font-size: 11px; color: #3C3489; margin: 0; line-height: 1.5; font-style: italic; }
-        .ficheNotions { margin-bottom: 10px; }
-        .ficheNotionsList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 5px; }
-        .ficheNotionsList li { display: flex; align-items: flex-start; gap: 7px; font-size: 11px; color: #374151; line-height: 1.4; }
-        .ficheDot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
-        .ficheDotBlue { background: #378ADD; }
-        .ficheDotRed { background: #E24B4A; }
-        .fichePiege { display: flex; align-items: flex-start; gap: 8px; background: #fff0f0; border: 0.5px solid #F7C1C1; border-radius: 10px; padding: 9px 11px; margin-bottom: 10px; }
-        .fichePiegeLabel { font-size: 8px; font-weight: 800; color: #A32D2D; letter-spacing: 0.5px; text-transform: uppercase; margin: 0 0 3px; }
-        .fichePiegeText { font-size: 11px; color: #791F1F; margin: 0; line-height: 1.4; }
-        .ficheFlashcard { background: #1a1a2e; border-radius: 10px; padding: 11px 13px; }
-        .ficheFlashcardLabel { display: block; font-size: 8px; font-weight: 700; color: rgba(255, 255, 255, 0.4); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 6px; }
-        .ficheFlashcardQuestion { font-size: 12px; font-weight: 700; color: #ffffff; margin: 0 0 8px; line-height: 1.35; }
-        .ficheFlashcardSeparator { height: 0.5px; background: rgba(255, 255, 255, 0.12); margin-bottom: 7px; }
-        .ficheFlashcardAnswer { font-size: 11px; color: rgba(255, 255, 255, 0.6); margin: 0; line-height: 1.4; }
-        .fichePreviewFooter { border-top: 0.5px solid #e5e7eb; padding: 10px 14px; display: flex; gap: 8px; }
-        .ficheBtnOutline, .ficheBtnDark { flex: 1; padding: 8px 0; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
-        .ficheBtnOutline { background: transparent; border: 0.5px solid #d1d5db; color: #1a1a2e; }
-        .ficheBtnOutline:hover { background: #f9fafb; }
-        .ficheBtnDark { background: #1a1a2e; border: none; color: #ffffff; }
-        .ficheBtnDark:hover { opacity: 0.88; }
+        .hero-mascot-shell { margin-top: 18px; position: relative; display: flex; align-items: center; justify-content: center; min-height: 100%; flex: 1; }
+        .hero-mascot-ring { position: absolute; inset: 64px 32px 22px; border: 3px solid rgba(9,9,9,0.1); border-radius: 36px; }
+        .hero-mascot-card { position: absolute; top: 18px; right: 20px; min-height: 42px; padding: 0 18px; border-radius: 999px; border: 2px solid #090909; background: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 800; z-index: 2; box-shadow: 6px 6px 0 #090909; }
+        .hero-mascot { position: relative; width: 100%; min-height: 580px; display: flex; align-items: center; justify-content: center; }
+        .hero-mascot-image { position: relative; z-index: 1; width: min(100%, 560px); display: flex; align-items: center; justify-content: center; }
+        .hero-mascot-frame { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 34px; background: transparent; border: 3px solid #090909; box-shadow: 12px 12px 0 #090909; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .hero-mascot-note { position: absolute; z-index: 2; max-width: 240px; padding: 16px 18px; border-radius: 22px; border: 2px solid #090909; font-weight: 800; line-height: 1.25; box-shadow: 8px 8px 0 #090909; }
+        .note-left { top: 180px; left: -6px; background: #090909; color: #ffffff; }
+        .note-bottom { right: 6px; bottom: 72px; background: #3B5BDB; color: #ffffff; }
         .section { padding: 110px 0; }
         .grid { display: grid; gap: 18px; }
         .grid-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
@@ -501,14 +494,21 @@ export function MarketingSite() {
         .source-card-blue { background: #2f5bff; color: #ffffff; }
         .source-card:hover, .pricing-card:hover, .testimonial-card:hover { transform: translateY(-6px) scale(1.01); }
         .source-symbol { font-size: 4.8rem; line-height: 1; }
+        .step-card h3 { margin: 12px 0 0; font-size: clamp(2.1rem,3.4vw,3.4rem); }
         .step-card { min-height: 340px; display: flex; flex-direction: column; justify-content: space-between; color: #090909; }
         .step-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 28px; }
         .step-number { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #090909; color: #ffffff; font-weight: 800; flex: 0 0 auto; }
-        .step-icon-svg { width: 80px; height: 80px; stroke: #090909; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
         .pricing-head { text-align: center; margin-left: auto; margin-right: auto; }
-        .pricing-grid { display: grid; grid-template-columns: 1fr; justify-items: center; gap: 20px; }
-        .pricing-card { width: min(100%, 520px); display: flex; flex-direction: column; gap: 14px; border-color: rgba(9,9,9,0.14); padding: 28px; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 720px; margin: 0 auto; }
+        .pricing-card { width: 100%; display: flex; flex-direction: column; gap: 14px; border-color: rgba(9,9,9,0.14); padding: 32px; }
         .pricing-badge { width: fit-content; background: #eef1f6; color: #090909; font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase; }
+        .pricing-card-free { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 16px; box-shadow: none; }
+        .pricing-badge-free { background: #F3F4F6; color: #6B7280; min-height: auto; padding: 4px 12px; border-radius: 50px; font-size: 12px; }
+        .pricing-title-free { color: #000000; }
+        .pricing-price-free { font-size: 48px; font-weight: 900; color: #000000; }
+        .pricing-subtitle { margin: -4px 0 0; color: #6B7280; font-size: 14px; }
+        .pricing-list-free { color: #374151; font-size: 14px; gap: 10px; }
+        .pricing-free-cta { margin-top: auto; width: 100%; min-height: 56px; border-radius: 50px; background: #000000; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; text-decoration: none; }
         .plan-dark { background: #090909; color: #ffffff; border-color: #090909; box-shadow: 10px 10px 0 #2f5bff; }
         .plan-dark .pricing-badge { background: rgba(255,255,255,0.14); color: #ffffff; }
         .pricing-title { margin: 0; font-size: 2.1rem; }
@@ -525,7 +525,8 @@ export function MarketingSite() {
         .faq-panel[data-open="true"] { grid-template-rows: 1fr; padding-bottom: 20px; }
         .faq-panel p { margin: 0; overflow: hidden; color: #616875; line-height: 1.7; }
         .social-proof { background: #090909; color: #ffffff; }
-        .stars { color: #2f5bff; margin-bottom: 14px; }
+        .stars { display: flex; align-items: center; gap: 4px; margin-bottom: 14px; }
+        .star-icon { width: 16px; height: 16px; fill: #FFB800; flex: 0 0 auto; }
         .testimonial-meta { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; }
         .testimonial-avatar { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #ffffff; }
         .avatar-blue { background: #2f5bff; }
@@ -539,10 +540,44 @@ export function MarketingSite() {
         .footer-links a { min-height: 48px; padding: 0 18px; border-radius: 999px; background: rgba(255,255,255,0.08); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
         .mobile-sticky-cta { display: none; }
         @keyframes hero-word-in { to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 1180px) { .hero, .grid-3, .footer-inner, .pricing-grid { grid-template-columns: 1fr; } .hero { gap: 42px; } .footer-links { justify-content: flex-start; } }
-        @media (max-width: 767px) { .container { width: min(100% - 28px, 1200px); } .topbar { padding: 12px 0; } .topbar-inner { flex-direction: column; align-items: flex-start; } .nav { width: 100%; overflow-x: auto; } .hero { grid-template-columns: 1fr; padding: 72px 0 60px; } .hero-title { font-size: min(48px, 14vw); max-width: 9ch; } .hero-visual { display: none; } .section { padding: 60px 0; } .grid-3, .footer-inner, .pricing-grid { grid-template-columns: 1fr; } .step-card, .source-card, .testimonial-card, .pricing-card { min-height: auto; } .footer-inner { padding: 60px 0; } .mobile-sticky-cta { position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background: #090909; color: #ffffff; z-index: 200; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; box-shadow: 0 -8px 30px rgba(9,9,9,0.18); } .footer { padding-bottom: 56px; } }
+        @media (max-width: 1180px) {
+          .hero, .grid-3, .footer-inner, .pricing-grid { grid-template-columns: 1fr; }
+          .hero { gap: 42px; }
+          .footer-links { justify-content: flex-start; }
+          .hero-visual { min-height: 560px; }
+          .hero-mascot { min-height: 460px; }
+          .hero-mascot-note { max-width: 200px; }
+        }
+        @media (max-width: 767px) {
+          .container { width: min(100% - 28px, 1200px); }
+          .topbar { padding: 12px 0; }
+          .topbar-inner { flex-direction: column; align-items: flex-start; }
+          .nav { width: 100%; overflow-x: auto; }
+          .hero { grid-template-columns: 1fr; padding: 72px 0 60px; }
+          .hero-title { font-size: min(48px, 14vw); max-width: 9ch; }
+          .hero-visual { display: none; }
+          .section { padding: 60px 0; }
+          .grid-3, .footer-inner, .pricing-grid { grid-template-columns: 1fr; }
+          .step-card, .testimonial-card, .pricing-card { min-height: auto; }
+          .footer-inner { padding: 60px 0; }
+          .mobile-sticky-cta {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: #090909;
+            color: #ffffff;
+            z-index: 200;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            box-shadow: 0 -8px 30px rgba(9,9,9,0.18);
+          }
+          .footer { padding-bottom: 56px; }
+        }
       `}</style>
     </div>
   );
 }
-

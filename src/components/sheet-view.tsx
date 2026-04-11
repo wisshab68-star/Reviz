@@ -122,7 +122,7 @@ export function SheetView({
   const memoryImage = deriveMemoryImage(summary, keyPoints, definitions);
 
   return (
-    <section style={{ display: "grid", gap: 0 }}>
+    <section style={{ display: "grid", gap: 0, background: "#FFFFFF", color: "#000000" }}>
       {/* Resume */}
       <div style={{ paddingBottom: "2rem", borderBottom: "1px solid var(--line)" }}>
         <p style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 8 }}>Synthese</p>

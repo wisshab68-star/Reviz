@@ -57,34 +57,34 @@ export default async function SettingsPage() {
     : null;
 
   return (
-    <main className="page-shell">
+    <main className="page-shell" style={{ background: "#FAFAF8", minHeight: "100vh" }}>
       <AppTopbar />
 
-      <div className="content-shell">
-        <section className="section-block">
+      <div className="content-shell" style={{ maxWidth: 1120, margin: "0 auto", paddingInline: "1.5rem" }}>
+        <section className="section-block" style={{ background: "transparent" }}>
           <div className="section-title">
             <p className="eyebrow">Compte</p>
-            <h1>Profil et abonnement</h1>
+            <h1 style={{ color: "#2F5BFF" }}>Profil et abonnement</h1>
             <p>Gere ton plan, suis ton quota mensuel et pilote ton acces Premium depuis ici.</p>
           </div>
 
           <div className="metrics-grid">
-            <article className="metric-card">
+            <article className="metric-card" style={{ borderColor: "rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
               <h3>Plan actuel</h3>
               <p>{getPlanLabel(session.user.plan)}</p>
             </article>
-            <article className="metric-card">
+            <article className="metric-card" style={{ borderColor: "rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
               <h3>Fiches ce mois</h3>
               <p>{usedSheets}</p>
             </article>
-            <article className="metric-card">
+            <article className="metric-card" style={{ borderColor: "rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
               <h3>Quota restant</h3>
               <p>{unlimited ? "Illimite" : `${remainingSheets} / ${FREE_MONTHLY_SHEET_LIMIT}`}</p>
             </article>
           </div>
 
-          <div className="workspace-panel">
-            <h2 style={{ marginTop: 0 }}>Facturation</h2>
+          <div className="workspace-panel" style={{ borderColor: "rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", background: "#ffffff" }}>
+            <h2 style={{ marginTop: 0, color: "#2F5BFF" }}>Facturation</h2>
             <p className="workspace-copy">
               Passe en Premium pour lever les limites de generation et gerer ensuite ton abonnement
               depuis le portail Stripe.
@@ -92,8 +92,8 @@ export default async function SettingsPage() {
             <BillingActions hasPremium={session.user.plan === "PREMIUM"} />
           </div>
 
-          <div className="workspace-panel">
-            <h2 style={{ marginTop: 0 }}>Abonnement</h2>
+          <div className="workspace-panel" style={{ borderColor: "rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", background: "#ffffff" }}>
+            <h2 style={{ marginTop: 0, color: "#2F5BFF" }}>Abonnement</h2>
             {!isSubscriptionActive ? (
               <>
                 <p className="workspace-copy">

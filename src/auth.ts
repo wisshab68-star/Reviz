@@ -4,8 +4,8 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 
+import authConfig from "@/auth.config";
 import { db } from "@/lib/db";
-import { verifyPassword } from "@/lib/password";
 
 function readEnv(...keys: string[]) {
   for (const key of keys) {
@@ -19,7 +19,6 @@ function readEnv(...keys: string[]) {
   return undefined;
 }
 
-const authSecret = readEnv("AUTH_SECRET", "NEXTAUTH_SECRET");
 const authUrl = readEnv("AUTH_URL", "NEXTAUTH_URL", "NEXT_PUBLIC_APP_URL");
 const googleClientId = readEnv("AUTH_GOOGLE_ID", "GOOGLE_CLIENT_ID", "NEXTAUTH_GOOGLE_ID");
 const googleClientSecret = readEnv("AUTH_GOOGLE_SECRET", "GOOGLE_CLIENT_SECRET", "NEXTAUTH_GOOGLE_SECRET");
@@ -59,6 +58,7 @@ providers.push(
         return null;
       }
 
+      const { verifyPassword } = await import("@/lib/password");
       const isValidPassword = await verifyPassword(password, user.passwordHash);
 
       if (!isValidPassword) {
@@ -79,16 +79,15 @@ providers.push(
 console.log("[AUTH_INIT] providers registered:", providers.length,
   "| GOOGLE client set:", !!googleClientId,
   "| GOOGLE secret set:", !!googleClientSecret,
-  "| AUTH secret set:", !!authSecret,
+  "| AUTH secret set:", !!authConfig.secret,
   "| AUTH url set:", !!authUrl);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  trustHost: true,
+  ...authConfig,
   adapter: PrismaAdapter(db),
   session: {
-    strategy: "database",
+    strategy: "jwt",
   },
-  secret: authSecret,
   providers,
   logger: {
     error: (error: unknown) => {
@@ -111,6 +110,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       console.log("[AUTH_DEBUG] signIn called", { userId: user?.id, provider: account?.provider });
       return true;
     },
+    async jwt({ token, user }) {
+      if (user?.id) {
+        token.sub = user.id;
+      }
+
+      if (user?.plan) {
+        token.plan = user.plan;
+      }
+
+      return token;
+    },
     redirect({ url, baseUrl }) {
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
@@ -128,16 +138,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       return `${baseUrl}/app`;
     },
-    session({ session, user }) {
+    session({ session, token, user }) {
       if (session.user) {
-        session.user.id = user.id;
-        session.user.plan = user.plan;
+        session.user.id = typeof token.sub === "string" ? token.sub : user.id;
+        session.user.plan = (token.plan as typeof session.user.plan) ?? user.plan;
       }
 
       return session;
     },
-  },
-  pages: {
-    signIn: "/sign-in",
   },
 });

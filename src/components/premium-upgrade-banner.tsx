@@ -26,14 +26,31 @@ export function PremiumUpgradeBanner({ active }: PremiumUpgradeBannerProps) {
   }
 
   return (
-    <div className="status-box success" style={{ width: "min(920px, 100%)", marginBottom: "1rem" }}>
+    <div
+      className="status-box success"
+      style={{
+        width: "100%",
+        marginBottom: 0,
+        background: "transparent",
+        border: "none",
+        boxShadow: "none",
+        borderRadius: 0,
+        padding: 0,
+      }}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
-        <span>Bienvenue dans Reviz Premium !</span>
+        <span style={{ color: "#FFFFFF", fontFamily: "var(--display-font)" }}>Bienvenue dans Reviz Premium !</span>
         <button
           type="button"
           className="btn btn-soft"
           onClick={() => setVisible(false)}
-          style={{ minHeight: "42px" }}
+          style={{
+            minHeight: "42px",
+            background: "#0F0F13",
+            color: "#FFFFFF",
+            border: "1px solid #2A2A38",
+            boxShadow: "none",
+          }}
         >
           Fermer
         </button>

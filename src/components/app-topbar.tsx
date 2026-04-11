@@ -16,11 +16,11 @@ export function AppTopbar() {
         </div>
       </div>
 
-      <SidebarNav />
-
-      <div className="sidebar-footer">
+      <div className="sidebar-auth">
         <AuthButtons />
       </div>
+
+      <SidebarNav />
     </aside>
   );
 }

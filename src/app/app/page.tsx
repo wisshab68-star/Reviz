@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
+
 import { auth } from "@/auth";
 import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { AppTopbar } from "@/components/app-topbar";
 import { HomeGenerator } from "@/components/home-generator";
+
+export const metadata: Metadata = {
+  title: "G\u00e9n\u00e9rer une fiche \u2014 Reviz",
+  description: "Transforme ton cours en fiche de r\u00e9vision intelligente en 30 secondes.",
+};
 
 export default async function AppPage() {
   let session = null;

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 
 import { FREE_MONTHLY_SHEET_LIMIT } from "@/lib/plans";
 import { RevizMascotDoodle, RevizMindOrbitDoodle, RevizNotebookDoodle } from "@/components/reviz-illustrations";
@@ -59,6 +59,14 @@ const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_UPLOAD_SIZE_LABEL = "10 Mo";
 const MINIMAL_UPLOAD_INPUT_ID = "reviz-minimal-upload-input";
 const MINIMAL_CAMERA_INPUT_ID = "reviz-minimal-camera-input";
+const LOADING_MESSAGES = [
+  { text: "Lecture de ton cours...", delay: 0 },
+  { text: "Identification des points cles...", delay: 6000 },
+  { text: "Selection des notions importantes...", delay: 12000 },
+  { text: "Redaction de tes flashcards...", delay: 18000 },
+  { text: "Mise en forme de ta fiche...", delay: 24000 },
+  { text: "Presque pret...", delay: 30000 },
+];
 const hiddenFileInputStyle = {
   position: "absolute" as const,
   width: "1px",
@@ -139,8 +147,11 @@ export function HomeGenerator({
 }: HomeGeneratorProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const minimalUploadInputRef = useRef<HTMLInputElement | null>(null);
+  const minimalCameraInputRef = useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
   const [content, setContent] = useState("");
   const [isActivated, setIsActivated] = useState(false);
   const [textMode, setTextMode] = useState(false);
@@ -148,16 +159,66 @@ export function HomeGenerator({
   const [sourceType, setSourceType] = useState("TEXT");
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [fileSizeLabel, setFileSizeLabel] = useState<string | null>(null);
   const [fileAccept, setFileAccept] = useState(".pdf,.txt,image/*");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedSubject, setSelectedSubject] = useState("");
   const [customSubject, setCustomSubject] = useState("");
+  const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0]?.text ?? "Lecture de ton cours...");
 
   const resolvedSubject = selectedSubject === OTHER_SUBJECT_VALUE ? customSubject.trim() : selectedSubject;
   const isOtherSubject = selectedSubject === OTHER_SUBJECT_VALUE;
   const isSubjectValid = resolvedSubject.trim().length > 0;
   const isGenerateDisabled = isSubmitting || isUploading || content.trim().length < 80 || !isSubjectValid;
+  const hasUploadedFile = Boolean(fileName);
+  const isStepOneDone = hasUploadedFile;
+  const isStepTwoDone = isSubjectValid;
+  const currentStep = isStepTwoDone ? 3 : isStepOneDone ? 2 : 1;
+
+  function formatFileSize(sizeInBytes: number) {
+    if (sizeInBytes >= 1024 * 1024) {
+      return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} Mo`;
+    }
+
+    return `${Math.max(1, Math.round(sizeInBytes / 1024))} Ko`;
+  }
+
+  function truncateFileName(name: string) {
+    if (name.length <= 30) {
+      return name;
+    }
+
+    const extensionMatch = name.match(/(\.[^.]+)$/);
+    const extension = extensionMatch?.[1] ?? "";
+    const base = extension ? name.slice(0, -(extension.length)) : name;
+    return `${base.slice(0, Math.max(0, 27 - extension.length))}...${extension}`;
+  }
+
+  function clearSelectedFile() {
+    setContent("");
+    setDocumentId(null);
+    setFileName(null);
+    setFileSizeLabel(null);
+    setTitleHint("");
+    setSourceType("TEXT");
+    setStatus(null);
+    setError(null);
+    setIsActivated(false);
+    setTextMode(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    if (minimalUploadInputRef.current) {
+      minimalUploadInputRef.current.value = "";
+    }
+
+    if (minimalCameraInputRef.current) {
+      minimalCameraInputRef.current.value = "";
+    }
+  }
 
   function formatGenerationError(message: string) {
     if (/FUNCTION_INVOCATION_TIMEOUT|timeout|timed out|erreur serveur|server error|500|502|503|504/i.test(message)) {
@@ -216,26 +277,36 @@ export function HomeGenerator({
     return () => window.clearTimeout(timeoutId);
   }, [launchMode]);
 
-  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const selectedFile = event.target.files?.[0];
-
-    if (!selectedFile) {
+  useEffect(() => {
+    if (!isSubmitting) {
+      setLoadingMessage(LOADING_MESSAGES[0]?.text ?? "Lecture de ton cours...");
       return;
     }
 
+    setLoadingMessage(LOADING_MESSAGES[0]?.text ?? "Lecture de ton cours...");
+    const timeoutIds = LOADING_MESSAGES.slice(1).map((message) =>
+      window.setTimeout(() => setLoadingMessage(message.text), message.delay),
+    );
+
+    return () => {
+      timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    };
+  }, [isSubmitting]);
+
+  async function processSelectedFile(selectedFile: File) {
     setError(null);
 
     if (selectedFile.size > MAX_UPLOAD_SIZE_BYTES) {
       setError(`Le fichier depasse la limite de ${MAX_UPLOAD_SIZE_LABEL}. Reduis sa taille ou exporte un PDF plus leger.`);
       setStatus(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
       return;
     }
 
     setStatus("Import du fichier et extraction du texte...");
     setIsUploading(true);
+    setIsActivated(true);
+    setFileName(selectedFile.name);
+    setFileSizeLabel(formatFileSize(selectedFile.size));
 
     try {
       const formData = new FormData();
@@ -253,11 +324,10 @@ export function HomeGenerator({
       }
 
       setContent(data.data.extractedText ?? "");
-      setIsActivated(true);
       setTextMode(true);
       setSourceType(data.data.sourceType);
       setDocumentId(data.data.documentId);
-      setFileName(data.data.filename);
+      setFileName(data.data.filename ?? selectedFile.name);
       setTitleHint((data.data.filename ?? selectedFile.name).replace(/\.[^.]+$/, ""));
       setStatus(data.warning ?? "Texte extrait avec succes. Tu peux maintenant generer la fiche.");
     } catch (uploadError) {
@@ -267,12 +337,35 @@ export function HomeGenerator({
           : "Une erreur inattendue est survenue pendant l'import.",
       );
       setStatus(null);
+      setContent("");
+      setDocumentId(null);
+      setTitleHint("");
+      setSourceType("TEXT");
     } finally {
       setIsUploading(false);
+
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+
+      if (minimalUploadInputRef.current) {
+        minimalUploadInputRef.current.value = "";
+      }
+
+      if (minimalCameraInputRef.current) {
+        minimalCameraInputRef.current.value = "";
+      }
     }
+  }
+
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const selectedFile = event.target.files?.[0];
+
+    if (!selectedFile) {
+      return;
+    }
+
+    await processSelectedFile(selectedFile);
   }
 
   async function handleSubmit() {
@@ -415,6 +508,136 @@ export function HomeGenerator({
     input.click();
   }
 
+  function handleUploadZoneDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+
+    if (isSubmitting || isUploading) {
+      return;
+    }
+
+    setIsDragActive(true);
+  }
+
+  function handleUploadZoneDragLeave(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDragActive(false);
+  }
+
+  async function handleUploadZoneDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDragActive(false);
+
+    if (isSubmitting || isUploading) {
+      return;
+    }
+
+    const droppedFile = event.dataTransfer.files?.[0];
+    if (!droppedFile) {
+      return;
+    }
+
+    await processSelectedFile(droppedFile);
+  }
+
+  function renderStepper() {
+    const steps = [
+      {
+        key: "import",
+        number: "①",
+        label: "Importe ton cours",
+        done: isStepOneDone,
+        active: currentStep === 1,
+      },
+      {
+        key: "subject",
+        number: "②",
+        label: "Choisis la matiere",
+        done: isStepTwoDone,
+        active: currentStep === 2,
+      },
+      {
+        key: "generate",
+        number: "③",
+        label: "Genere",
+        done: false,
+        active: currentStep === 3,
+      },
+    ];
+
+    return (
+      <div className="reviz-stepper" aria-label="Etapes pour generer ta fiche">
+        {steps.map((step, index) => (
+          <div key={step.key} className="reviz-stepper-segment">
+            <div
+              className={`reviz-step${step.done ? " done" : ""}${step.active ? " active" : ""}`}
+              aria-current={step.active ? "step" : undefined}
+            >
+              <span className="step-num" aria-hidden="true">
+                {step.done ? "✓" : step.number}
+              </span>
+              <span className="step-label">{step.label}</span>
+            </div>
+            {index < steps.length - 1 ? (
+              <div className="step-arrow" aria-hidden="true">
+                →
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function renderFileConfirmation() {
+    if (!fileName) {
+      return null;
+    }
+
+    return (
+      <div className="reviz-file-confirm" role="status" aria-live="polite">
+        <span className="confirm-icon" aria-hidden="true">
+          ✓
+        </span>
+        <span className="confirm-name">{truncateFileName(fileName)}</span>
+        <span className="confirm-size">{fileSizeLabel ?? ""}</span>
+        <button
+          type="button"
+          className="confirm-remove"
+          aria-label="Supprimer"
+          onClick={clearSelectedFile}
+          disabled={isSubmitting || isUploading}
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  function renderPreviewPanel() {
+    return (
+      <aside className="reviz-preview-panel" aria-label="Exemple de fiche generee">
+        <p className="preview-label">Exemple de fiche generee ✨</p>
+        <div className="preview-card">
+          <div className="preview-subject-badge">📐 Maths · Terminale</div>
+          <h3 className="preview-title">Derivees et primitives</h3>
+          <div className="preview-section">
+            <span className="preview-tag">Points cles</span>
+            <ul>
+              <li>La derivee de x² est 2x</li>
+              <li>f&apos;(x) = 0 indique un extremum local</li>
+              <li>∫f&apos;(x)dx = f(x) + C</li>
+            </ul>
+          </div>
+          <div className="preview-flash">
+            <span className="flash-q">Q : Derivee de sin(x) ?</span>
+            <span className="flash-a">R : cos(x)</span>
+          </div>
+          <p className="preview-cta">Ta fiche sera comme ca →</p>
+        </div>
+      </aside>
+    );
+  }
+
   function renderSubjectSelector() {
     return (
       <div className="reviz-subject-selector">
@@ -427,7 +650,7 @@ export function HomeGenerator({
               <button
                 key={option.value}
                 type="button"
-                className="reviz-subject-pill"
+                className={`reviz-subject-pill${isSelected ? " selected" : ""}`}
                 data-selected={isSelected}
                 aria-pressed={isSelected}
                 onClick={() => {
@@ -461,6 +684,7 @@ export function HomeGenerator({
       <>
       <input
         id={MINIMAL_UPLOAD_INPUT_ID}
+        ref={minimalUploadInputRef}
         type="file"
         accept=".pdf,.txt,image/*"
         onChange={(event) => void handleFileChange(event)}
@@ -473,6 +697,7 @@ export function HomeGenerator({
       />
       <input
         id={MINIMAL_CAMERA_INPUT_ID}
+        ref={minimalCameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
@@ -485,7 +710,21 @@ export function HomeGenerator({
         disabled={isUploading || isSubmitting}
       />
       <section className="reviz-generator-home">
+        <div className="reviz-generator-shell">
         <div className="reviz-generator-card">
+          {isSubmitting ? (
+            <div className="reviz-loading-overlay" id="reviz-loading">
+              <div className="loading-mascot" aria-hidden="true">
+                <RevizMindOrbitDoodle className="reviz-illustration reviz-illustration-orbit" />
+              </div>
+              <div className="loading-progress-bar" aria-hidden="true">
+                <div className="loading-progress-fill" id="reviz-progress" />
+              </div>
+              <p className="loading-message" id="reviz-loading-msg">{loadingMessage}</p>
+              <p className="loading-sub">Ca prend environ 30 secondes ☕</p>
+            </div>
+          ) : (
+            <>
           <p className="reviz-app-eyebrow">REVIZ AI</p>
           <h1>
             transforme ton cours
@@ -500,6 +739,14 @@ export function HomeGenerator({
             <RevizMascotDoodle className="reviz-illustration reviz-illustration-mascot" />
           </div>
 
+          {renderStepper()}
+
+          <div
+            className={`reviz-upload-zone${isDragActive ? " drag-active" : ""}`}
+            onDragOver={handleUploadZoneDragOver}
+            onDragLeave={handleUploadZoneDragLeave}
+            onDrop={(event) => void handleUploadZoneDrop(event)}
+          >
           <div className="reviz-generator-actions">
             <label
               htmlFor={MINIMAL_UPLOAD_INPUT_ID}
@@ -526,6 +773,9 @@ export function HomeGenerator({
             </label>
           </div>
 
+          {renderFileConfirmation()}
+          </div>
+
           {renderSubjectSelector()}
 
           <button
@@ -533,13 +783,18 @@ export function HomeGenerator({
             className="btn btn-primary reviz-generate-button"
             onClick={() => void handleSubmit()}
             disabled={isGenerateDisabled}
+            title={isGenerateDisabled ? "Selectionne un fichier et une matiere d'abord" : undefined}
           >
-            {isUploading ? "Extraction..." : isSubmitting ? "Generation..." : "Generer ma fiche"}
+            {isUploading ? "Extraction..." : "Generer ma fiche"}
           </button>
 
           {fileName ? <p className="reviz-generator-file">Pret : {fileName}</p> : null}
           {status ? <div className="status-box success">{status}</div> : null}
           {error ? <div className="status-box error">{error}</div> : null}
+          </>
+          )}
+        </div>
+        {renderPreviewPanel()}
         </div>
       </section>
       </>

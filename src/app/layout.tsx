@@ -4,8 +4,8 @@ import "./globals.css";
 import "@/styles/print.css";
 
 export const metadata: Metadata = {
-  title: "Prompt SaaS",
-  description: "Genere des fiches de revision intelligentes a partir de n'importe quel cours.",
+  title: "Reviz",
+  description: "Transforme tes cours en fiches de revision intelligentes avec Reviz.",
 };
 
 export default function RootLayout({

@@ -1,10 +1,11 @@
 import NextAuth from "next-auth";
 import type { Provider } from "next-auth/providers";
 import Google from "next-auth/providers/google";
-import Email from "next-auth/providers/email";
+import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 
 import { db } from "@/lib/db";
+import { verifyPassword } from "@/lib/password";
 
 const providers: Provider[] = [];
 
@@ -19,21 +20,45 @@ if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
   );
 }
 
-if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_HOST !== "smtp.example.com") {
-  providers.push(
-    Email({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: Number(process.env.EMAIL_SERVER_PORT ?? 587),
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
-      },
-      from: process.env.EMAIL_FROM,
-    }),
-  );
-}
+providers.push(
+  Credentials({
+    name: "Reviz Email",
+    credentials: {
+      email: { label: "Email", type: "email" },
+      password: { label: "Password", type: "password" },
+    },
+    async authorize(credentials) {
+      const email = typeof credentials?.email === "string" ? credentials.email.trim().toLowerCase() : "";
+      const password = typeof credentials?.password === "string" ? credentials.password : "";
+
+      if (!email || !password) {
+        return null;
+      }
+
+      const user = await db.user.findUnique({
+        where: { email },
+      });
+
+      if (!user?.passwordHash) {
+        return null;
+      }
+
+      const isValidPassword = await verifyPassword(password, user.passwordHash);
+
+      if (!isValidPassword) {
+        return null;
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        image: user.image,
+        plan: user.plan,
+      };
+    },
+  }),
+);
 
 console.log("[AUTH_INIT] providers registered:", providers.length,
   "| AUTH_GOOGLE_ID set:", !!process.env.AUTH_GOOGLE_ID,

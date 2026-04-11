@@ -2250,8 +2250,8 @@ textarea {
 }
 
 .signin-shell-clean {
-  grid-template-columns: minmax(320px, 460px) minmax(0, 1fr);
-  gap: 2rem;
+  grid-template-columns: minmax(360px, 500px) minmax(0, 1fr);
+  gap: 2.4rem;
   align-items: stretch;
 }
 
@@ -2260,7 +2260,7 @@ textarea {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  padding: 1.4rem 0;
+  padding: 1.8rem 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -2270,7 +2270,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 0.85rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.8rem;
 }
 
 .signin-brand-mark {
@@ -2306,20 +2306,43 @@ textarea {
 .signin-card-head-clean h1 {
   margin: 0;
   font-family: var(--display-font);
-  font-size: clamp(2.9rem, 5vw, 4.2rem);
+  font-size: clamp(3rem, 5vw, 4.6rem);
   line-height: 0.92;
   letter-spacing: -0.07em;
   text-transform: none;
+}
+
+.signin-kicker {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 34px;
+  padding: 0 0.9rem;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #dbe2f2;
+  background: #f8fbff;
+  color: #2f5bff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
 }
 
 .signin-card-copy-clean {
   max-width: 30rem;
   margin-top: 1rem;
   font-size: 1rem;
+  line-height: 1.75;
 }
 
 .signin-form-grid-clean {
-  gap: 1.1rem;
+  gap: 1rem;
+  margin-top: 1.8rem;
+}
+
+.signin-mode-switch-clean {
+  margin-top: 1.6rem;
 }
 
 .signin-google-button-clean {
@@ -2342,6 +2365,17 @@ textarea {
   margin-top: 1rem;
 }
 
+.signin-alert {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #9f1239;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
 .signin-under-note {
   display: flex;
   align-items: center;
@@ -2354,6 +2388,10 @@ textarea {
 
 .signin-under-note strong {
   color: #050505;
+}
+
+.signin-under-note a {
+  text-decoration: none;
 }
 
 .signin-visual-panel {
@@ -2373,6 +2411,13 @@ textarea {
   overflow: hidden;
   display: grid;
   place-items: center;
+}
+
+.signin-visual-surface-reviz {
+  background:
+    radial-gradient(circle at top left, rgba(47, 91, 255, 0.08), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(151, 137, 255, 0.12), transparent 36%),
+    linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
 }
 
 .signin-visual-surface::before,
@@ -2421,10 +2466,50 @@ textarea {
   color: #111827;
 }
 
+.signin-floating-pill-blue {
+  top: 12%;
+  right: 24%;
+  background: #dce7ff;
+  color: #1736b6;
+}
+
+.signin-formula {
+  position: absolute;
+  color: rgba(111, 125, 171, 0.72);
+  font-family: var(--hand-font);
+  font-size: 1.3rem;
+  z-index: 0;
+  transform: rotate(-6deg);
+}
+
+.signin-formula-one {
+  left: 12%;
+  top: 18%;
+}
+
+.signin-formula-two {
+  right: 16%;
+  top: 54%;
+}
+
+.signin-formula-three {
+  left: 18%;
+  bottom: 20%;
+}
+
 .signin-mascot-stage {
   position: relative;
   z-index: 1;
   width: min(340px, 62%);
+}
+
+.signin-mascot-stage-reviz {
+  width: min(420px, 74%);
+}
+
+.reviz-prof-mascot-hero {
+  width: 100%;
+  filter: drop-shadow(0 24px 50px rgba(47, 91, 255, 0.14));
 }
 
 .signin-visual-copy {
@@ -2450,6 +2535,17 @@ textarea {
 .signin-visual-copy h2 {
   font-size: clamp(3rem, 5vw, 4.8rem);
   color: #111827;
+}
+
+.signin-visual-copy-reviz {
+  bottom: 8%;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.signin-visual-copy-reviz span {
+  color: #667085;
+  font-size: 0.95rem;
 }
 
 .signin-story {
@@ -2678,6 +2774,12 @@ textarea {
   border-radius: 999px;
   color: #5b6474;
   font-weight: 700;
+  text-decoration: none;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.signin-mode-pill:hover {
+  transform: translateY(-1px);
 }
 
 .signin-mode-pill-active {
@@ -2968,12 +3070,25 @@ textarea {
     min-height: 420px;
   }
 
+  .signin-visual-copy-reviz {
+    position: static;
+    padding: 0 1.2rem 1.2rem;
+  }
+
+  .signin-mascot-stage-reviz {
+    width: min(300px, 72%);
+  }
+
   .signin-floating-pill-green {
     left: 10%;
   }
 
   .signin-floating-pill-pink {
     right: 10%;
+  }
+
+  .signin-floating-pill-blue {
+    right: 8%;
   }
 
   .fiche-anchor-grid,

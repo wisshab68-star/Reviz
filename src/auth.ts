@@ -7,14 +7,30 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 
+function readEnv(...keys: string[]) {
+  for (const key of keys) {
+    const value = process.env[key];
+
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
+const authSecret = readEnv("AUTH_SECRET", "NEXTAUTH_SECRET");
+const authUrl = readEnv("AUTH_URL", "NEXTAUTH_URL", "NEXT_PUBLIC_APP_URL");
+const googleClientId = readEnv("AUTH_GOOGLE_ID", "GOOGLE_CLIENT_ID", "NEXTAUTH_GOOGLE_ID");
+const googleClientSecret = readEnv("AUTH_GOOGLE_SECRET", "GOOGLE_CLIENT_SECRET", "NEXTAUTH_GOOGLE_SECRET");
+
 const providers: Provider[] = [];
 
-if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
-  && process.env.AUTH_GOOGLE_ID !== "google-client-id") {
+if (googleClientId && googleClientSecret && googleClientId !== "google-client-id") {
   providers.push(
     Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
       checks: ["state"],
     }),
   );
@@ -61,9 +77,10 @@ providers.push(
 );
 
 console.log("[AUTH_INIT] providers registered:", providers.length,
-  "| AUTH_GOOGLE_ID set:", !!process.env.AUTH_GOOGLE_ID,
-  "| AUTH_GOOGLE_SECRET set:", !!process.env.AUTH_GOOGLE_SECRET,
-  "| AUTH_SECRET set:", !!process.env.AUTH_SECRET);
+  "| GOOGLE client set:", !!googleClientId,
+  "| GOOGLE secret set:", !!googleClientSecret,
+  "| AUTH secret set:", !!authSecret,
+  "| AUTH url set:", !!authUrl);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -71,7 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: "database",
   },
-  secret: process.env.AUTH_SECRET,
+  secret: authSecret,
   providers,
   logger: {
     error: (error: unknown) => {
@@ -93,6 +110,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       console.log("[AUTH_DEBUG] signIn called", { userId: user?.id, provider: account?.provider });
       return true;
+    },
+    redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+
+      try {
+        const targetUrl = new URL(url);
+
+        if (targetUrl.origin === baseUrl) {
+          return url;
+        }
+      } catch {
+        return `${baseUrl}/app`;
+      }
+
+      return `${baseUrl}/app`;
     },
     session({ session, user }) {
       if (session.user) {

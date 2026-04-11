@@ -35,6 +35,17 @@ function normalizeText(rawValue: FormDataEntryValue | null) {
 }
 
 export async function signInWithGoogleAction() {
+  const googleClientId = process.env.AUTH_GOOGLE_ID
+    ?? process.env.GOOGLE_CLIENT_ID
+    ?? process.env.NEXTAUTH_GOOGLE_ID;
+  const googleClientSecret = process.env.AUTH_GOOGLE_SECRET
+    ?? process.env.GOOGLE_CLIENT_SECRET
+    ?? process.env.NEXTAUTH_GOOGLE_SECRET;
+
+  if (!googleClientId || !googleClientSecret || googleClientId === "google-client-id") {
+    redirectWithError("login", "Connexion Google indisponible pour le moment. Verifie la configuration OAuth.");
+  }
+
   await signIn("google", { redirectTo: "/app" });
 }
 

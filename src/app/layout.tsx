@@ -4,8 +4,15 @@ import "./globals.css";
 import "@/styles/print.css";
 
 export const metadata: Metadata = {
-  title: "Reviz",
-  description: "Transforme tes cours en fiches de revision intelligentes avec Reviz.",
+  title: "Reviz AI",
+  description: "Reviz AI - Transforme tes revisions avec l'intelligence artificielle",
+  openGraph: {
+    title: "Reviz AI",
+    description: "Reviz AI - Transforme tes revisions avec l'intelligence artificielle",
+    type: "website",
+    locale: "fr_FR",
+    siteName: "Reviz AI",
+  },
 };
 
 export default function RootLayout({

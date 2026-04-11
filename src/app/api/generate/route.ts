@@ -4,11 +4,13 @@ import { DocumentType, Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { db } from "@/lib/db";
+import { isPremium } from "@/lib/subscription";
 import { generateSheetRequestSchema } from "@/lib/validations";
-import { assertSheetQuota } from "@/services/usage-service";
+import { getMonthlySheetUsage } from "@/services/usage-service";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+const FREE_PREMIUM_GATE_LIMIT = 3;
 
 class GenerateStageTimeoutError extends Error {
   constructor(public readonly stage: string, public readonly timeoutMs: number) {
@@ -77,11 +79,31 @@ export async function POST(request: Request) {
     if (session?.user?.id) {
       try {
         logStage("quota:start");
-        quota = await withStageTimeout(
-          "quota",
-          assertSheetQuota(session.user.id, session.user.plan ?? "FREE"),
-          8000,
-        );
+        const premium = await withStageTimeout("quota:premium", isPremium(session.user.id), 8000);
+        const usage = await withStageTimeout("quota:usage", getMonthlySheetUsage(session.user.id), 8000);
+        const used = usage._sum.quantity ?? 0;
+
+        if (!premium && used >= FREE_PREMIUM_GATE_LIMIT) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Limite atteinte — passe Premium pour continuer",
+            },
+            { status: 403 },
+          );
+        }
+
+        quota = premium
+          ? {
+            allowed: true,
+            remaining: null,
+            limit: null,
+          }
+          : {
+            allowed: true,
+            remaining: Math.max(FREE_PREMIUM_GATE_LIMIT - used, 0),
+            limit: FREE_PREMIUM_GATE_LIMIT,
+          };
         logStage("quota:done");
       } catch (error) {
         if (!isDatabaseConnectionError(error)) {

@@ -163,9 +163,6 @@ export default async function SheetPage({ params }: PageProps) {
                   Retour
                 </Link>
                 <SaveSheetButton title={sheet.title} />
-                <Link href={`/review/${sheet.id}`} className="btn btn-primary">
-                  Reviser
-                </Link>
               </div>
             </div>
             <p className="reviz-sheet-page-summary">{sheet.summary}</p>

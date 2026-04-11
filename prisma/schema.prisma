@@ -29,21 +29,24 @@ enum ProcessingStatus {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String?
-  email         String         @unique
-  passwordHash  String?
-  emailVerified DateTime?
-  image         String?
-  plan          Plan           @default(FREE)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  documents     Document[]
-  studySheets   StudySheet[]
-  subscriptions Subscription[]
-  usageEvents   UsageEvent[]
+  id                 String         @id @default(cuid())
+  name               String?
+  email              String         @unique
+  passwordHash       String?
+  emailVerified      DateTime?
+  image              String?
+  plan               Plan           @default(FREE)
+  stripeCustomerId   String?        @unique
+  subscriptionStatus String?
+  subscriptionId     String?        @unique
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  accounts           Account[]
+  sessions           Session[]
+  documents          Document[]
+  studySheets        StudySheet[]
+  subscriptions      Subscription[]
+  usageEvents        UsageEvent[]
 }
 
 model Document {

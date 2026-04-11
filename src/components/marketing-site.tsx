@@ -1,14 +1,15 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+
 import { MethodeReviz } from "@/components/landing/MethodeReviz";
 import { OutputsReviz } from "@/components/landing/OutputsReviz";
 
 const sourceCards = [
-  { kicker: "Je pars d'un cours", title: "PDF", copy: "Un poly, un chapitre, un support de cours. Reviz te fait gagner du temps.", symbol: "↓", tone: "light" },
-  { kicker: "Je pars d'une page", title: "PHOTO", copy: "Tu photographies ton cahier ou ton tableau. L'app remet tout au propre.", symbol: "◎", tone: "dark" },
-  { kicker: "Je pars de l'essentiel", title: "TEXTE", copy: "Tu colles ton contenu et Reviz construit directement la fiche de revision.", symbol: "✦", tone: "blue" },
+  { kicker: "Je pars d'un cours", title: "PDF", copy: "Un poly, un chapitre, un support de cours. Reviz te fait gagner du temps.", symbol: "?", tone: "light" },
+  { kicker: "Je pars d'une page", title: "PHOTO", copy: "Tu photographies ton cahier ou ton tableau. L'app remet tout au propre.", symbol: "?", tone: "dark" },
+  { kicker: "Je pars de l'essentiel", title: "TEXTE", copy: "Tu colles ton contenu et Reviz construit directement la fiche de revision.", symbol: "?", tone: "blue" },
 ] as const;
 
 const steps = [
@@ -24,8 +25,20 @@ const testimonials = [
 ] as const;
 
 const pricingPlans = [
-  { badge: "Pour decouvrir", name: "GRATUIT", price: "Gratuit", items: ["1 fiche par mois", "Sans carte bancaire", "Sans inscription"], cta: "Essayer maintenant", className: "plan-light", ctaClass: "btn btn-secondary" },
-  { badge: "Le plus populaire", name: "PRO ⭐", price: "4,99€/mois", compareAt: "Koro AI : 9,99€/mois", items: ["Fiches illimitees", "Toutes les matieres lycee & college", "Flashcards + Quiz inclus", "Resiliation en 1 clic"], cta: "Commencer", className: "plan-dark", ctaClass: "btn plan-dark-cta" },
+  {
+    badge: "Le plus populaire",
+    name: "PRO ?",
+    price: "4,99€/mois",
+    items: [
+      "Fiches illimitees",
+      "Toutes les matieres lycee & college",
+      "Flashcards + Quiz inclus",
+      "Resiliation en 1 clic",
+    ],
+    cta: "Commencer",
+    className: "plan-dark",
+    ctaClass: "btn plan-dark-cta",
+  },
 ] as const;
 
 const faqItems = [
@@ -155,7 +168,7 @@ export function MarketingSite() {
           <div className="container hero">
             <div className="hero-copy">
               <p className="eyebrow">REVISION SIMPLE. VITE. BIEN.</p>
-              <div className="hero-speed-badge">⚡ Fiche generee en 30 secondes</div>
+              <div className="hero-speed-badge">? Fiche generee en 30 secondes</div>
               <h1 className="hero-title" aria-label="REVIZ transforme tes cours en fiches.">
                 {heroWords.map((word, index) => (
                   <span key={word} className={`hero-word ${word === "cours" ? "chip" : ""}`} style={{ animationDelay: `${index * 0.08}s` }}>
@@ -169,31 +182,76 @@ export function MarketingSite() {
                 <a href="#steps" className="btn btn-secondary">Voir comment</a>
               </div>
               <p className="hero-cta-note">1 fiche gratuite · Sans carte bancaire · Sans inscription</p>
-              <div className="tag-row reviz-reveal reviz-reveal-delay-1">
-                <span className="tag">PDF</span>
-                <span className="tag">Photo</span>
-                <span className="tag">Texte</span>
-                <span className="tag">Fiche IA</span>
-                <span className="tag">Flashcards</span>
-                <span className="tag">Quiz</span>
-              </div>
             </div>
 
             <div className="hero-visual" aria-hidden="true">
               <div className="hero-badge">REVISION FUN</div>
               <div className="hero-mock">
-                <div className="mock-topbar">REVISION FUN</div>
-                <div className="mock-sheet-card">
-                  <p className="mock-section-kicker">PROBABILITES</p>
-                  <p className="mock-sheet-title">Probabilites - Terminale</p>
-                  <div className="mock-row"><span className="mock-dot mock-dot-blue" /> <span>Experience aleatoire : resultat imprevisible</span></div>
-                  <div className="mock-row"><span className="mock-dot mock-dot-blue" /> <span>Univers Ω : ensemble de toutes les issues</span></div>
-                  <div className="mock-row mock-row-success"><span className="mock-dot mock-dot-green" /> <span>Piege : confondre P(A|B) et P(B|A)</span></div>
-                  <div className="mock-divider" />
-                  <p className="mock-card-label">FLASHCARD</p>
-                  <div className="mock-flashcard">
-                    <p>Qu'est-ce qu'une experience aleatoire ?</p>
-                    <span>Touche pour retourner →</span>
+                <div className="fichePreview">
+                  <div className="fichePreviewHeader">
+                    <div className="fichePreviewHeaderLeft">
+                      <span className="ficheBadgeViolet">fiche reviz</span>
+                      <span className="ficheHashtag">#revise</span>
+                    </div>
+                    <span className="ficheMatiereLabel">MATHS · TERMINALE</span>
+                  </div>
+
+                  <div className="fichePreviewBody">
+                    <p className="ficheKicker">NOTIONS CLÉS</p>
+                    <h3 className="ficheTitre">Probabilités</h3>
+
+                    <div className="ficheCounters">
+                      <div className="ficheCounter ficheCounterViolet">
+                        <span className="ficheCounterNum">6</span>
+                        <span className="ficheCounterLabel">FORMULES</span>
+                      </div>
+                      <div className="ficheCounter ficheCounterCoral">
+                        <span className="ficheCounterNum">4</span>
+                        <span className="ficheCounterLabel">PROPRIÉTÉS</span>
+                      </div>
+                      <div className="ficheCounter ficheCounterGreen">
+                        <span className="ficheCounterNum">3</span>
+                        <span className="ficheCounterLabel">PIÈGES</span>
+                      </div>
+                    </div>
+                    <div className="ficheImageMentale">
+                      <span className="ficheSectionKicker">IMAGE MENTALE</span>
+                      <p className="ficheImageMentaleText">
+                        "L'univers probabiliste : la toile de fond de tous les possibles."
+                      </p>
+                    </div>
+
+                    <div className="ficheNotions">
+                      <span className="ficheSectionKicker">À RETENIR</span>
+                      <ul className="ficheNotionsList">
+                        <li><span className="ficheDot ficheDotBlue"></span>Expérience aléatoire : résultat imprévisible</li>
+                        <li><span className="ficheDot ficheDotBlue"></span>P(E) = issues favorables / total</li>
+                        <li><span className="ficheDot ficheDotBlue"></span>P(A?B) = P(A) + P(B) - P(AnB)</li>
+                      </ul>
+                    </div>
+
+                    <div className="fichePiege">
+                      <span className="ficheDot ficheDotRed"></span>
+                      <div>
+                        <p className="fichePiegeLabel">PIÈGE CLASSIQUE</p>
+                        <p className="fichePiegeText">Confondre P(A|B) et P(B|A) — deux probabilités conditionnelles inverses.</p>
+                      </div>
+                    </div>
+
+                    <div className="ficheFlashcard">
+                      <span className="ficheFlashcardLabel">FLASHCARD</span>
+                      <p className="ficheFlashcardQuestion">Qu'est-ce qu'une expérience aléatoire ?</p>
+                      <div className="ficheFlashcardSeparator"></div>
+                      <p className="ficheFlashcardAnswer">
+                        Un processus dont on ne peut pas prédire le résultat à l'avance.
+                        L'ensemble des issues forme l'univers O.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="fichePreviewFooter">
+                    <button className="ficheBtnOutline">Voir la fiche</button>
+                    <button className="ficheBtnDark">Générer la mienne</button>
                   </div>
                 </div>
               </div>
@@ -243,7 +301,7 @@ export function MarketingSite() {
               ))}
             </div>
             <div className="section-cta reviz-reveal reviz-reveal-delay-2">
-              <Link href="/app" className="btn btn-secondary">Generer ma premiere fiche →</Link>
+              <Link href="/app" className="btn btn-secondary">Generer ma premiere fiche ?</Link>
             </div>
           </div>
         </section>
@@ -264,18 +322,16 @@ export function MarketingSite() {
                   <div className="pricing-badge">{plan.badge}</div>
                   <h3 className="pricing-title">{plan.name}</h3>
                   <p className="pricing-price">{plan.price}</p>
-                  {"compareAt" in plan ? <p className="pricing-struck">{plan.compareAt}</p> : <div className="pricing-spacer" />}
                   <ul className="pricing-list">
-                    {plan.items.map((item) => <li key={item}>✓ {item}</li>)}
+                    {plan.items.map((item) => <li key={item}>? {item}</li>)}
                   </ul>
                   <Link href="/app" className={plan.ctaClass}>{plan.cta}</Link>
                 </article>
               ))}
             </div>
-            <p className="pricing-footnote">🔒 Paiement securise Stripe · Annulation a tout moment · Sans engagement</p>
+            <p className="pricing-footnote">?? Paiement securise Stripe · Annulation a tout moment · Sans engagement</p>
           </div>
         </section>
-
         <section className="section-band faq-band">
           <div className="container section">
             <div className="section-head">
@@ -287,9 +343,14 @@ export function MarketingSite() {
                 const isOpen = openFaq === index;
                 return (
                   <article key={item.question} className={`faq-item reviz-reveal reviz-reveal-delay-${(index % 3) + 1}`}>
-                    <button type="button" className="faq-trigger" aria-expanded={isOpen} onClick={() => setOpenFaq((current) => current === index ? null : index)}>
+                    <button
+                      type="button"
+                      className="faq-trigger"
+                      aria-expanded={isOpen}
+                      onClick={() => setOpenFaq((current) => current === index ? null : index)}
+                    >
                       <span>{item.question}</span>
-                      <span className="faq-icon" aria-hidden="true">{isOpen ? "−" : "+"}</span>
+                      <span className="faq-icon" aria-hidden="true">{isOpen ? "-" : "+"}</span>
                     </button>
                     <div className="faq-panel" data-open={isOpen}>
                       <p>{item.answer}</p>
@@ -310,7 +371,7 @@ export function MarketingSite() {
             <div className="grid grid-3">
               {testimonials.map((testimonial, index) => (
                 <article key={testimonial.author} className={`testimonial-card reviz-reveal reviz-reveal-delay-${index + 1}`}>
-                  <div className="stars">★★★★★</div>
+                  <div className="stars">?????</div>
                   <div className="testimonial-meta">
                     <div className={`testimonial-avatar ${testimonial.colorClass}`}>{testimonial.initial}</div>
                     <div>
@@ -340,7 +401,7 @@ export function MarketingSite() {
         </div>
       </footer>
 
-      <Link href="/app" className="mobile-sticky-cta">Essayer gratuitement →</Link>
+      <Link href="/app" className="mobile-sticky-cta">Essayer gratuitement ?</Link>
 
       <style jsx global>{`
         .reviz-reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -372,8 +433,7 @@ export function MarketingSite() {
         .lead, .section-note, .source-copy, .step-card p, .testimonial-card p, .footer-copy { color: #585f6b; line-height: 1.7; font-size: 1.04rem; }
         .lead { max-width: 34rem; margin-top: 24px; }
         .hero-cta-note { margin: 12px 0 0; color: #767d88; font-size: 0.92rem; line-height: 1.5; }
-        .cta-row, .tag-row, .section-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
-        .tag { min-height: 42px; padding: 0 16px; border-radius: 999px; border: 2px solid rgba(9,9,9,0.12); display: inline-flex; align-items: center; justify-content: center; font-size: 0.92rem; background: #ffffff; }
+        .cta-row, .section-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
         .btn { min-height: 62px; padding: 0 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border: 3px solid #090909; font-weight: 800; font-size: 1rem; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s cubic-bezier(0.16,1,0.3,1); }
         .btn:hover { transform: translateY(-3px); }
         .btn-primary { background: #2f5bff; color: #ffffff; box-shadow: 8px 8px 0 #090909; }
@@ -381,20 +441,51 @@ export function MarketingSite() {
         .hero-visual { position: relative; border: 3px solid #090909; border-radius: 42px; background: linear-gradient(180deg,#f5f7ff 0%,#dbe4ff 100%); box-shadow: 10px 10px 0 #090909; padding: 24px; }
         .hero-badge, .section-kicker-light, .pricing-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 800; }
         .hero-badge, .section-kicker-light { border: 2px solid #090909; }
-        .hero-mock { margin-top: 20px; }
-        .mock-topbar { display: inline-flex; min-height: 28px; padding: 0 14px; border-radius: 999px; background: #0d0d0d; color: #ffffff; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; align-items: center; justify-content: center; }
-        .mock-sheet-card { margin-top: 16px; border: 2px solid #0d0d0d; border-radius: 16px; background: #ffffff; box-shadow: 8px 8px 0 #0d0d0d; padding: 20px; }
-        .mock-section-kicker, .mock-card-label { margin: 0; color: #8a8f98; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-        .mock-sheet-title { margin: 0 0 14px; color: #0d0d0d; font-size: 16px; font-weight: 700; line-height: 1.2; }
-        .mock-row { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: flex-start; color: #202631; font-size: 12px; line-height: 1.5; margin-bottom: 8px; }
-        .mock-row-success { margin-bottom: 14px; padding: 8px; border-radius: 8px; background: #e8f5e9; color: #1b5e20; }
-        .mock-dot { width: 7px; height: 7px; margin-top: 5px; border-radius: 50%; flex-shrink: 0; }
-        .mock-dot-blue { background: #2f5bff; }
-        .mock-dot-green { background: #43a047; }
-        .mock-divider { border-top: 1px solid #f0f0f0; margin-bottom: 14px; }
-        .mock-flashcard { width: 100%; padding: 14px; border-radius: 10px; background: #0d0d0d; }
-        .mock-flashcard p { margin: 0; color: #ffffff; font-size: 13px; font-weight: 600; line-height: 1.45; margin-bottom: 4px; }
-        .mock-flashcard span { display: block; margin-top: 8px; color: rgba(255,255,255,0.72); font-size: 11px; }
+        .hero-mock { margin-top: 20px; display: flex; justify-content: center; }
+        .fichePreview { width: 320px; background: #ffffff; border-radius: 16px; border: 1.5px solid #e5e7eb; overflow: hidden; font-family: inherit; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07); }
+        .fichePreviewHeader { background: #f8f7ff; border-bottom: 1px solid #ede9fe; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+        .fichePreviewHeaderLeft { display: flex; align-items: center; gap: 8px; }
+        .ficheBadgeViolet { font-size: 10px; font-weight: 700; color: #534AB7; background: #EEEDFE; padding: 3px 9px; border-radius: 100px; }
+        .ficheHashtag { font-size: 11px; color: #7F77DD; }
+        .ficheMatiereLabel { font-size: 9px; font-weight: 600; color: #9ca3af; letter-spacing: 0.5px; }
+        .fichePreviewBody { padding: 14px; }
+        .ficheKicker, .ficheSectionKicker { font-size: 9px; font-weight: 700; color: #9ca3af; letter-spacing: 0.6px; text-transform: uppercase; display: block; margin: 0 0 4px; }
+        .ficheTitre { font-size: 19px; font-weight: 900; color: #1a1a2e; margin: 0 0 12px; letter-spacing: -0.3px; }
+        .ficheCounters { display: flex; gap: 6px; margin-bottom: 12px; }
+        .ficheCounter { flex: 1; border-radius: 8px; padding: 5px 0; text-align: center; }
+        .ficheCounterNum { display: block; font-size: 17px; font-weight: 900; line-height: 1; }
+        .ficheCounterLabel { display: block; font-size: 8px; font-weight: 700; letter-spacing: 0.4px; margin-top: 2px; }
+        .ficheCounterViolet { background: #f0f0ff; }
+        .ficheCounterViolet .ficheCounterNum { color: #534AB7; }
+        .ficheCounterViolet .ficheCounterLabel { color: #7F77DD; }
+        .ficheCounterCoral { background: #fff4f0; }
+        .ficheCounterCoral .ficheCounterNum { color: #993C1D; }
+        .ficheCounterCoral .ficheCounterLabel { color: #D85A30; }
+        .ficheCounterGreen { background: #f0fdf4; }
+        .ficheCounterGreen .ficheCounterNum { color: #3B6D11; }
+        .ficheCounterGreen .ficheCounterLabel { color: #639922; }
+        .ficheImageMentale { background: #faf9ff; border: 0.5px solid #CECBF6; border-radius: 10px; padding: 10px 12px; margin-bottom: 11px; }
+        .ficheImageMentaleText { font-size: 11px; color: #3C3489; margin: 0; line-height: 1.5; font-style: italic; }
+        .ficheNotions { margin-bottom: 10px; }
+        .ficheNotionsList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 5px; }
+        .ficheNotionsList li { display: flex; align-items: flex-start; gap: 7px; font-size: 11px; color: #374151; line-height: 1.4; }
+        .ficheDot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+        .ficheDotBlue { background: #378ADD; }
+        .ficheDotRed { background: #E24B4A; }
+        .fichePiege { display: flex; align-items: flex-start; gap: 8px; background: #fff0f0; border: 0.5px solid #F7C1C1; border-radius: 10px; padding: 9px 11px; margin-bottom: 10px; }
+        .fichePiegeLabel { font-size: 8px; font-weight: 800; color: #A32D2D; letter-spacing: 0.5px; text-transform: uppercase; margin: 0 0 3px; }
+        .fichePiegeText { font-size: 11px; color: #791F1F; margin: 0; line-height: 1.4; }
+        .ficheFlashcard { background: #1a1a2e; border-radius: 10px; padding: 11px 13px; }
+        .ficheFlashcardLabel { display: block; font-size: 8px; font-weight: 700; color: rgba(255, 255, 255, 0.4); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 6px; }
+        .ficheFlashcardQuestion { font-size: 12px; font-weight: 700; color: #ffffff; margin: 0 0 8px; line-height: 1.35; }
+        .ficheFlashcardSeparator { height: 0.5px; background: rgba(255, 255, 255, 0.12); margin-bottom: 7px; }
+        .ficheFlashcardAnswer { font-size: 11px; color: rgba(255, 255, 255, 0.6); margin: 0; line-height: 1.4; }
+        .fichePreviewFooter { border-top: 0.5px solid #e5e7eb; padding: 10px 14px; display: flex; gap: 8px; }
+        .ficheBtnOutline, .ficheBtnDark { flex: 1; padding: 8px 0; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+        .ficheBtnOutline { background: transparent; border: 0.5px solid #d1d5db; color: #1a1a2e; }
+        .ficheBtnOutline:hover { background: #f9fafb; }
+        .ficheBtnDark { background: #1a1a2e; border: none; color: #ffffff; }
+        .ficheBtnDark:hover { opacity: 0.88; }
         .section { padding: 110px 0; }
         .grid { display: grid; gap: 18px; }
         .grid-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
@@ -415,15 +506,13 @@ export function MarketingSite() {
         .step-number { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #090909; color: #ffffff; font-weight: 800; flex: 0 0 auto; }
         .step-icon-svg { width: 80px; height: 80px; stroke: #090909; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
         .pricing-head { text-align: center; margin-left: auto; margin-right: auto; }
-        .pricing-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
-        .pricing-card { display: flex; flex-direction: column; gap: 14px; border-color: rgba(9,9,9,0.14); padding: 28px; }
+        .pricing-grid { display: grid; grid-template-columns: 1fr; justify-items: center; gap: 20px; }
+        .pricing-card { width: min(100%, 520px); display: flex; flex-direction: column; gap: 14px; border-color: rgba(9,9,9,0.14); padding: 28px; }
         .pricing-badge { width: fit-content; background: #eef1f6; color: #090909; font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase; }
         .plan-dark { background: #090909; color: #ffffff; border-color: #090909; box-shadow: 10px 10px 0 #2f5bff; }
         .plan-dark .pricing-badge { background: rgba(255,255,255,0.14); color: #ffffff; }
         .pricing-title { margin: 0; font-size: 2.1rem; }
         .pricing-price { margin: 0; font-size: clamp(2.6rem,4vw,3.8rem); }
-        .pricing-struck, .pricing-spacer { min-height: 22px; margin: -4px 0 0; color: #8a8f98; font-size: 0.92rem; text-decoration: line-through; }
-        .plan-dark .pricing-struck { color: rgba(255,255,255,0.62); }
         .pricing-list { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; color: #313844; line-height: 1.6; }
         .plan-dark .pricing-list { color: rgba(255,255,255,0.88); }
         .plan-dark-cta { margin-top: auto; background: #ffffff; color: #090909; box-shadow: 8px 8px 0 rgba(255,255,255,0.16); }
@@ -456,3 +545,4 @@ export function MarketingSite() {
     </div>
   );
 }
+

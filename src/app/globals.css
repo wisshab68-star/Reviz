@@ -2243,6 +2243,328 @@ textarea {
   align-items: start;
 }
 
+.signin-shell-reviz {
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 520px);
+  gap: 1.4rem;
+  align-items: stretch;
+}
+
+.signin-story {
+  position: relative;
+  border: 3px solid #050505;
+  border-radius: 36px;
+  background:
+    radial-gradient(circle at top right, rgba(47, 91, 255, 0.12), transparent 24%),
+    linear-gradient(180deg, #ffffff 0%, #f6f8ff 100%);
+  box-shadow: 12px 12px 0 #050505;
+  padding: 2.4rem;
+  display: grid;
+  gap: 1.35rem;
+  overflow: hidden;
+}
+
+.signin-story-badge {
+  width: fit-content;
+  min-height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #050505;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1736b6;
+  font-family: var(--display-font);
+  font-size: 0.88rem;
+  letter-spacing: -0.03em;
+}
+
+.signin-story h1 {
+  margin: 0;
+  font-family: var(--display-font);
+  font-size: clamp(3.1rem, 5vw, 5rem);
+  line-height: 0.9;
+  letter-spacing: -0.07em;
+  text-transform: lowercase;
+  max-width: 9ch;
+}
+
+.signin-story-copy {
+  max-width: 42rem;
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.signin-mascot-card {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.1rem;
+  border: 2px solid #050505;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 8px 8px 0 #050505;
+}
+
+.reviz-prof-mascot {
+  width: 100%;
+  height: auto;
+}
+
+.mascot-shadow {
+  fill: rgba(5, 5, 5, 0.08);
+}
+
+.mascot-bone {
+  fill: #fffdf8;
+  stroke: #050505;
+  stroke-width: 3;
+}
+
+.mascot-eye-ring {
+  fill: #ffffff;
+  stroke: #050505;
+  stroke-width: 3;
+}
+
+.mascot-eye {
+  fill: #050505;
+}
+
+.mascot-line {
+  fill: none;
+  stroke: #050505;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mascot-teeth {
+  fill: none;
+  stroke: #050505;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.mascot-coat {
+  fill: #2f5bff;
+  stroke: #050505;
+  stroke-width: 3;
+}
+
+.mascot-hat-top,
+.mascot-hat-brim {
+  fill: #050505;
+}
+
+.mascot-accent {
+  fill: #2f5bff;
+  stroke: #050505;
+  stroke-width: 3;
+}
+
+.mascot-accent-soft {
+  fill: #ffe680;
+  stroke: #050505;
+  stroke-width: 3;
+}
+
+.mascot-note {
+  fill: #fff4d6;
+  stroke: #050505;
+  stroke-width: 3;
+}
+
+.signin-mascot-copy {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.signin-mascot-copy p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+.signin-mascot-label {
+  color: #050505 !important;
+  font-family: var(--display-font);
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+}
+
+.signin-method-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.signin-method-step {
+  padding: 1rem;
+  border: 2px solid #050505;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 6px 6px 0 #050505;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.signin-method-step span {
+  width: 2rem;
+  height: 2rem;
+  display: inline-grid;
+  place-items: center;
+  border: 2px solid #050505;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-family: var(--display-font);
+  font-size: 0.92rem;
+}
+
+.signin-method-step strong {
+  font-size: 1rem;
+  color: #050505;
+}
+
+.signin-method-step p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 0.94rem;
+}
+
+.signin-panel-reviz {
+  border: 3px solid #050505;
+  border-radius: 32px;
+  background: #ffffff;
+  box-shadow: 12px 12px 0 #050505;
+  padding: 2rem 1.6rem;
+}
+
+.signin-card-head h2 {
+  margin: 0.2rem 0 0;
+  font-family: var(--display-font);
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
+.signin-card-copy {
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.signin-mode-switch {
+  display: inline-flex;
+  gap: 0.55rem;
+  padding: 0.35rem;
+  margin-top: 1.2rem;
+  border: 2px solid #050505;
+  border-radius: 999px;
+  background: #f5f7ff;
+}
+
+.signin-mode-pill {
+  min-height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #5b6474;
+  font-weight: 700;
+}
+
+.signin-mode-pill-active {
+  background: #050505;
+  color: #ffffff;
+}
+
+.signin-form-grid {
+  margin-top: 1.2rem !important;
+  gap: 1rem;
+}
+
+.signin-google-button,
+.signin-email-button {
+  width: 100%;
+}
+
+.signin-google-button {
+  gap: 0.65rem;
+}
+
+.signin-google-mark {
+  width: 1.7rem;
+  height: 1.7rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-weight: 800;
+}
+
+.signin-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #9aa0aa;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.signin-divider::before,
+.signin-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(5, 5, 5, 0.1);
+}
+
+.signin-helper-box {
+  padding: 0.95rem 1rem;
+  border: 2px solid #c7d2fe;
+  border-radius: 22px;
+  background: #f7f8ff;
+}
+
+.signin-helper-box p {
+  margin: 0;
+  color: #4c5680;
+  line-height: 1.65;
+}
+
+.signin-helper-title {
+  margin-bottom: 0.3rem !important;
+  color: #1736b6 !important;
+  font-family: var(--display-font);
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.signin-trust-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.signin-trust-row span {
+  min-height: 36px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #374151;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .signin-intro h1 {
   margin: 0;
   font-size: clamp(2.4rem, 4vw, 4rem);
@@ -2425,6 +2747,15 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .signin-shell-reviz {
+    grid-template-columns: 1fr;
+  }
+
+  .signin-mascot-card,
+  .signin-method-steps {
+    grid-template-columns: 1fr;
+  }
+
   .fiche-anchor-grid,
   .fiche-schema-reading-grid {
     grid-template-columns: 1fr;
@@ -2498,6 +2829,12 @@ textarea {
   .marketing-showcase-visual,
   .marketing-visual-mini {
     min-height: 320px;
+  }
+
+  .signin-story,
+  .signin-panel-reviz {
+    padding: 1.4rem;
+    box-shadow: 8px 8px 0 #050505;
   }
 }
 

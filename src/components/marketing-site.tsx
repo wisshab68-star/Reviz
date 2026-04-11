@@ -178,7 +178,7 @@ export function MarketingSite() {
               </h1>
               <p className="lead">PDF, photo, image ou texte. Reviz AI genere une fiche claire, un schema, des flashcards et un quiz sans te noyer sous le blabla.</p>
               <div className="cta-row">
-                <Link href="/app" className="btn btn-primary">Commencer</Link>
+                <Link href="/sign-in" className="btn btn-primary">Commencer</Link>
                 <a href="#steps" className="btn btn-secondary">Voir comment</a>
               </div>
               <p className="hero-cta-note">1 fiche gratuite · Sans carte bancaire · Sans inscription</p>
@@ -325,7 +325,7 @@ export function MarketingSite() {
                   <ul className="pricing-list">
                     {plan.items.map((item) => <li key={item}>? {item}</li>)}
                   </ul>
-                  <Link href="/app" className={plan.ctaClass}>{plan.cta}</Link>
+                  <Link href="/sign-in" className={plan.ctaClass}>{plan.cta}</Link>
                 </article>
               ))}
             </div>

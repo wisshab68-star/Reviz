@@ -123,6 +123,16 @@
   background: #ffffff;
 }
 
+.previewSheetCard {
+  border: 1px solid rgba(13, 13, 13, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #fcfcff 100%);
+}
+
+.previewQuizCard {
+  background: #2f5bff;
+  color: #ffffff;
+}
+
 .sheetBadge {
   display: inline-flex;
   width: fit-content;
@@ -258,7 +268,7 @@
 
 .quizQuestion {
   margin: 0 0 14px;
-  color: #0d0d0d;
+  color: inherit;
   font-weight: 700;
 }
 
@@ -283,6 +293,17 @@
     border-color 0.2s ease,
     background 0.2s ease,
     color 0.2s ease;
+}
+
+.previewQuizCard .quizOption {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.previewQuizCard .quizOptionLetter {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 }
 
 .quizOptionLetter {

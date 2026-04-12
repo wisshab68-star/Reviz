@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { AppTopbar } from "@/components/app-topbar";
+
+export const metadata: Metadata = {
+  themeColor: "#ffffff",
+};
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (

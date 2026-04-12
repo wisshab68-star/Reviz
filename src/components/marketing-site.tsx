@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -54,7 +54,7 @@ const pricingPlans = [
   {
     badge: "Le plus populaire",
     name: "PRO",
-    price: "4,99€/mois",
+    price: "4,99€,-/mois",
     items: [
       "Fiches illimitees",
       "Toutes les matieres lycee & college",
@@ -69,7 +69,7 @@ const pricingPlans = [
 
 const freePlan = {
   badge: "GRATUIT",
-  price: "0€",
+  price: "0€,-",
   subtitle: "Pour commencer",
   items: [
     "1 fiche générée offerte",
@@ -107,18 +107,8 @@ const faqItems = [
   },
 ] as const;
 
-const heroWords = ["REVIZ", "transforme", "tes", "cours", "en", "fiches."] as const;
-
 function formatStudentCount(value: number) {
   return new Intl.NumberFormat("fr-FR").format(value);
-}
-
-function LightningIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true" className="badge-icon">
-      <path d="M9.2 1 3.8 8h3l-1 7L12.2 8h-3L9.2 1Z" />
-    </svg>
-  );
 }
 
 function StarIcon() {
@@ -203,66 +193,59 @@ export function MarketingSite() {
     <div className="landing">
       <header className={`topbar ${isScrolled ? "topbar-scrolled" : ""}`}>
         <div className="container topbar-inner">
-          <Link href="/" className="brand">REVIZ</Link>
+          <Link href="/" className="brand">
+            REVIZ<span className="brand-dot">.</span>
+          </Link>
           <nav className="nav">
-            <a href="#hero" className="pill pill-active">Accueil</a>
-            <a href="#steps" className="pill">A propos</a>
-            <a href="#exemples" className="pill">Exemples</a>
-            <Link href="/sign-in" className="pill">Connexion</Link>
+            <Link href="/sign-in" className="nav-link nav-link-outline">CONNEXION</Link>
+            <Link href="/sign-up" className="nav-link nav-link-button">S&apos;INSCRIRE</Link>
           </nav>
         </div>
       </header>
 
       <main className="page">
         <section id="hero" className="hero-band">
-          <div className="container hero">
-            <div className="hero-copy">
-              <p className="eyebrow">REVISION SIMPLE. VITE. BIEN.</p>
-              <div className="hero-speed-badge">
-                <LightningIcon />
-                <span>Fiche generee en 30 secondes</span>
-              </div>
-              <h1 className="hero-title" aria-label="REVIZ transforme tes cours en fiches.">
-                {heroWords.map((word, index) => (
-                  <span
-                    key={word}
-                    className={`hero-word ${word === "cours" ? "chip" : ""}`}
-                    style={{ animationDelay: `${index * 0.08}s` }}
-                  >
-                    {word}
-                  </span>
-                ))}
-              </h1>
-              <p className="lead">
-                PDF, photo, image ou texte. Reviz AI genere une fiche claire, un schema, des flashcards et un quiz
-                sans te noyer sous le blabla.
-              </p>
-              <div className="cta-row">
-                <Link href="/demo" className="btn btn-primary">Commencer</Link>
-                <a href="#steps" className="btn btn-secondary">Voir comment</a>
-              </div>
-              <p className="hero-cta-note">1 fiche gratuite · Sans carte bancaire · Sans inscription</p>
-            </div>
+          <div className="hero">
+            <svg
+              className="hero-background"
+              viewBox="0 0 1200 600"
+              preserveAspectRatio="xMidYMid slice"
+              aria-hidden="true"
+            >
+              <circle className="hero-bg-circle" cx="150" cy="100" r="200" />
+              <circle className="hero-bg-circle hero-bg-circle-soft" cx="150" cy="100" r="300" />
+              <circle className="hero-bg-circle" cx="1000" cy="500" r="250" />
+              <circle className="hero-bg-circle hero-bg-circle-soft" cx="1000" cy="500" r="350" />
 
-            <div className="hero-visual" aria-hidden="true">
-              <div className="hero-badge">REVISION FUN</div>
-              <div className="hero-mascot-shell">
-                <div className="hero-mascot-ring"></div>
-                <div className="hero-mascot-card">Fiche générée ✓</div>
-                <div className="hero-mascot">
-                  <div className="hero-mascot-image">
-                    <div className="hero-mascot-frame">
-                      <img
-                        src="/mascotte.png"
-                        alt="Mascotte Reviz"
-                        style={{ width: "100%", height: "auto", objectFit: "contain", display: "block" }}
-                      />
-                    </div>
-                  </div>
-                  <div className="hero-mascot-note note-left">La puissance comme répétition mécanique</div>
-                  <div className="hero-mascot-note note-bottom">6 formules · 4 flashcards</div>
-                </div>
-              </div>
+              <path
+                className="hero-bg-path"
+                d="M 150 300 Q 300 200, 1000 500"
+              />
+              <path
+                className="hero-bg-path hero-bg-path-soft"
+                d="M 150 100 Q 600 50, 1000 200"
+              />
+
+              <text className="hero-bg-symbol hero-bg-symbol-1" x="100" y="400">∫</text>
+              <text className="hero-bg-symbol hero-bg-symbol-2" x="1050" y="150">∑</text>
+              <text className="hero-bg-symbol hero-bg-symbol-3" x="600" y="550">√</text>
+              <text className="hero-bg-symbol hero-bg-symbol-4" x="950" y="400">π</text>
+              <text className="hero-bg-symbol hero-bg-symbol-5" x="300" y="150">α</text>
+            </svg>
+
+            <div className="hero-content">
+              <h1 className="hero-brand-title">REVIZ</h1>
+              <h2 className="hero-subtitle">
+                Transforme tes cours
+                <br />
+                en fiches. Revise mieux.
+              </h2>
+              <p className="hero-microcopy">
+                1 fiche offerte a l&apos;inscription · Sans carte bancaire
+              </p>
+              <Link href="/sign-up" className="hero-cta">
+                COMMENCER GRATUITEMENT
+              </Link>
             </div>
           </div>
         </section>
@@ -311,7 +294,7 @@ export function MarketingSite() {
               ))}
             </div>
             <div className="section-cta reviz-reveal reviz-reveal-delay-2">
-              <Link href="/demo" className="btn btn-secondary">Generer ma premiere fiche</Link>
+              <Link href="/app" className="btn btn-secondary">Generer ma premiere fiche</Link>
             </div>
           </div>
         </section>
@@ -429,7 +412,7 @@ export function MarketingSite() {
         </div>
       </footer>
 
-      <Link href="/demo" className="mobile-sticky-cta">Essayer gratuitement →</Link>
+      <Link href="/sign-up" className="mobile-sticky-cta">Essayer gratuitement →</Link>
 
       <style jsx global>{`
         .reviz-reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -437,48 +420,60 @@ export function MarketingSite() {
         .reviz-reveal-delay-1 { transition-delay: 0.1s; }
         .reviz-reveal-delay-2 { transition-delay: 0.2s; }
         .reviz-reveal-delay-3 { transition-delay: 0.3s; }
+        @keyframes pulse-subtle {
+          0%, 100% { opacity: 0.05; }
+          50% { opacity: 0.12; }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
+        }
       `}</style>
 
       <style jsx>{`
         .landing { min-height: 100vh; background: #ffffff; color: #090909; }
         .container { width: min(100% - 48px, 1200px); margin: 0 auto; }
-        .topbar { position: sticky; top: 0; z-index: 50; padding: 18px 0; transition: background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease; }
-        .topbar-scrolled { background: rgba(255,255,255,0.86); backdrop-filter: blur(16px); box-shadow: 0 16px 48px rgba(9,9,9,0.08); border-bottom: 1px solid rgba(9,9,9,0.08); }
+        .topbar { position: sticky; top: 0; z-index: 50; padding: 18px 0; transition: background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease; background: rgba(255,255,255,0.72); backdrop-filter: blur(18px); border-bottom: 1px solid rgba(9,9,9,0.04); }
+        .topbar-scrolled { background: rgba(255,255,255,0.92); box-shadow: 0 10px 30px rgba(9,9,9,0.06); border-bottom: 1px solid rgba(9,9,9,0.08); }
         .topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-        .brand, .hero-title, .section-head h2, .step-card h3, .footer-brand, .pricing-title, .pricing-price { font-family: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif; letter-spacing: -0.06em; line-height: 0.88; font-weight: 800; }
-        .brand { font-size: clamp(2.2rem, 4vw, 3.4rem); }
-        .nav { display: inline-flex; align-items: center; gap: 10px; padding: 8px; border-radius: 999px; background: rgba(255,255,255,0.94); box-shadow: 0 24px 60px rgba(9,9,9,0.08); border: 1px solid rgba(9,9,9,0.08); }
-        .pill { min-height: 50px; padding: 0 22px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: #f2f3f7; font-weight: 700; font-size: 0.96rem; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), background 0.3s ease; }
-        .pill:hover { transform: translateY(-2px); }
-        .pill-active { background: #141414; color: #ffffff; }
-        .hero { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 56px; align-items: center; padding: 120px 0; }
-        .hero-copy { display: flex; flex-direction: column; align-items: flex-start; }
+        .brand, .hero-title, .section-head h2, .step-card h3, .footer-brand, .pricing-title, .pricing-price { font-family: var(--display-font), "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif; }
+        .brand { font-size: 22px; font-weight: 900; color: #000000; letter-spacing: -0.02em; line-height: 1; }
+        .brand-dot { color: #3B5BDB; }
+        .nav { display: inline-flex; align-items: center; gap: 12px; }
+        .nav-link { font-size: 14px; font-weight: 600; text-decoration: none; transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+        .nav-link-outline { color: #3B5BDB; border: 1px solid #3B5BDB; background: transparent; border-radius: 8px; padding: 10px 20px; }
+        .nav-link-button { color: #ffffff; background: #3B5BDB; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 600; }
+        .nav-link-outline:hover,
+        .nav-link-button:hover {
+          box-shadow: 0 4px 12px rgba(63, 91, 219, 0.2);
+          transform: translateY(-1px);
+        }
+        .hero { position: relative; width: 100%; min-height: 600px; background: #ffffff; display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 1; padding: 0 24px; }
+        .hero-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .hero-bg-circle { stroke: #3B5BDB; stroke-width: 0.5; fill: none; opacity: 0.08; animation: pulse-subtle 8s ease-in-out infinite; }
+        .hero-bg-circle-soft { opacity: 0.05; }
+        .hero-bg-path { stroke: #3B5BDB; stroke-width: 1; fill: none; opacity: 0.06; }
+        .hero-bg-path-soft { opacity: 0.05; }
+        .hero-bg-symbol { fill: #3B5BDB; opacity: 0.1; font-family: serif; animation: float 6s ease-in-out infinite; }
+        .hero-bg-symbol-1 { font-size: 20px; animation-delay: 0.5s; }
+        .hero-bg-symbol-2 { font-size: 18px; animation-delay: 1s; }
+        .hero-bg-symbol-3 { font-size: 22px; animation-delay: 1.5s; }
+        .hero-bg-symbol-4 { font-size: 16px; animation-delay: 2s; }
+        .hero-bg-symbol-5 { font-size: 19px; animation-delay: 2.5s; }
+        .hero-content { position: relative; z-index: 10; text-align: center; max-width: 700px; padding: 0 20px; }
         .eyebrow, .section-kicker, .source-kicker { font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.82rem; }
-        .hero-speed-badge { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 38px; padding: 0 16px; margin-top: 14px; border-radius: 999px; background: #090909; color: #ffffff; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.03em; }
-        .badge-icon { width: 15px; height: 15px; fill: currentColor; flex: 0 0 auto; }
-        .hero-title { display: flex; flex-wrap: wrap; gap: 0.16em; margin: 12px 0 0; font-size: clamp(5rem,7vw,6.4rem); max-width: 11ch; }
-        .hero-word { opacity: 0; transform: translateY(20px); animation: hero-word-in 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
-        .chip { display: inline-block; padding: 0.02em 0.18em; border-radius: 0.26em; background: #2f5bff; color: #ffffff; box-shadow: 4px 4px 0 #090909; }
+        .hero-brand-title { font-family: var(--display-font), "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif; font-size: clamp(48px, 8vw, 84px); font-weight: 900; color: #000000; margin: 0 0 20px; line-height: 1.1; }
+        .hero-subtitle { font-size: clamp(18px, 3vw, 28px); font-weight: 500; color: #333333; margin: 0 0 16px; line-height: 1.4; }
         .lead, .section-note, .step-card p, .testimonial-card p, .footer-copy { color: #585f6b; line-height: 1.7; font-size: 1.04rem; }
-        .lead { max-width: 34rem; margin-top: 24px; }
-        .hero-cta-note { margin: 12px 0 0; color: #767d88; font-size: 0.92rem; line-height: 1.5; }
+        .hero-microcopy { font-size: 13px; color: #666666; margin: 16px 0 24px; font-weight: 400; }
+        .hero-cta { display: inline-flex; align-items: center; justify-content: center; background: #3B5BDB; color: #FFFFFF; border: none; border-radius: 10px; padding: 16px 40px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 200ms ease; box-shadow: 0 4px 12px rgba(63, 91, 219, 0.15); }
+        .hero-cta:hover { box-shadow: 0 8px 24px rgba(63, 91, 219, 0.25); transform: scale(1.02); }
         .cta-row, .section-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
         .btn { min-height: 62px; padding: 0 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border: 3px solid #090909; font-weight: 800; font-size: 1rem; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s cubic-bezier(0.16,1,0.3,1); }
         .btn:hover { transform: translateY(-3px); }
         .btn-primary { background: #2f5bff; color: #ffffff; box-shadow: 8px 8px 0 #090909; }
         .btn-secondary { background: #ffffff; color: #090909; }
-        .hero-visual { position: relative; border: 3px solid #090909; border-radius: 42px; background: #edf2ff; box-shadow: 10px 10px 0 #090909; padding: 24px; overflow: hidden; min-height: 720px; display: flex; flex-direction: column; }
-        .hero-badge, .section-kicker-light, .pricing-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 800; }
-        .hero-badge, .section-kicker-light { border: 2px solid #090909; }
-        .hero-mascot-shell { margin-top: 18px; position: relative; display: flex; align-items: center; justify-content: center; min-height: 100%; flex: 1; }
-        .hero-mascot-ring { position: absolute; inset: 64px 32px 22px; border: 3px solid rgba(9,9,9,0.1); border-radius: 36px; }
-        .hero-mascot-card { position: absolute; top: 18px; right: 20px; min-height: 42px; padding: 0 18px; border-radius: 999px; border: 2px solid #090909; background: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 800; z-index: 2; box-shadow: 6px 6px 0 #090909; }
-        .hero-mascot { position: relative; width: 100%; min-height: 580px; display: flex; align-items: center; justify-content: center; }
-        .hero-mascot-image { position: relative; z-index: 1; width: min(100%, 560px); display: flex; align-items: center; justify-content: center; }
-        .hero-mascot-frame { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 34px; background: transparent; border: 3px solid #090909; box-shadow: 12px 12px 0 #090909; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        .hero-mascot-note { position: absolute; z-index: 2; max-width: 240px; padding: 16px 18px; border-radius: 22px; border: 2px solid #090909; font-weight: 800; line-height: 1.25; box-shadow: 8px 8px 0 #090909; }
-        .note-left { top: 180px; left: -6px; background: #090909; color: #ffffff; }
-        .note-bottom { right: 6px; bottom: 72px; background: #3B5BDB; color: #ffffff; }
+        .section-kicker-light, .pricing-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 800; }
         .section { padding: 110px 0; }
         .grid { display: grid; gap: 18px; }
         .grid-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
@@ -539,23 +534,18 @@ export function MarketingSite() {
         .footer-links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
         .footer-links a { min-height: 48px; padding: 0 18px; border-radius: 999px; background: rgba(255,255,255,0.08); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
         .mobile-sticky-cta { display: none; }
-        @keyframes hero-word-in { to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 1180px) {
-          .hero, .grid-3, .footer-inner, .pricing-grid { grid-template-columns: 1fr; }
-          .hero { gap: 42px; }
+          .grid-3, .footer-inner, .pricing-grid { grid-template-columns: 1fr; }
           .footer-links { justify-content: flex-start; }
-          .hero-visual { min-height: 560px; }
-          .hero-mascot { min-height: 460px; }
-          .hero-mascot-note { max-width: 200px; }
         }
         @media (max-width: 767px) {
           .container { width: min(100% - 28px, 1200px); }
           .topbar { padding: 12px 0; }
-          .topbar-inner { flex-direction: column; align-items: flex-start; }
-          .nav { width: 100%; overflow-x: auto; }
-          .hero { grid-template-columns: 1fr; padding: 72px 0 60px; }
-          .hero-title { font-size: min(48px, 14vw); max-width: 9ch; }
-          .hero-visual { display: none; }
+          .topbar-inner { flex-direction: column; align-items: stretch; }
+          .nav { width: 100%; justify-content: flex-end; }
+          .hero { min-height: 540px; padding: 48px 20px; }
+          .hero-brand-title { font-size: min(64px, 15vw); }
+          .hero-subtitle { font-size: 20px; }
           .section { padding: 60px 0; }
           .grid-3, .footer-inner, .pricing-grid { grid-template-columns: 1fr; }
           .step-card, .testimonial-card, .pricing-card { min-height: auto; }
@@ -581,3 +571,4 @@ export function MarketingSite() {
     </div>
   );
 }
+

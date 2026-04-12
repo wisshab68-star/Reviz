@@ -20,10 +20,6 @@ export default async function LibraryPage() {
         style={{ maxWidth: 1120, margin: "0 auto", padding: "24px 1.5rem 40px", background: "#0F0F13", width: "100%" }}
       >
         <section className="section-block library-section-block" style={{ background: "transparent" }}>
-          <div className="section-title library-section-title">
-            <h1 style={{ color: "#FFFFFF", fontFamily: "var(--font-heading)" }}>tes fiches.</h1>
-          </div>
-
           <LibraryClient />
         </section>
       </div>

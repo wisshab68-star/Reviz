@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,48 +17,51 @@ type SidebarNavProps = {
 type NavItem = {
   href: string;
   label: string;
-  icon: ReactNode;
+  icon: ReactElement;
   isActive: (pathname: string) => boolean;
 };
 
 function HomeIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M4 10.75L12 4L20 10.75V19A1 1 0 0 1 19 20H14V14H10V20H5A1 1 0 0 1 4 19V10.75Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9,22 9,12 15,12 15,22" />
     </svg>
   );
 }
 
 function LibraryIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19V19H7.5A2.5 2.5 0 0 0 5 21.5V5.5Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M19 19H7.5A2.5 2.5 0 0 0 5 21.5M9 7H15M9 11H15"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
     </svg>
   );
 }
 
 function SettingsIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M12 8.75A3.25 3.25 0 1 1 8.75 12A3.25 3.25 0 0 1 12 8.75Z"
         stroke="currentColor"
@@ -126,15 +129,9 @@ const navItems: NavItem[] = [
   },
   {
     href: "/library",
-    label: "Bibliothèque",
+    label: "Bibliotheque",
     icon: <LibraryIcon />,
     isActive: (pathname) => pathname.startsWith("/library"),
-  },
-  {
-    href: "/settings",
-    label: "Paramètres",
-    icon: <SettingsIcon />,
-    isActive: (pathname) => pathname.startsWith("/settings"),
   },
 ];
 
@@ -188,49 +185,48 @@ export function SidebarNav({ displayName, email, image, initials, subscriptionSt
               color: "#FFFFFF",
               textDecoration: "none",
               fontFamily: "var(--display-font)",
-              fontSize: "1.6rem",
-              fontWeight: 800,
-              letterSpacing: "0.12em",
+              fontSize: "22px",
+              fontWeight: 900,
+              letterSpacing: "-0.03em",
+              lineHeight: 1,
             }}
           >
-            REVIZ
+            <span>REVIZ</span>
+            <span style={{ color: "#3B5BDB" }}>.</span>
           </Link>
         </div>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {navItems.map((item) => {
             const active = item.isActive(pathname);
-            const baseStyle = {
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "10px 14px",
-              borderRadius: "8px",
-              textDecoration: "none",
-              fontFamily: "var(--display-font)",
-              fontWeight: 600,
-              transition: "background 180ms ease, color 180ms ease",
-            } as const;
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 style={{
-                  ...baseStyle,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  textDecoration: "none",
+                  fontFamily: "var(--display-font)",
+                  fontWeight: 600,
                   color: active ? "#FFFFFF" : "#8B8B9E",
                   background: active ? "#3B5BDB" : "transparent",
+                  transition: "background 180ms ease, color 180ms ease",
                 }}
                 onMouseEnter={(event) => {
                   if (!active) {
+                    event.currentTarget.style.background = "#1E1E2A";
                     event.currentTarget.style.color = "#FFFFFF";
-                    event.currentTarget.style.background = "#252532";
                   }
                 }}
                 onMouseLeave={(event) => {
                   if (!active) {
-                    event.currentTarget.style.color = "#8B8B9E";
                     event.currentTarget.style.background = "transparent";
+                    event.currentTarget.style.color = "#8B8B9E";
                   }
                 }}
               >
@@ -267,7 +263,7 @@ export function SidebarNav({ displayName, email, image, initials, subscriptionSt
                 Passe Premium
               </h2>
               <p style={{ margin: "6px 0 0", color: "#8B8B9E", fontSize: "0.92rem" }}>
-                Génère en illimité
+                Genere en illimite
               </p>
             </div>
 
@@ -296,9 +292,8 @@ export function SidebarNav({ displayName, email, image, initials, subscriptionSt
           ref={menuRef}
           style={{
             marginTop: "auto",
-            padding: "12px",
+            paddingTop: "12px",
             borderTop: "1px solid #1E1E2A",
-            cursor: "pointer",
             position: "relative",
           }}
         >
@@ -343,7 +338,7 @@ export function SidebarNav({ displayName, email, image, initials, subscriptionSt
                 }}
               >
                 <SettingsIcon />
-                <span>Paramètres</span>
+                <span>Parametres</span>
               </button>
               <button
                 type="button"
@@ -369,7 +364,7 @@ export function SidebarNav({ displayName, email, image, initials, subscriptionSt
                 }}
               >
                 <LogoutIcon />
-                <span>Se déconnecter</span>
+                <span>Se deconnecter</span>
               </button>
             </div>
           ) : null}
@@ -380,14 +375,17 @@ export function SidebarNav({ displayName, email, image, initials, subscriptionSt
               display: "flex",
               alignItems: "center",
               gap: "10px",
-              padding: "8px",
-              borderRadius: "8px",
+              padding: "10px 12px",
+              borderRadius: "10px",
+              border: "1px solid #2A2A38",
+              background: "#1E1E2A",
+              cursor: "pointer",
             }}
             onMouseEnter={(event) => {
-              event.currentTarget.style.background = "#1E1E2A";
+              event.currentTarget.style.borderColor = "#3B5BDB";
             }}
             onMouseLeave={(event) => {
-              event.currentTarget.style.background = "transparent";
+              event.currentTarget.style.borderColor = "#2A2A38";
             }}
           >
             {image ? (

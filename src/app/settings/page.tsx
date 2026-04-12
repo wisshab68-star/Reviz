@@ -1,133 +1,279 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
-import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { AppTopbar } from "@/components/app-topbar";
-import { BillingActions } from "@/components/billing-actions";
-import { UpgradeButton } from "@/components/UpgradeButton";
+import { SettingsPremiumButton } from "@/components/settings-premium-button";
+import { SettingsSignOutButton } from "@/components/settings-signout-button";
 import { db } from "@/lib/db";
-import { FREE_MONTHLY_SHEET_LIMIT, getPlanLabel, hasUnlimitedSheets } from "@/lib/plans";
-import { getMonthlySheetUsage } from "@/services/usage-service";
 
-export default async function SettingsPage() {
-  let session = null;
+import { updatePasswordAction } from "./actions";
 
-  try {
-    session = await auth();
-  } catch (error) {
-    if (!isDatabaseConnectionError(error)) {
-      throw error;
-    }
+type SettingsPageProps = {
+  searchParams?: Promise<{
+    password?: string;
+    message?: string;
+  }>;
+};
 
-    console.error("Auth lookup failed on /settings, redirecting to sign-in.", error);
-  }
+const cardStyle = {
+  background: "#1E1E2A",
+  border: "1px solid #2A2A38",
+  borderRadius: "16px",
+  padding: "24px",
+  marginBottom: "12px",
+};
+
+const sectionTitleStyle = {
+  fontFamily: "var(--display-font)",
+  fontSize: "16px",
+  fontWeight: 900,
+  color: "#FFFFFF",
+  margin: "0 0 20px",
+};
+
+const fieldLabelStyle = {
+  fontSize: "12px",
+  color: "#8B8B9E",
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.08em",
+  marginBottom: "6px",
+};
+
+const fieldValueStyle = {
+  fontSize: "15px",
+  color: "#FFFFFF",
+  background: "#252532",
+  border: "1px solid #2A2A38",
+  borderRadius: "8px",
+  padding: "10px 14px",
+  width: "100%",
+};
+
+const inputStyle = {
+  width: "100%",
+  background: "#252532",
+  border: "1px solid #2A2A38",
+  borderRadius: "8px",
+  padding: "10px 14px",
+  color: "#FFFFFF",
+  fontSize: "15px",
+  outline: "none",
+};
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+  const session = await auth();
 
   if (!session?.user?.id) {
     redirect("/sign-in");
   }
 
-  const usage = await getMonthlySheetUsage(session.user.id);
-  const usedSheets = usage._sum.quantity ?? 0;
-  const unlimited = hasUnlimitedSheets(session.user.plan);
-  const remainingSheets = unlimited ? null : Math.max(FREE_MONTHLY_SHEET_LIMIT - usedSheets, 0);
-  const subscriptionSnapshot = await db.user.findUnique({
+  const user = await db.user.findUnique({
     where: { id: session.user.id },
     select: {
+      name: true,
+      email: true,
+      passwordHash: true,
       subscriptionStatus: true,
-      subscriptionId: true,
-      subscriptions: {
-        orderBy: {
-          createdAt: "desc",
-        },
-        take: 1,
+      accounts: {
         select: {
-          currentPeriodEnd: true,
+          provider: true,
         },
       },
     },
   });
-  const isSubscriptionActive = subscriptionSnapshot?.subscriptionStatus === "active";
-  const currentPeriodEnd = subscriptionSnapshot?.subscriptions[0]?.currentPeriodEnd;
-  const formattedRenewalDate = currentPeriodEnd
-    ? new Intl.DateTimeFormat("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(currentPeriodEnd)
-    : null;
+
+  if (!user) {
+    redirect("/sign-in");
+  }
+
+  const resolvedSearchParams = await searchParams;
+  const passwordStatus = resolvedSearchParams?.password;
+  const passwordMessage = resolvedSearchParams?.message;
+  const isGoogleAuth = user.accounts.some((account) => account.provider === "google") && !user.passwordHash;
+  const isEmailAuth = Boolean(user.passwordHash);
+  const isSubscriptionActive = user.subscriptionStatus === "active";
+  const firstName = user.name?.trim().split(/\s+/)[0] ?? "Ton compte";
 
   return (
-    <main className="page-shell" style={{ background: "#FAFAF8", minHeight: "100vh" }}>
+    <main style={{ minHeight: "100vh", background: "#0F0F13", display: "flex" }}>
       <AppTopbar />
 
-      <div className="content-shell" style={{ maxWidth: 1120, margin: "0 auto", paddingInline: "1.5rem" }}>
-        <section className="section-block" style={{ background: "transparent" }}>
-          <div className="section-title">
-            <p className="eyebrow">Compte</p>
-            <h1 style={{ color: "#2F5BFF" }}>Profil et abonnement</h1>
-            <p>Gere ton plan, suis ton quota mensuel et pilote ton acces Premium depuis ici.</p>
-          </div>
+      <div style={{ flex: 1, minWidth: 0, background: "#0F0F13" }}>
+        <div
+          style={{
+            maxWidth: "600px",
+            margin: "0 auto",
+            padding: "48px 32px",
+            background: "#0F0F13",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: "#8B8B9E",
+              textTransform: "uppercase",
+              margin: "0 0 8px",
+            }}
+          >
+            COMPTE
+          </p>
 
-          <div className="metrics-grid">
-            <article className="metric-card" style={{ borderColor: "rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-              <h3>Plan actuel</h3>
-              <p>{getPlanLabel(session.user.plan)}</p>
-            </article>
-            <article className="metric-card" style={{ borderColor: "rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-              <h3>Fiches ce mois</h3>
-              <p>{usedSheets}</p>
-            </article>
-            <article className="metric-card" style={{ borderColor: "rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-              <h3>Quota restant</h3>
-              <p>{unlimited ? "Illimite" : `${remainingSheets} / ${FREE_MONTHLY_SHEET_LIMIT}`}</p>
-            </article>
-          </div>
+          <h1
+            style={{
+              fontFamily: "var(--display-font)",
+              fontSize: "52px",
+              fontWeight: 900,
+              color: "#FFFFFF",
+              letterSpacing: "-0.02em",
+              margin: "0 0 40px",
+            }}
+          >
+            Parametres
+          </h1>
 
-          <div className="workspace-panel" style={{ borderColor: "rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", background: "#ffffff" }}>
-            <h2 style={{ marginTop: 0, color: "#2F5BFF" }}>Facturation</h2>
-            <p className="workspace-copy">
-              Passe en Premium pour lever les limites de generation et gerer ensuite ton abonnement
-              depuis le portail Stripe.
-            </p>
-            <BillingActions hasPremium={session.user.plan === "PREMIUM"} />
-          </div>
+          <section style={cardStyle}>
+            <h2 style={sectionTitleStyle}>Mon compte</h2>
 
-          <div className="workspace-panel" style={{ borderColor: "rgba(0,0,0,0.12)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", background: "#ffffff" }}>
-            <h2 style={{ marginTop: 0, color: "#2F5BFF" }}>Abonnement</h2>
-            {!isSubscriptionActive ? (
-              <>
-                <p className="workspace-copy">
-                  Debloque Reviz Premium pour generer sans interruption et continuer tes revisions a 4,99€/mois.
-                </p>
-                <UpgradeButton className="btn btn-primary">
-                  Passer Premium — 4,99€/mois
-                </UpgradeButton>
-              </>
+            <div style={{ display: "grid", gap: "18px" }}>
+              <div>
+                <div style={fieldLabelStyle}>Prenom</div>
+                <div style={fieldValueStyle}>{firstName}</div>
+              </div>
+
+              <div>
+                <div style={fieldLabelStyle}>Email</div>
+                <div style={fieldValueStyle}>{user.email ?? "Email indisponible"}</div>
+                {isGoogleAuth ? (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      marginTop: "10px",
+                      background: "#1a2744",
+                      color: "#93c5fd",
+                      fontSize: "11px",
+                      padding: "3px 10px",
+                      borderRadius: "50px",
+                    }}
+                  >
+                    Connecte via Google
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </section>
+
+          <section style={cardStyle}>
+            <h2 style={sectionTitleStyle}>Mot de passe</h2>
+
+            {passwordStatus === "updated" ? (
+              <div
+                style={{
+                  marginBottom: "18px",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  background: "#14532d",
+                  color: "#86efac",
+                  fontSize: "13px",
+                }}
+              >
+                Mot de passe mis a jour.
+              </div>
+            ) : null}
+
+            {passwordStatus === "error" && passwordMessage ? (
+              <div
+                style={{
+                  marginBottom: "18px",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  background: "#3b1d24",
+                  color: "#fca5a5",
+                  fontSize: "13px",
+                }}
+              >
+                {passwordMessage}
+              </div>
+            ) : null}
+
+            {isGoogleAuth && !isEmailAuth ? (
+              <p
+                style={{
+                  margin: 0,
+                  color: "#8B8B9E",
+                  fontSize: "13px",
+                  fontStyle: "italic",
+                }}
+              >
+                Tu utilises la connexion Google - aucun mot de passe a gerer.
+              </p>
             ) : (
+              <form action={updatePasswordAction} style={{ display: "grid", gap: "16px" }}>
+                <div>
+                  <div style={fieldLabelStyle}>Nouveau mot de passe</div>
+                  <input name="newPassword" type="password" autoComplete="new-password" style={inputStyle} />
+                </div>
+
+                <div>
+                  <div style={fieldLabelStyle}>Confirmer</div>
+                  <input name="confirmPassword" type="password" autoComplete="new-password" style={inputStyle} />
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    style={{
+                      background: "#3B5BDB",
+                      borderRadius: "50px",
+                      padding: "10px 24px",
+                      border: "none",
+                      color: "#FFFFFF",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Mettre a jour
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
+
+          <section style={cardStyle}>
+            <h2 style={sectionTitleStyle}>Abonnement</h2>
+
+            {isSubscriptionActive ? (
               <>
-                <div
+                <span
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    minHeight: "42px",
-                    padding: "0 1rem",
-                    borderRadius: "999px",
-                    background: "#dcfce7",
-                    color: "#166534",
+                    background: "#14532d",
+                    color: "#86efac",
+                    fontSize: "13px",
                     fontWeight: 700,
+                    padding: "6px 16px",
+                    borderRadius: "50px",
+                    display: "inline-block",
+                    marginBottom: "12px",
                   }}
                 >
                   Premium actif
-                </div>
-                <p className="workspace-copy" style={{ marginTop: "1rem", marginBottom: 0 }}>
-                  {formattedRenewalDate
-                    ? `Prochain renouvellement : ${formattedRenewalDate}`
-                    : "Ton abonnement Premium est bien actif."}
+                </span>
+                <p style={{ margin: 0, color: "#FFFFFF", fontSize: "15px" }}>
+                  Ton abonnement Premium est actif.
                 </p>
               </>
+            ) : (
+              <SettingsPremiumButton>
+                Passer Premium 4,99€/mois
+              </SettingsPremiumButton>
             )}
+          </section>
+
+          <div style={{ marginTop: "20px" }}>
+            <SettingsSignOutButton />
           </div>
-        </section>
+        </div>
       </div>
     </main>
   );

@@ -23,7 +23,7 @@ function splitSentences(text: string) {
 }
 
 function extractCandidateTerms(text: string) {
-  const matches = text.match(/\b[A-Z][A-Za-zÀ-ÿ-]{3,}\b/g) ?? [];
+  const matches = text.match(/\b[A-Z][A-Za-zÀ-ÿ\-]{3,}\b/g) ?? [];
   return [...new Set(matches)].slice(0, 6);
 }
 
@@ -32,7 +32,7 @@ function truncate(text: string, maxLength: number) {
     return text;
   }
 
-  return `${text.slice(0, maxLength - 1).trim()}…`;
+  return `${text.slice(0, maxLength - 1).trim()}â€¦`;
 }
 
 function buildSummary(sentences: string[]) {
@@ -95,7 +95,7 @@ function inferTitle(titleHint: string | undefined, text: string, paragraphs: str
   return truncate(text.slice(0, 80), 140) || "Fiche de revision";
 }
 
-export function generateDemoStudySheet(input: { content: string; titleHint?: string }): GeneratedSheet {
+export function generateFallbackStudySheet(input: { content: string; titleHint?: string }): GeneratedSheet {
   const cleaned = stripNoise(input.content);
   const paragraphs = splitParagraphs(cleaned);
   const sentences = splitSentences(cleaned);

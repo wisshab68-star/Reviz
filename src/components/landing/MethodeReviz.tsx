@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import styles from "./MethodeReviz.module.css";
@@ -197,11 +197,18 @@ export function MethodeReviz() {
           <span className={`${styles.eyebrow} anim`}>
             Méthode Reviz
           </span>
-          <h2 className={`${styles.title} anim`}>
-            <span className={styles.titleLine}>Pas juste un résumé.</span>
-            <span className={styles.titleLine}>
-              Un cerveau qui <span className={styles.titleAccent}>retient.</span>
-            </span>
+          <h2
+            className={`${styles.title} anim`}
+            style={{
+              fontFamily: "var(--display-font)",
+              fontSize: "clamp(32px, 5vw, 56px)",
+              fontWeight: 900,
+              textAlign: "center",
+              color: "#000000",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Réussis avec la méthode Reviz
           </h2>
           <p className={`${styles.subtitle} anim`}>
             Chaque fiche Reviz active 4 mécanismes validés par les neurosciences
@@ -268,3 +275,4 @@ export function MethodeReviz() {
     </section>
   );
 }
+

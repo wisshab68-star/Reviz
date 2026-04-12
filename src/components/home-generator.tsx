@@ -94,15 +94,15 @@ const subjectOptions: SubjectOption[] = [
   { value: "Maths", label: "Maths" },
   { value: "Physique-Chimie", label: "Physique-Chimie" },
   { value: "SVT", label: "SVT" },
-  { value: "Histoire-Géo", label: "Histoire-Géo" },
-  { value: "Français", label: "Français" },
+  { value: "Histoire-GÃ©o", label: "Histoire-GÃ©o" },
+  { value: "FranÃ§ais", label: "FranÃ§ais" },
   { value: "Philosophie", label: "Philosophie" },
   { value: "Anglais", label: "Anglais" },
   { value: "Langues vivantes", label: "Langues vivantes" },
   { value: "SES", label: "SES" },
   { value: "Technologie", label: "Technologie" },
   { value: "Arts / Musique", label: "Arts / Musique" },
-  { value: OTHER_SUBJECT_VALUE, label: "Autre (précise)" },
+  { value: OTHER_SUBJECT_VALUE, label: "Autre (prÃ©cise)" },
 ];
 
 const heroMetrics = [
@@ -649,7 +649,7 @@ export function HomeGenerator({
             </div>
             {index < steps.length - 1 ? (
               <div className="step-arrow" aria-hidden="true" style={{ color: "#2A2A38", fontFamily: "var(--display-font)", fontSize: "12px", lineHeight: 1 }}>
-                →
+                â†’
               </div>
             ) : null}
           </div>
@@ -742,7 +742,7 @@ export function HomeGenerator({
             type="text"
             value={customSubject}
             onChange={(event) => setCustomSubject(event.target.value)}
-            placeholder="Ex : NSI, Droit, Cinéma..."
+            placeholder="Ex : NSI, Droit, CinÃ©ma..."
             disabled={!isOtherSubject || isSubmitting || isUploading}
             style={{
               fontFamily: "var(--display-font)",
@@ -846,65 +846,151 @@ export function HomeGenerator({
           ) : hasReachedFreeLimit ? (
             <div
               style={{
-                width: "100%",
-                minHeight: "420px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
+                maxWidth: "480px",
+                margin: "0 auto",
                 textAlign: "center",
+                padding: "48px 24px",
               }}
             >
-              <h2
+              <span
                 style={{
-                  margin: 0,
-                  fontFamily: "var(--display-font)",
-                  fontSize: "clamp(28px, 4vw, 44px)",
-                  color: "#FFFFFF",
-                  textAlign: "center",
+                  background: "#1E1E2A",
+                  border: "1px solid #2A2A38",
+                  borderRadius: "50px",
+                  padding: "6px 16px",
+                  fontSize: "12px",
+                  color: "#8B8B9E",
+                  display: "inline-block",
+                  marginBottom: "24px",
                 }}
               >
-                Tu as utilisé ta fiche gratuite
+                1/1 fiche utilisee
+              </span>
+              <h2
+                style={{
+                  fontFamily: "var(--display-font)",
+                  fontSize: "clamp(32px, 5vw, 52px)",
+                  fontWeight: 900,
+                  color: "#FFFFFF",
+                  lineHeight: 1.05,
+                  margin: "0 0 16px",
+                  whiteSpace: "pre-line",
+                }}
+              >
+                {"Tu as vu ce que\nReviz peut faire."}
               </h2>
               <p
                 style={{
                   color: "#8B8B9E",
                   fontSize: "15px",
-                  textAlign: "center",
-                  margin: "16px 0 8px",
-                }}
-              >
-                Tu as vu ce que Reviz peut faire sur ton propre cours.
-              </p>
-              <p
-                style={{
-                  color: "#8B8B9E",
-                  fontSize: "15px",
-                  textAlign: "center",
                   margin: "0 0 32px",
                 }}
               >
-                Passe Premium pour générer en illimité.
+                Genere toutes tes fiches en illimite pour le prix d'un cafe.
               </p>
+              <div
+                style={{
+                  background: "#1E1E2A",
+                  border: "1px solid #3B5BDB",
+                  borderRadius: "20px",
+                  padding: "28px",
+                  marginBottom: "20px",
+                }}
+              >
+                <div style={{ marginBottom: "24px" }}>
+                  <span
+                    style={{
+                      fontSize: "48px",
+                      fontWeight: 900,
+                      color: "#FFFFFF",
+                    }}
+                  >
+                    4,99€
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "16px",
+                      color: "#8B8B9E",
+                      marginLeft: "6px",
+                    }}
+                  >
+                    /mois
+                  </span>
+                </div>
+                <div style={{ display: "grid", gap: "12px", textAlign: "left" }}>
+                  {[
+                    "Fiches illimitees chaque mois",
+                    "Toutes les matieres lycee & college",
+                    "Flashcards incluses automatiquement",
+                    "Resiliation en 1 clic",
+                  ].map((feature) => (
+                    <div
+                      key={feature}
+                      style={{
+                        display: "flex",
+                        gap: "10px",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          display: "inline-flex",
+                          color: "#3B5BDB",
+                          flex: "0 0 auto",
+                        }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                      </span>
+                      <span style={{ color: "#FFFFFF", fontSize: "14px" }}>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => void handleUpgradeCheckout()}
                 disabled={isCheckoutLoading}
                 style={{
                   background: "#3B5BDB",
-                  borderRadius: "50px",
-                  padding: "16px 48px",
-                  fontSize: "15px",
-                  fontWeight: 700,
-                  boxShadow: "0 0 32px rgba(59,91,219,0.4)",
-                  border: "none",
                   color: "#FFFFFF",
+                  borderRadius: "50px",
+                  padding: "16px",
+                  width: "100%",
+                  fontFamily: "var(--display-font)",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  boxShadow: "0 0 40px rgba(59,91,219,0.5)",
+                  border: "none",
                   cursor: isCheckoutLoading ? "wait" : "pointer",
                 }}
               >
-                {isCheckoutLoading ? "Redirection..." : "Passer Premium — 4,99€/mois"}
+                {isCheckoutLoading ? "Redirection..." : "Commencer pour 4,99€/mois"}
               </button>
-              {error ? <div className="status-box error" style={{ background: "#252532", color: "#FFFFFF", border: "1px solid #2A2A38", marginTop: "20px" }}>{error}</div> : null}
+              <p
+                style={{
+                  color: "#2A2A38",
+                  fontSize: "12px",
+                  margin: "12px 0 0",
+                }}
+              >
+                Paiement securise · Annulation a tout moment
+              </p>
+              {error ? (
+                <div
+                  className="status-box error"
+                  style={{
+                    background: "#252532",
+                    color: "#FFFFFF",
+                    border: "1px solid #2A2A38",
+                    marginTop: "20px",
+                  }}
+                >
+                  {error}
+                </div>
+              ) : null}
             </div>
           ) : (
             <>

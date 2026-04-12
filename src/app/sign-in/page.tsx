@@ -23,9 +23,9 @@ function inputStyle() {
     width: "100%",
     background: "#1E1E2A",
     border: "1px solid #2A2A38",
-    color: "#FFFFFF",
-    borderRadius: "8px",
+    borderRadius: "10px",
     padding: "12px 16px",
+    color: "#FFFFFF",
     fontSize: "14px",
     outline: "none",
   } as const;
@@ -35,18 +35,18 @@ function bulletItem(label: string) {
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.1)",
+        background: "rgba(255,255,255,0.15)",
         borderRadius: "12px",
-        padding: "12px 16px",
-        margin: "8px 0",
+        padding: "14px 18px",
+        marginBottom: "10px",
         display: "flex",
         alignItems: "center",
-        gap: "12px",
+        gap: 12,
         width: "100%",
         maxWidth: "360px",
       }}
     >
-      <span aria-hidden="true" style={{ display: "inline-flex", color: "#93c5fd", flex: "0 0 auto" }}>
+      <span aria-hidden="true" style={{ display: "inline-flex", color: "#FFFFFF", flex: "0 0 auto" }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M20 6 9 17l-5-5" />
         </svg>
@@ -85,99 +85,99 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         minHeight: "100vh",
         background: "#0F0F13",
         display: "grid",
-        gridTemplateColumns: "minmax(0, 540px) minmax(0, 1fr)",
+        gridTemplateColumns: "minmax(0, 560px) minmax(0, 1fr)",
       }}
     >
       <section
         style={{
           background: "#0F0F13",
-          color: "#FFFFFF",
           padding: "48px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
         }}
       >
-        <div style={{ width: "100%", maxWidth: "420px", margin: "0 auto", display: "grid", gap: "24px" }}>
-          <div style={{ display: "grid", gap: "20px" }}>
+        <div style={{ width: "100%", maxWidth: "420px", margin: "0 auto" }}>
+          <div
+            style={{
+              background: "#1E1E2A",
+              borderRadius: "50px",
+              padding: "4px",
+              display: "inline-flex",
+              marginBottom: "24px",
+            }}
+          >
             <Link
-              href="/"
+              href="/sign-in?mode=signup"
               style={{
-                color: "#FFFFFF",
-                fontFamily: "var(--font-heading)",
-                fontSize: "28px",
-                lineHeight: 1,
+                background: !isLogin ? "#FFFFFF" : "transparent",
+                color: !isLogin ? "#000000" : "#8B8B9E",
+                borderRadius: "50px",
+                padding: "8px 20px",
+                fontSize: "13px",
+                fontWeight: 700,
+                transition: "all 0.2s",
                 textDecoration: "none",
               }}
             >
-              REVIZ
+              Creer
             </Link>
-
-            <div style={{ display: "inline-flex", gap: "8px", padding: "4px", background: "#1A1A24", borderRadius: "8px", width: "fit-content" }}>
-              <Link
-                href="/sign-in?mode=signup"
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "6px",
-                  background: !isLogin ? "#FFFFFF" : "transparent",
-                  color: !isLogin ? "#0F0F13" : "#8B8B9E",
-                  textDecoration: "none",
-                  fontWeight: 600,
-                  transition: "background 0.2s ease, color 0.2s ease",
-                }}
-              >
-                Creer un compte
-              </Link>
-              <Link
-                href="/sign-in?mode=login"
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "6px",
-                  background: isLogin ? "#FFFFFF" : "transparent",
-                  color: isLogin ? "#0F0F13" : "#8B8B9E",
-                  textDecoration: "none",
-                  fontWeight: 600,
-                  transition: "background 0.2s ease, color 0.2s ease",
-                }}
-              >
-                Se connecter
-              </Link>
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gap: "12px" }}>
-            <h1
+            <Link
+              href="/sign-in?mode=login"
               style={{
-                margin: 0,
-                color: "#FFFFFF",
-                fontFamily: "var(--font-heading)",
-                fontSize: "clamp(36px, 5vw, 52px)",
-                lineHeight: 0.95,
+                background: isLogin ? "#FFFFFF" : "transparent",
+                color: isLogin ? "#000000" : "#8B8B9E",
+                borderRadius: "50px",
+                padding: "8px 20px",
+                fontSize: "13px",
+                fontWeight: 700,
+                transition: "all 0.2s",
+                textDecoration: "none",
+                cursor: "pointer",
               }}
             >
-              la methode reviz
-            </h1>
-            <p
-              style={{
-                margin: 0,
-                color: "#8B8B9E",
-                lineHeight: 1.7,
-                fontSize: "15px",
-              }}
-            >
-              Google d&apos;abord, email ensuite. Une connexion claire, rapide et sans friction pour retrouver tes fiches.
-            </p>
+              Connecter
+            </Link>
           </div>
+
+          <Link
+            href="/"
+            style={{
+              display: "inline-block",
+              marginBottom: "32px",
+              textDecoration: "none",
+              fontFamily: "var(--display-font)",
+              fontSize: "28px",
+              fontWeight: 900,
+              color: "#FFFFFF",
+            }}
+          >
+            <span>REVIZ</span>
+            <span style={{ color: "#3B5BDB" }}>.</span>
+          </Link>
+
+          <h1
+            style={{
+              margin: "0 0 24px",
+              fontFamily: "var(--display-font)",
+              fontSize: "32px",
+              fontWeight: 900,
+              color: "#FFFFFF",
+            }}
+          >
+            {isLogin ? "Se connecter" : "Creer mon compte"}
+          </h1>
 
           {errorMessage ? (
             <div
               role="alert"
               style={{
-                borderRadius: "8px",
+                borderRadius: "12px",
                 border: "1px solid #2A2A38",
                 background: "#1E1E2A",
                 color: "#FFFFFF",
                 padding: "12px 16px",
+                marginBottom: "16px",
               }}
             >
               {errorMessage}
@@ -192,15 +192,17 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
                   width: "100%",
                   background: "#1E1E2A",
                   border: "1px solid #2A2A38",
+                  borderRadius: "12px",
+                  padding: "14px",
                   color: "#FFFFFF",
-                  borderRadius: "8px",
-                  padding: "14px 16px",
+                  fontSize: "14px",
+                  fontWeight: 600,
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "12px",
                   cursor: "pointer",
-                  transition: "background 0.2s ease",
+                  transition: "border-color 0.2s ease",
                 }}
               >
                 <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
@@ -222,7 +224,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
                 gridTemplateColumns: "1fr auto 1fr",
                 alignItems: "center",
                 gap: "12px",
-                color: "#8B8B9E",
+                color: "#2A2A38",
                 fontSize: "14px",
               }}
             >
@@ -235,68 +237,61 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
               <input type="hidden" name="mode" value={mode} />
 
               {!isLogin ? (
-                <label style={{ display: "grid", gap: "8px" }}>
-                  <span style={{ color: "#8B8B9E", fontSize: "13px" }}>Prénom</span>
-                  <input
-                    name="name"
-                    type="text"
-                    placeholder="Ex : Lea"
-                    autoComplete="given-name"
-                    style={sharedInputStyle}
-                  />
-                </label>
+                <input
+                  name="name"
+                  type="text"
+                  placeholder="Prenom"
+                  autoComplete="given-name"
+                  style={sharedInputStyle}
+                />
               ) : null}
 
-              <label style={{ display: "grid", gap: "8px" }}>
-                <span style={{ color: "#8B8B9E", fontSize: "13px" }}>Email</span>
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="toi@reviz.app"
-                  autoComplete="email"
-                  required
-                  style={sharedInputStyle}
-                />
-              </label>
+              <input
+                name="email"
+                type="email"
+                placeholder="Email"
+                autoComplete="email"
+                required
+                style={sharedInputStyle}
+              />
 
-              <label style={{ display: "grid", gap: "8px" }}>
-                <span style={{ color: "#8B8B9E", fontSize: "13px" }}>Mot de passe</span>
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Au moins 8 caracteres"
-                  autoComplete={isLogin ? "current-password" : "new-password"}
-                  minLength={8}
-                  required
-                  style={sharedInputStyle}
-                />
-              </label>
+              <input
+                name="password"
+                type="password"
+                placeholder="Mot de passe"
+                autoComplete={isLogin ? "current-password" : "new-password"}
+                minLength={8}
+                required
+                style={sharedInputStyle}
+              />
 
               <button
                 type="submit"
                 style={{
                   background: "#3B5BDB",
                   color: "#FFFFFF",
-                  borderRadius: "8px",
+                  borderRadius: "50px",
                   padding: "14px",
                   width: "100%",
-                  fontFamily: "var(--font-heading)",
+                  fontFamily: "var(--display-font)",
+                  fontWeight: 700,
+                  fontSize: "15px",
                   border: "none",
                   cursor: "pointer",
-                  transition: "background 0.2s ease",
+                  boxShadow: "0 0 24px rgba(59,91,219,0.3)",
                 }}
               >
-                {isLogin ? "CONNEXION" : "CREER MON COMPTE"}
+                {isLogin ? "Se connecter" : "Creer mon compte"}
               </button>
             </form>
 
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", color: "#8B8B9E" }}>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", color: "#8B8B9E", fontSize: "14px" }}>
               <span>{isLogin ? "Pas encore de compte ?" : "Tu as deja un compte ?"}</span>
               <Link
                 href={isLogin ? "/sign-in?mode=signup" : "/sign-in?mode=login"}
                 style={{ color: "#3B5BDB", textDecoration: "none" }}
               >
-                {isLogin ? "Creer un compte" : "Se connecter"}
+                {isLogin ? "S'inscrire" : "Se connecter"}
               </Link>
             </div>
           </div>
@@ -310,30 +305,30 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          height: "100%",
           padding: "40px",
         }}
       >
-        <div style={{ display: "grid", gap: "20px", justifyItems: "center", width: "100%" }}>
+        <div style={{ display: "grid", gap: "0", justifyItems: "center", width: "100%" }}>
           <h2
             style={{
-              margin: 0,
               color: "#FFFFFF",
-              fontFamily: "var(--font-heading)",
-              fontSize: "42px",
+              fontFamily: "var(--display-font)",
+              fontSize: "44px",
+              fontWeight: 900,
               textAlign: "center",
+              margin: "0 0 32px",
               lineHeight: 1,
             }}
           >
-            Ton allié
+            Ton allie
             <br />
-            pour réussir
+            pour reussir
           </h2>
 
           <div style={{ width: "100%", display: "grid", justifyItems: "center" }}>
-            {bulletItem("Fiche générée en 30 secondes")}
+            {bulletItem("Fiche generee en 30 secondes")}
             {bulletItem("Flashcards automatiques incluses")}
-            {bulletItem("Méthode validée par les neurosciences")}
+            {bulletItem("Methode validee par les neurosciences")}
           </div>
         </div>
       </section>

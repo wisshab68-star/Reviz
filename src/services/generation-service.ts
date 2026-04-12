@@ -3,11 +3,11 @@ import { anthropic } from "@/lib/openai";
 import { CLASSIC_SYSTEM_PROMPT, buildClassicUserPrompt } from "@/lib/prompts/fiche-generator";
 import { generatedSheetSchema, type GenerateSheetRequest } from "@/lib/validations";
 import type { GeneratedSheet } from "@/types/sheet";
-import { generateDemoStudySheet } from "@/services/demo-sheet-service";
+import { generateFallbackStudySheet } from "@/services/fallback-sheet-service";
 
 export async function generateStudySheet(input: GenerateSheetRequest): Promise<GeneratedSheet> {
   if (!process.env.ANTHROPIC_API_KEY) {
-    return generateDemoStudySheet(input);
+    return generateFallbackStudySheet(input);
   }
 
   const prompt = buildClassicUserPrompt(input.content, input.titleHint);
@@ -31,6 +31,6 @@ export async function generateStudySheet(input: GenerateSheetRequest): Promise<G
     return generatedSheetSchema.parse(payload);
   } catch (error) {
     console.warn("OpenAI generation failed, using demo fallback.", error);
-    return generateDemoStudySheet(input);
+    return generateFallbackStudySheet(input);
   }
 }

@@ -133,29 +133,10 @@ export function TryGenerator() {
   const displayFiche: FicheGeneree = {
     ...baseFiche,
     niveau: selectedNiveau ?? baseFiche.niveau,
-    flashcards: isLoggedIn
-      ? baseFiche.flashcards
-      : baseFiche.flashcards.slice(0, 2),
   };
 
   return (
     <>
-      <style>{`
-        .demo-fiche-locked [data-print="feynman"] {
-          filter: blur(5px);
-          pointer-events: none;
-          user-select: none;
-          position: relative;
-        }
-        .demo-fiche-locked [data-print="carte-mentale"] {
-          filter: blur(5px);
-          pointer-events: none;
-          user-select: none;
-        }
-        .demo-fiche-container {
-          padding-bottom: 80px;
-        }
-      `}</style>
 
       <div style={{ marginBottom: "1rem" }}>
         <button
@@ -176,40 +157,6 @@ export function TryGenerator() {
 
       <div className={`demo-fiche-container${isLoggedIn ? "" : " demo-fiche-locked"}`}>
         <FicheRenderer fiche={displayFiche} />
-
-        {!isLoggedIn && (
-          <div
-            style={{
-              border: "2px dashed rgba(47,91,255,0.4)",
-              borderRadius: "16px",
-              padding: "2rem",
-              textAlign: "center",
-              background: "rgba(47,91,255,0.05)",
-              margin: "1rem 0",
-            }}
-          >
-            <p style={{ margin: "0 0 0.5rem", fontWeight: 700 }}>
-              🔒 4 flashcards supplémentaires
-            </p>
-            <p style={{ margin: "0 0 1rem", opacity: 0.7, fontSize: "0.9rem" }}>
-              + Carte mentale complète + Méthode Feynman
-            </p>
-            <a
-              href={`/sign-in?redirectTo=/try`}
-              style={{
-                background: "#2F5BFF",
-                color: "#fff",
-                padding: "0.7rem 1.6rem",
-                borderRadius: "12px",
-                fontWeight: 700,
-                textDecoration: "none",
-                display: "inline-block",
-              }}
-            >
-              Débloquer gratuitement →
-            </a>
-          </div>
-        )}
       </div>
 
       {!isLoggedIn && (

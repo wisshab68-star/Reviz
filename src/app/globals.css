@@ -6191,13 +6191,10 @@ textarea {
 }
 
 /* Demo fiche blur for locked sections */
-.demo-fiche-locked [data-print="feynman"] {
-  filter: blur(5px);
-  pointer-events: none;
-  user-select: none;
-  position: relative;
-}
-.demo-fiche-locked [data-print="carte-mentale"] {
+.demo-fiche-locked [data-print="feynman"],
+.demo-fiche-locked [data-print="carte-mentale"],
+.demo-fiche-locked .reviz-fiche-mental,
+.demo-fiche-locked .reviz-fiche-flashcard:nth-child(n+3) {
   filter: blur(5px);
   pointer-events: none;
   user-select: none;

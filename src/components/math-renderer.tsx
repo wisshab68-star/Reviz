@@ -70,7 +70,11 @@ function renderPlainSegment(segment: string) {
     return renderKatex(segment, false)
   }
 
-  return escapeHtml(segment)
+  // Preserve newlines as <br> so multi-line content (piège, exemple, définition) renders correctly
+  return segment
+    .split('\n')
+    .map(escapeHtml)
+    .join('<br>')
 }
 
 function renderMath(input: string): string {

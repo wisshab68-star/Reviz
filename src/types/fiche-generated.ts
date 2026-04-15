@@ -25,6 +25,7 @@ export interface FicheSchemaConnexion {
 export interface FicheSchema {
   type: "comparaison" | "formule" | "processus" | "relations";
   description: string;
+  ascii?: string;
   elements: FicheSchemaElement[];
   connexions: FicheSchemaConnexion[];
 }

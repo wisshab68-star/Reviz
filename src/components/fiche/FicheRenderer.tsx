@@ -215,8 +215,8 @@ const DEFAULT_SECTION_ORDER: FicheSectionKey[] = [
   "exemple",
   "piege",
   "schema",
-  "feynman",
   "flashcards",
+  "feynman",
   "blueprint",
 ];
 
@@ -229,8 +229,8 @@ const SECTION_ORDER_BY_BLUEPRINT: Record<string, FicheSectionKey[]> = {
     "exemple",
     "piege",
     "schema",
-    "feynman",
     "flashcards",
+    "feynman",
     "blueprint",
   ],
   mecanisme: [
@@ -240,8 +240,8 @@ const SECTION_ORDER_BY_BLUEPRINT: Record<string, FicheSectionKey[]> = {
     "exemple",
     "schema",
     "piege",
-    "feynman",
     "flashcards",
+    "feynman",
     "blueprint",
   ],
   chronologie: [
@@ -251,8 +251,8 @@ const SECTION_ORDER_BY_BLUEPRINT: Record<string, FicheSectionKey[]> = {
     "schema",
     "exemple",
     "piege",
-    "feynman",
     "flashcards",
+    "feynman",
     "blueprint",
   ],
   comparaison: [
@@ -262,8 +262,8 @@ const SECTION_ORDER_BY_BLUEPRINT: Record<string, FicheSectionKey[]> = {
     "exemple",
     "piege",
     "schema",
-    "feynman",
     "flashcards",
+    "feynman",
     "blueprint",
   ],
   algorithmique: [
@@ -274,8 +274,8 @@ const SECTION_ORDER_BY_BLUEPRINT: Record<string, FicheSectionKey[]> = {
     "exemple",
     "piege",
     "schema",
-    "feynman",
     "flashcards",
+    "feynman",
     "blueprint",
   ],
   "cas-pratique": [
@@ -285,8 +285,8 @@ const SECTION_ORDER_BY_BLUEPRINT: Record<string, FicheSectionKey[]> = {
     "exemple",
     "piege",
     "schema",
-    "feynman",
     "flashcards",
+    "feynman",
     "blueprint",
   ],
   taxonomie: [
@@ -296,8 +296,8 @@ const SECTION_ORDER_BY_BLUEPRINT: Record<string, FicheSectionKey[]> = {
     "schema",
     "exemple",
     "piege",
-    "feynman",
     "flashcards",
+    "feynman",
     "blueprint",
   ],
   concepts: DEFAULT_SECTION_ORDER,
@@ -758,40 +758,8 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
     ),
     schema: (
       <div key="schema" data-print="section">
-        <SectionLabel>Structure du cours</SectionLabel>
-        {/* Rendu linéaire numéroté en priorité — SVG en fallback si les éléments sont riches */}
-        {displayFiche.schema?.elements && displayFiche.schema.elements.length > 0 ? (
-          <div className="fiche-tree-structure">
-            {displayFiche.schema.elements.map((el, idx) => (
-              <div key={el.id ?? idx} className="fiche-tree-item">
-                <span className="fiche-tree-number">{String(idx + 1).padStart(2, '0')}</span>
-                <span className="fiche-tree-label">{el.label}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <FicheSchemaVisuel schema={displayFiche.schema} blueprintId={displayFiche.blueprintId} />
-        )}
-        <div className="fiche-schema-reading-grid" data-print="etapes-wrapper">
-          {schemaReadingGrid.map((item) => (
-            <article key={`${item.title}-${item.content}`} className="fiche-schema-reading-card">
-              <p className="fiche-anchor-label">{item.title}</p>
-              <p className="fiche-anchor-text">{item.content}</p>
-            </article>
-          ))}
-        </div>
-        <div data-print="parcours-wrapper">
-          <div className="fiche-logic-strip" data-print="parcours-logique">
-            <p className="fiche-logic-title">Parcours logique a retenir</p>
-            <div className="fiche-logic-list">
-              {connectionNarrative.map((item) => (
-                <p key={item} className="fiche-logic-item">
-                  {item}
-                </p>
-              ))}
-            </div>
-          </div>
-        </div>
+        <SectionLabel>Carte mentale</SectionLabel>
+        <FicheSchemaVisuel schema={displayFiche.schema} blueprintId={displayFiche.blueprintId} />
       </div>
     ),
     feynman: (

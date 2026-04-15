@@ -82,9 +82,38 @@ REGLE QUALITE CONTENU (NON-NEGOCIABLES) :
    Mauvais : "Les frequences se stabilisent progressivement"
    Bon : "Apres 10 lancers : 20%, apres 1000 : 16.7%, apres 1M : 16.666%"
 
-2. STRUCTURE LINEAIRE : La carte mentale doit etre une structure numerotee
-   Format : "1. CONCEPT A\n   - definition\n   - exemple\n2. CONCEPT B\n   - sous-concept"
-   Maximum 8 concepts. Chaque concept doit etre definissable, pas un label administratif.
+2. CARTE MENTALE ASCII : Choisir UNE des 3 variantes selon la famille pedagogique du cours.
+   Le champ "ascii" dans le schema doit contenir le resultat (max 200 tokens).
+
+   VARIANTE 1 - Hierarchie (probabilites, definitions, concepts) :
+   Format :
+                       CONCEPT CENTRAL
+                            │
+          ┌─────────────────┼─────────────────┐
+          │                 │                 │
+       NOTION A          NOTION B          NOTION C
+       - detail           - detail          - detail
+   Usage : cours de mathematiques, probabilites, definitions
+
+   VARIANTE 2 - Flux Processus (chimie, biologie, mecanismes) :
+   Format :
+   REACTIFS / INPUT   →   PROCESSUS   →   PRODUITS / OUTPUT
+                          - etape 1
+                          - etape 2
+   Usage : chimie, biologie, algorithmique, processus lineaires
+
+   VARIANTE 3 - Arborescence (taxonomie, biologie cellulaire, hierarchies complexes) :
+   Format :
+   CONCEPT RACINE
+   ├─ BRANCHE A
+   │  ├─ sous-element 1
+   │  └─ sous-element 2
+   ├─ BRANCHE B
+   │  └─ sous-element 3
+   └─ BRANCHE C
+   Usage : taxonomie, biologie cellulaire, classifications, arbres de decision
+
+   REGLES : max 8 noeuds, chaque noeud doit etre definissable, aucun label administratif.
 
 3. PIEGES COURANTS : La section piege doit contenir 3-4 pièges avec correction
    Format : "PIEGE : [erreur] | CORRECT : [correction]"
@@ -473,6 +502,7 @@ FORMAT DE SORTIE APPLICATIF EXACT :
   "schema": {
     "type": "comparaison | formule | processus | relations",
     "description": "string",
+    "ascii": "string", // carte mentale ASCII (variante 1 hierarchie | 2 flux | 3 arborescence)
     "elements": [
       { "id": "string", "label": "string", "couleur": "bleu | teal | coral | violet | gris" }
     ],

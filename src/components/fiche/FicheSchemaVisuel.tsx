@@ -183,6 +183,33 @@ export function FicheSchemaVisuel({ schema, blueprintId }: FicheSchemaVisuelProp
   const svgHeight = blueprintId === "chronologie" ? 420 : elements.length <= 4 ? 420 : 500;
   const positions = buildNodePositions(elements, svgWidth, svgHeight, blueprintId);
 
+  // ASCII mind map — render as pre-formatted text block (no SVG)
+  if (schema.ascii?.trim()) {
+    return (
+      <div className="reviz-schema-shell" data-print="carte-mentale" style={{ background: "#FFFFFF", color: "#000000" }}>
+        <div className="reviz-schema-badge">{getSchemaBadge(blueprintId)}</div>
+        <p className="reviz-schema-description">{schema.description}</p>
+        <pre
+          style={{
+            fontFamily: "'Courier New', 'Consolas', monospace",
+            fontSize: "13px",
+            lineHeight: "1.6",
+            whiteSpace: "pre",
+            overflowX: "auto",
+            padding: "16px",
+            background: "#F8F9FC",
+            border: "2px solid #E2E8F0",
+            borderRadius: "12px",
+            margin: "8px 0",
+            color: "#1A202C",
+          }}
+        >
+          {schema.ascii}
+        </pre>
+      </div>
+    );
+  }
+
   return (
     <div className="reviz-schema-shell" data-print="carte-mentale" style={{ background: "#FFFFFF", color: "#000000" }}>
       <div className="reviz-schema-badge">{getSchemaBadge(blueprintId)}</div>

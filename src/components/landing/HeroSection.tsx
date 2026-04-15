@@ -171,7 +171,7 @@ export default function HeroSection() {
         </p>
 
         <div className={styles.ctaSection}>
-          <Link href="/sign-up" className={styles.btnPrimary}>
+          <Link href="/try" className={styles.btnPrimary}>
             Générer ma première fiche
           </Link>
           <Link href="/sign-in" className={styles.btnSecondary}>

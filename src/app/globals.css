@@ -5974,3 +5974,234 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Try / Funnel page ─────────────────────────────────────────────────── */
+
+.try-page {
+  min-height: 100vh;
+  background: #0d0d0d;
+  display: flex;
+  flex-direction: column;
+}
+
+.try-topbar {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.try-logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-decoration: none;
+}
+
+.try-main {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1rem 6rem;
+}
+
+.try-card {
+  width: 100%;
+  max-width: 640px;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.try-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.try-title {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.try-subtitle {
+  color: rgba(255,255,255,0.55);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.try-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.try-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.try-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.try-label-optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: rgba(255,255,255,0.4);
+}
+
+.try-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.try-pill {
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: rgba(255,255,255,0.65);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.try-pill:hover {
+  border-color: rgba(255,255,255,0.4);
+  color: #fff;
+}
+
+.try-pill-active {
+  border-color: #6366f1;
+  background: rgba(99,102,241,0.15);
+  color: #818cf8;
+}
+
+.try-textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  color: #fff;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.try-textarea:focus {
+  border-color: rgba(99,102,241,0.5);
+}
+
+.try-textarea::placeholder {
+  color: rgba(255,255,255,0.3);
+}
+
+.try-cta {
+  width: 100%;
+  justify-content: center;
+  font-size: 1rem;
+  padding: 0.875rem 1.5rem;
+}
+
+.try-cta:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.try-hint {
+  text-align: center;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.8rem;
+  margin: -1rem 0 0;
+}
+
+/* Loading state */
+.try-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2rem 0;
+}
+
+.try-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(99,102,241,0.2);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: try-spin 0.8s linear infinite;
+}
+
+@keyframes try-spin {
+  to { transform: rotate(360deg); }
+}
+
+.try-loading-msg {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  min-height: 1.5em;
+  text-align: center;
+  transition: opacity 0.3s;
+}
+
+.try-loading-sub {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.4);
+  margin: 0;
+}
+
+/* Error state */
+.try-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1rem 0;
+}
+
+.try-error-msg {
+  color: #f87171;
+  font-size: 0.95rem;
+  text-align: center;
+  margin: 0;
+}
+
+/* Demo fiche blur for locked sections */
+.demo-fiche-locked [data-print="feynman"] {
+  filter: blur(5px);
+  pointer-events: none;
+  user-select: none;
+  position: relative;
+}
+.demo-fiche-locked [data-print="carte-mentale"] {
+  filter: blur(5px);
+  pointer-events: none;
+  user-select: none;
+}
+.demo-fiche-container {
+  padding-bottom: 80px;
+}

@@ -34,7 +34,7 @@ function normalizeText(rawValue: FormDataEntryValue | null) {
   return typeof rawValue === "string" ? rawValue.trim() : "";
 }
 
-export async function signInWithGoogleAction() {
+export async function signInWithGoogleAction(formData: FormData) {
   const googleClientId = process.env.AUTH_GOOGLE_ID
     ?? process.env.GOOGLE_CLIENT_ID
     ?? process.env.NEXTAUTH_GOOGLE_ID;
@@ -46,7 +46,10 @@ export async function signInWithGoogleAction() {
     redirectWithError("login", "Connexion Google indisponible pour le moment. Verifie la configuration OAuth.");
   }
 
-  await signIn("google", { redirectTo: "/app" });
+  const rawRedirectTo = normalizeText(formData.get("redirectTo"));
+  const safeRedirectTo = rawRedirectTo.startsWith("/") ? rawRedirectTo : "/app";
+
+  await signIn("google", { redirectTo: safeRedirectTo });
 }
 
 export async function authenticateWithPasswordAction(formData: FormData) {
@@ -54,6 +57,8 @@ export async function authenticateWithPasswordAction(formData: FormData) {
   const name = normalizeText(formData.get("name"));
   const email = normalizeEmail(formData.get("email"));
   const password = normalizeText(formData.get("password"));
+  const rawRedirectTo = normalizeText(formData.get("redirectTo"));
+  const safeRedirectTo = rawRedirectTo.startsWith("/") ? rawRedirectTo : "/app";
 
   if (!email) {
     redirectWithError(mode, "Entre ton adresse email.");
@@ -121,7 +126,7 @@ export async function authenticateWithPasswordAction(formData: FormData) {
     await signIn("credentials", {
       email,
       password,
-      redirectTo: "/app",
+      redirectTo: safeRedirectTo,
     });
   } catch (error) {
     if (isRedirectError(error)) {

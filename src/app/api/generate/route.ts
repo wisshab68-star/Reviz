@@ -100,11 +100,11 @@ export async function POST(request: Request) {
         );
         const premium = userSnapshot?.subscriptionStatus === "active";
 
-        if (!premium && sheetCount >= 1) {
+        if (!premium && sheetCount >= 2) {
           return NextResponse.json(
             {
               error: "LIMIT_REACHED",
-              message: "Tu as utilisé ta fiche gratuite",
+              message: "Tu as utilisé tes 2 fiches gratuites",
             },
             { status: 403 },
           );
@@ -118,8 +118,8 @@ export async function POST(request: Request) {
             }
           : {
               allowed: true,
-              remaining: Math.max(1 - sheetCount, 0),
-              limit: 1,
+              remaining: Math.max(2 - sheetCount, 0),
+              limit: 2,
             };
         logStage("quota:done");
       } catch (error) {

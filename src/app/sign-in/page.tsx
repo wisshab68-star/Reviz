@@ -15,6 +15,7 @@ type SignInPageProps = {
   searchParams?: Promise<{
     error?: string;
     mode?: string;
+    redirectTo?: string;
   }>;
 };
 
@@ -76,6 +77,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const resolvedSearchParams = await searchParams;
   const mode = resolvedSearchParams?.mode === "login" ? "login" : "signup";
   const errorMessage = resolvedSearchParams?.error;
+  const redirectTo = resolvedSearchParams?.redirectTo ?? "";
   const isLogin = mode === "login";
   const sharedInputStyle = inputStyle();
 
@@ -186,6 +188,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
           <div style={{ display: "grid", gap: "16px" }}>
             <form action={signInWithGoogleAction}>
+              <input type="hidden" name="redirectTo" value={redirectTo} />
               <button
                 type="submit"
                 style={{
@@ -235,6 +238,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
             <form action={authenticateWithPasswordAction} style={{ display: "grid", gap: "14px" }}>
               <input type="hidden" name="mode" value={mode} />
+              <input type="hidden" name="redirectTo" value={redirectTo} />
 
               {!isLogin ? (
                 <input

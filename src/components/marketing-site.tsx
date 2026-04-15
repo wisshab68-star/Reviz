@@ -204,6 +204,57 @@ export function MarketingSite() {
       <main className="page">
         <HeroSection />
 
+        <section className="section-band video-placeholder-band" style={{ background: "#0d0d0d", padding: "5rem 0" }}>
+          <div className="container section">
+            <div className="section-head" style={{ marginBottom: "2.5rem" }}>
+              <h2 className="reviz-reveal" style={{ color: "#fff" }}>
+                Vois comment Reviz transforme ton cours en fiche
+              </h2>
+              <p className="section-note reviz-reveal reviz-reveal-delay-1" style={{ color: "rgba(255,255,255,0.6)" }}>
+                En 30 secondes, importe ton cours et obtiens une fiche structurée, des flashcards, et une carte mentale.
+              </p>
+            </div>
+            <div
+              className="reviz-reveal reviz-reveal-delay-1"
+              style={{
+                position: "relative",
+                maxWidth: "720px",
+                margin: "0 auto",
+                aspectRatio: "16/9",
+                background: "#1a1a1a",
+                borderRadius: "16px",
+                border: "1px solid rgba(255,255,255,0.1)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "1rem",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                aria-hidden="true"
+                style={{
+                  width: "64px",
+                  height: "64px",
+                  borderRadius: "50%",
+                  background: "rgba(99,102,241,0.2)",
+                  border: "2px solid rgba(99,102,241,0.5)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.8rem",
+                }}
+              >
+                ▶
+              </div>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", margin: 0 }}>
+                Vidéo de présentation — bientôt disponible
+              </p>
+            </div>
+          </div>
+        </section>
+
 <section id="steps" className="section-band section-band-blue">
           <div className="blue-particles" aria-hidden="true">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -241,7 +292,7 @@ export function MarketingSite() {
               ))}
             </div>
             <div className="section-cta reviz-reveal reviz-reveal-delay-2">
-              <Link href="/app" className="btn btn-secondary">Generer ma premiere fiche</Link>
+              <Link href="/try" className="btn btn-secondary">Generer ma premiere fiche</Link>
             </div>
           </div>
         </section>
@@ -264,7 +315,7 @@ export function MarketingSite() {
                 <ul className="pricing-list pricing-list-free">
                   {freePlan.items.map((item) => <li key={item}>• {item}</li>)}
                 </ul>
-                <Link href="/sign-in" className="pricing-free-cta">
+                <Link href="/try" className="pricing-free-cta">
                   {freePlan.cta}
                 </Link>
               </article>

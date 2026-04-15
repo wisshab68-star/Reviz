@@ -81,6 +81,45 @@ function enforceSheetLimits(data: any): any {
   return data;
 }
 
+function calculateSimilarity(a: string, b: string): number {
+  const wordsA = new Set(a.toLowerCase().split(/\s+/).filter(w => w.length > 2));
+  const wordsB = new Set(b.toLowerCase().split(/\s+/).filter(w => w.length > 2));
+  if (wordsA.size === 0 || wordsB.size === 0) return 0;
+  const intersection = [...wordsA].filter(w => wordsB.has(w)).length;
+  const union = new Set([...wordsA, ...wordsB]).size;
+  return intersection / union;
+}
+
+function validateBeforeSave(fiche: any): any {
+  // Deduplicate notionsCles by similarity (Jaccard >= 0.6)
+  if (Array.isArray(fiche.notionsCles) && fiche.notionsCles.length > 1) {
+    const deduped: string[] = [];
+    for (const notion of fiche.notionsCles) {
+      const isDuplicate = deduped.some(existing => calculateSimilarity(existing, notion) >= 0.6);
+      if (!isDuplicate) deduped.push(notion);
+    }
+    if (deduped.length < fiche.notionsCles.length) {
+      console.warn(`[validateBeforeSave] notionsCles: ${fiche.notionsCles.length} → ${deduped.length} après déduplication`);
+      fiche.notionsCles = deduped;
+    }
+  }
+
+  // Deduplicate flashcards by question similarity
+  if (Array.isArray(fiche.flashcards) && fiche.flashcards.length > 1) {
+    const deduped: any[] = [];
+    for (const card of fiche.flashcards) {
+      const isDuplicate = deduped.some(existing => calculateSimilarity(existing.question ?? "", card.question ?? "") >= 0.7);
+      if (!isDuplicate) deduped.push(card);
+    }
+    if (deduped.length < fiche.flashcards.length) {
+      console.warn(`[validateBeforeSave] flashcards: ${fiche.flashcards.length} → ${deduped.length} après déduplication`);
+      fiche.flashcards = deduped;
+    }
+  }
+
+  return fiche;
+}
+
 function cleanFilename(filename: string) {
   return filename
     .replace(/\.[^/.]+$/, "")
@@ -202,7 +241,7 @@ export function finalizeFicheForSave(
   input: Pick<GenerateSheetRequest, "titleHint">,
   rawFiche: FicheGeneree,
 ): FicheGeneree {
-  const fiche = enforceSheetLimits(sanitizeAiJsonValue(rawFiche) as FicheGeneree);
+  const fiche = validateBeforeSave(enforceSheetLimits(sanitizeAiJsonValue(rawFiche) as FicheGeneree));
   fiche.subjectFamily = fiche.subjectFamily ?? resolveSubjectFamily(fiche);
 
   const generatedModelTitle = typeof fiche.titre === "string" ? fiche.titre.trim() : "";

@@ -758,8 +758,20 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
     ),
     schema: (
       <div key="schema" data-print="section">
-        <SectionLabel>Carte mentale</SectionLabel>
-        <FicheSchemaVisuel schema={displayFiche.schema} blueprintId={displayFiche.blueprintId} />
+        <SectionLabel>Structure du cours</SectionLabel>
+        {/* Rendu linéaire numéroté en priorité — SVG en fallback si les éléments sont riches */}
+        {displayFiche.schema?.elements && displayFiche.schema.elements.length > 0 ? (
+          <div className="fiche-tree-structure">
+            {displayFiche.schema.elements.map((el, idx) => (
+              <div key={el.id ?? idx} className="fiche-tree-item">
+                <span className="fiche-tree-number">{String(idx + 1).padStart(2, '0')}</span>
+                <span className="fiche-tree-label">{el.label}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <FicheSchemaVisuel schema={displayFiche.schema} blueprintId={displayFiche.blueprintId} />
+        )}
         <div className="fiche-schema-reading-grid" data-print="etapes-wrapper">
           {schemaReadingGrid.map((item) => (
             <article key={`${item.title}-${item.content}`} className="fiche-schema-reading-card">
@@ -795,7 +807,12 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
       </div>
     ),
   };
-  const orderedSectionKeys = sectionOrder.filter((key) => sectionMap[key] !== null);
+  const MAX_SECTIONS = 8;
+  const allSectionKeys = sectionOrder.filter((key) => sectionMap[key] !== null);
+  if (allSectionKeys.length > MAX_SECTIONS) {
+    console.warn(`⚠️ Reviz: ${allSectionKeys.length} sections détectées, limité à ${MAX_SECTIONS}`);
+  }
+  const orderedSectionKeys = allSectionKeys.slice(0, MAX_SECTIONS);
   const firstVersoKey = orderedSectionKeys.find((key) => PRINT_VERSO_KEYS.includes(key));
 
   return (

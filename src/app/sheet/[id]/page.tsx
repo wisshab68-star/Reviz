@@ -58,11 +58,11 @@ export default async function SheetPage({ params }: PageProps) {
 
   if (sheet.status === "PROCESSING") {
     return (
-      <main className="app-layout" style={{ background: "#FFFFFF", minHeight: "100vh" }}>
+      <main className="app-layout" style={{ minHeight: "100vh" }}>
         <AppTopbar />
 
-        <div className="content-shell sheet-content-shell" style={{ background: "#FFFFFF" }}>
-          <div className="reviz-sheet-frame" style={{ background: "#FFFFFF", color: "#000000" }}>
+        <div className="content-shell sheet-content-shell">
+          <div className="reviz-sheet-frame">
             <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
             <div className="reviz-sheet-orb reviz-sheet-orb-b" aria-hidden="true" />
             <header className="reviz-sheet-page-header">
@@ -101,11 +101,11 @@ export default async function SheetPage({ params }: PageProps) {
 
   if (sheet.status === "FAILED") {
     return (
-      <main className="app-layout" style={{ background: "#FFFFFF", minHeight: "100vh" }}>
+      <main className="app-layout" style={{ minHeight: "100vh" }}>
         <AppTopbar />
 
-        <div className="content-shell sheet-content-shell" style={{ background: "#FFFFFF" }}>
-          <div className="reviz-sheet-frame" style={{ background: "#FFFFFF", color: "#000000" }}>
+        <div className="content-shell sheet-content-shell">
+          <div className="reviz-sheet-frame">
             <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
             <div className="reviz-sheet-orb reviz-sheet-orb-b" aria-hidden="true" />
             <header className="reviz-sheet-page-header">
@@ -145,11 +145,11 @@ export default async function SheetPage({ params }: PageProps) {
   }
 
   return (
-    <main className="app-layout" style={{ background: "#FFFFFF", minHeight: "100vh" }}>
+    <main className="app-layout" style={{ minHeight: "100vh" }}>
       <AppTopbar />
 
-      <div className="content-shell sheet-content-shell" style={{ background: "#FFFFFF" }}>
-        <div className="reviz-sheet-frame" style={{ background: "#FFFFFF", color: "#000000" }}>
+      <div className="content-shell sheet-content-shell">
+        <div className="reviz-sheet-frame">
           <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
           <div className="reviz-sheet-orb reviz-sheet-orb-b" aria-hidden="true" />
           <header className="reviz-sheet-page-header">

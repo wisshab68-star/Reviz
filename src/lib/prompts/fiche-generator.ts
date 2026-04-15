@@ -275,6 +275,10 @@ Contraintes de qualite :
 - Le ton doit etre direct
 - La langue de sortie doit etre la meme que celle du contenu source
 - Produire uniquement un JSON valide
+- EXEMPLE NUMERIQUE : inclure au moins 1 chiffre ou valeur concrete dans le summary si la matiere le permet
+- ZERO REDONDANCE : keyPoints ne doivent pas repeter le summary ; chaque point doit apporter une info nouvelle
+- MAX 4 keyPoints, MAX 3 definitions, MAX 6 flashcards, MAX 5 quiz : respecter ces caps strictement
+- PIEGES : au moins 1 flashcard de type "piege" identifiant une erreur courante et sa correction
 
 Structure JSON attendue :
 {

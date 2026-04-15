@@ -76,6 +76,33 @@ Ne jamais generer une fiche centree sur un seul chapitre si le document en conti
 Les formules doivent couvrir tous les domaines du cours, pas seulement le premier chapitre rencontre
 Si une [STRUCTURE DU DOCUMENT] est fournie en debut de texte, l'utiliser comme guide de couverture obligatoire
 
+REGLE QUALITE CONTENU (NON-NEGOCIABLES) :
+
+1. EXEMPLE NUMERIQUE : Ajouter TOUJOURS un exemple numerique concret quand la matiere le permet
+   Mauvais : "Les frequences se stabilisent progressivement"
+   Bon : "Apres 10 lancers : 20%, apres 1000 : 16.7%, apres 1M : 16.666%"
+
+2. STRUCTURE LINEAIRE : La carte mentale doit etre une structure numerotee
+   Format : "1. CONCEPT A\n   - definition\n   - exemple\n2. CONCEPT B\n   - sous-concept"
+   Maximum 8 concepts. Chaque concept doit etre definissable, pas un label administratif.
+
+3. PIEGES COURANTS : La section piege doit contenir 3-4 pièges avec correction
+   Format : "PIEGE : [erreur] | CORRECT : [correction]"
+   Chaque piege doit avoir une erreur type et sa correction explicite.
+
+4. EXEMPLES PROGRESSIFS : Si la matiere le permet, structurer l'exemple en 3 niveaux
+   Simple (1 variable) -> Moyen (2 variables) -> Avance (cas limite ou sans remise)
+
+5. FORMULES STRUCTUREES : Regrouper toutes les formules en un bloc coherent en debut de section
+   Numerotees, sans fragmentation, avec label clair pour chaque formule.
+
+6. ZERO REDONDANCE : Ne jamais creer une section dont le contenu est identique a 70%+ a une section existante
+   Si "Etapes" repete "Fondamentaux" -> supprimer "Etapes"
+   Si un tableau reorganise exactement les memes infos -> ne pas l'inclure
+
+7. MAX 8 SECTIONS : Si la fiche depasse 8 sections, supprimer les moins importantes
+   Priorite : image_mentale > fondamentaux > formules > points_cles > piege > exemple > feynman > flashcards
+
 Reponds UNIQUEMENT avec un objet JSON valide respectant exactement cette structure. Aucun texte avant ou apres le JSON.`;
 
 export const COMPACT_FICHE_REFERENCE_SCHEMA = `interface FicheGeneree {

@@ -4167,6 +4167,82 @@ textarea {
   margin: 0 auto;
 }
 
+/* ── Fond fiche premium ── */
+.fiche-container {
+  background: #ffffff;
+  border: 0.5px solid #e8e8e8;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Structure linéaire (remplace carte mentale SVG) ── */
+.fiche-tree-structure {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem 1.5rem;
+  background: #fafafa;
+  border-radius: 10px;
+  margin: 0.75rem 0;
+}
+
+.fiche-tree-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.fiche-tree-item:last-child {
+  border-bottom: none;
+}
+
+.fiche-tree-number {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #3B5BDB;
+  letter-spacing: 0.04em;
+  min-width: 24px;
+  flex-shrink: 0;
+}
+
+.fiche-tree-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  line-height: 1.5;
+}
+
+/* ── Color-codes sections ── */
+.fiche-section-blue {
+  background-color: #e6f1fb;
+  border-left: 4px solid #3B5BDB;
+  padding-left: 1rem;
+  border-radius: 0 8px 8px 0;
+}
+
+.fiche-section-pink {
+  background-color: #fbeaf0;
+  border-left: 4px solid #d4537e;
+  padding-left: 1rem;
+  border-radius: 0 8px 8px 0;
+}
+
+.fiche-section-green {
+  background-color: #eaf3de;
+  border-left: 4px solid #639922;
+  padding-left: 1rem;
+  border-radius: 0 8px 8px 0;
+}
+
+.fiche-section-amber {
+  background-color: #faeeda;
+  border-left: 4px solid #ba7517;
+  padding-left: 1rem;
+  border-radius: 0 8px 8px 0;
+}
+
 .reviz-fiche-divider {
   height: 0;
   margin: 1.7rem 0 2rem;

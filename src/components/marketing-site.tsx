@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { MethodeReviz } from "@/components/landing/MethodeReviz";
+import HeroSection from "@/components/landing/HeroSection";
 
 const sourceCards = [
   {
@@ -193,9 +194,6 @@ export function MarketingSite() {
     <div className="landing">
       <header className={`topbar ${isScrolled ? "topbar-scrolled" : ""}`}>
         <div className="container topbar-inner">
-          <Link href="/" className="brand">
-            REVIZ<span className="brand-dot">.</span>
-          </Link>
           <nav className="nav">
             <Link href="/sign-in" className="nav-link nav-link-outline">CONNEXION</Link>
             <Link href="/sign-up" className="nav-link nav-link-button">S&apos;INSCRIRE</Link>
@@ -204,75 +202,24 @@ export function MarketingSite() {
       </header>
 
       <main className="page">
-        <section id="hero" className="hero-band">
-          <div className="hero">
-            <svg
-              className="hero-background"
-              viewBox="0 0 1200 600"
-              preserveAspectRatio="xMidYMid slice"
-              aria-hidden="true"
-            >
-              <circle className="hero-bg-circle" cx="150" cy="100" r="200" />
-              <circle className="hero-bg-circle hero-bg-circle-soft" cx="150" cy="100" r="300" />
-              <circle className="hero-bg-circle" cx="1000" cy="500" r="250" />
-              <circle className="hero-bg-circle hero-bg-circle-soft" cx="1000" cy="500" r="350" />
+        <HeroSection />
 
-              <path
-                className="hero-bg-path"
-                d="M 150 300 Q 300 200, 1000 500"
+<section id="steps" className="section-band section-band-blue">
+          <div className="blue-particles" aria-hidden="true">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <span
+                key={i}
+                className="particle"
+                style={{
+                  left: `${8 + (i * 7.5) % 90}%`,
+                  animationDuration: `${4 + (i % 5) * 1.5}s`,
+                  animationDelay: `${(i * 0.6)}s`,
+                  width: `${3 + (i % 3) * 2}px`,
+                  height: `${3 + (i % 3) * 2}px`,
+                }}
               />
-              <path
-                className="hero-bg-path hero-bg-path-soft"
-                d="M 150 100 Q 600 50, 1000 200"
-              />
-
-              <text className="hero-bg-symbol hero-bg-symbol-1" x="100" y="400">∫</text>
-              <text className="hero-bg-symbol hero-bg-symbol-2" x="1050" y="150">∑</text>
-              <text className="hero-bg-symbol hero-bg-symbol-3" x="600" y="550">√</text>
-              <text className="hero-bg-symbol hero-bg-symbol-4" x="950" y="400">π</text>
-              <text className="hero-bg-symbol hero-bg-symbol-5" x="300" y="150">α</text>
-            </svg>
-
-            <div className="hero-content">
-              <h1 className="hero-brand-title">REVIZ</h1>
-              <h2 className="hero-subtitle">
-                Transforme tes cours
-                <br />
-                en fiches. Revise mieux.
-              </h2>
-              <p className="hero-microcopy">
-                1 fiche offerte a l&apos;inscription · Sans carte bancaire
-              </p>
-              <Link href="/sign-up" className="hero-cta">
-                COMMENCER GRATUITEMENT
-              </Link>
-            </div>
+            ))}
           </div>
-        </section>
-
-        <section id="modes" className="section-band section-band-white">
-          <div className="container section">
-            <div className="section-head">
-              <span className="section-kicker reviz-reveal reviz-reveal-delay-1">Choisis ton entree</span>
-              <h2 className="reviz-reveal">importe. capture. revise.</h2>
-            </div>
-            <div className="grid grid-3">
-              {sourceCards.map((card, index) => (
-                <article key={card.title} className={`source-card source-card-${card.tone} reviz-reveal reviz-reveal-delay-${index + 1}`}>
-                  <div>
-                    <p className="source-kicker">{card.kicker}</p>
-                    <h3>{card.title}</h3>
-                    <p className="source-copy">{card.copy}</p>
-                  </div>
-                  <div className="source-symbol" aria-hidden="true">{card.symbol}</div>
-                  <Link href="/app" className="btn source-btn">Utiliser</Link>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="steps" className="section-band section-band-blue">
           <div className="container section">
             <div className="section-head">
               <span className="section-kicker section-kicker-light reviz-reveal reviz-reveal-delay-1">Comment ca marche</span>
@@ -420,6 +367,11 @@ export function MarketingSite() {
         .reviz-reveal-delay-1 { transition-delay: 0.1s; }
         .reviz-reveal-delay-2 { transition-delay: 0.2s; }
         .reviz-reveal-delay-3 { transition-delay: 0.3s; }
+        .star-icon { width: 16px; height: 16px; fill: #FFB800; flex: 0 0 auto; animation: star-twinkle 2s ease-in-out infinite; }
+        .star-icon:nth-child(2) { animation-delay: 0.2s; }
+        .star-icon:nth-child(3) { animation-delay: 0.4s; }
+        .star-icon:nth-child(4) { animation-delay: 0.6s; }
+        .star-icon:nth-child(5) { animation-delay: 0.8s; }
         @keyframes pulse-subtle {
           0%, 100% { opacity: 0.05; }
           50% { opacity: 0.12; }
@@ -428,12 +380,47 @@ export function MarketingSite() {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-15px); }
         }
+        @keyframes hero-fade-up {
+          from { opacity: 0; transform: translateY(40px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes glow-pulse {
+          0%, 100% { box-shadow: 0 4px 12px rgba(59, 91, 219, 0.15); }
+          50% { box-shadow: 0 8px 32px rgba(59, 91, 219, 0.35), 0 0 60px rgba(59, 91, 219, 0.1); }
+        }
+        @keyframes float-particle {
+          0% { transform: translateY(0) translateX(0); opacity: 0; }
+          10% { opacity: 0.6; }
+          90% { opacity: 0.6; }
+          100% { transform: translateY(-400px) translateX(80px); opacity: 0; }
+        }
+        @keyframes star-twinkle {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.6; }
+        }
+        @keyframes tilt-in {
+          from { opacity: 0; transform: perspective(800px) rotateY(8deg) translateX(30px); }
+          to { opacity: 1; transform: perspective(800px) rotateY(0deg) translateX(0); }
+        }
+        @keyframes count-bar {
+          from { width: 0; }
+          to { width: 100%; }
+        }
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
       `}</style>
 
       <style jsx>{`
         .landing { min-height: 100vh; background: #ffffff; color: #090909; }
         .container { width: min(100% - 48px, 1200px); margin: 0 auto; }
-        .topbar { position: sticky; top: 0; z-index: 50; padding: 18px 0; transition: background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease; background: rgba(255,255,255,0.72); backdrop-filter: blur(18px); border-bottom: 1px solid rgba(9,9,9,0.04); }
+        .topbar { position: sticky; top: 0; z-index: 50; padding: 18px 0; transition: background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease; background: transparent; backdrop-filter: none; border-bottom: 1px solid transparent; }
         .topbar-scrolled { background: rgba(255,255,255,0.92); box-shadow: 0 10px 30px rgba(9,9,9,0.06); border-bottom: 1px solid rgba(9,9,9,0.08); }
         .topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
         .brand, .hero-title, .section-head h2, .step-card h3, .footer-brand, .pricing-title, .pricing-price { font-family: var(--display-font), "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif; }
@@ -448,26 +435,42 @@ export function MarketingSite() {
           box-shadow: 0 4px 12px rgba(63, 91, 219, 0.2);
           transform: translateY(-1px);
         }
-        .hero { position: relative; width: 100%; min-height: 600px; background: #ffffff; display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 1; padding: 0 24px; }
-        .hero-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-        .hero-bg-circle { stroke: #3B5BDB; stroke-width: 0.5; fill: none; opacity: 0.08; animation: pulse-subtle 8s ease-in-out infinite; }
-        .hero-bg-circle-soft { opacity: 0.05; }
-        .hero-bg-path { stroke: #3B5BDB; stroke-width: 1; fill: none; opacity: 0.06; }
-        .hero-bg-path-soft { opacity: 0.05; }
-        .hero-bg-symbol { fill: #3B5BDB; opacity: 0.1; font-family: serif; animation: float 6s ease-in-out infinite; }
-        .hero-bg-symbol-1 { font-size: 20px; animation-delay: 0.5s; }
-        .hero-bg-symbol-2 { font-size: 18px; animation-delay: 1s; }
-        .hero-bg-symbol-3 { font-size: 22px; animation-delay: 1.5s; }
-        .hero-bg-symbol-4 { font-size: 16px; animation-delay: 2s; }
-        .hero-bg-symbol-5 { font-size: 19px; animation-delay: 2.5s; }
-        .hero-content { position: relative; z-index: 10; text-align: center; max-width: 700px; padding: 0 20px; }
+        .hero { position: relative; width: 100%; min-height: 700px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 1; padding: 60px 24px; }
+        .hero-orbits { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .orbit-ring { stroke: #d0d7de; stroke-width: 1; fill: none; opacity: 0.5; }
+        .orbit-ring-outer { stroke-dasharray: 8 6; opacity: 0.3; }
+        .orbit-line { stroke: #d0d7de; stroke-width: 1; fill: none; opacity: 0.4; }
+        .hero-floaters { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+        .floater { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: float 6s ease-in-out infinite; }
+        .floater-1 { top: 14%; left: 8%; animation-delay: 0s; }
+        .floater-2 { top: 8%; left: 38%; animation-delay: 0.8s; }
+        .floater-3 { top: 22%; right: 10%; animation-delay: 1.2s; }
+        .floater-4 { bottom: 28%; left: 6%; animation-delay: 0.4s; }
+        .floater-5 { top: 10%; right: 18%; animation-delay: 1.6s; }
+        .floater-6 { bottom: 18%; right: 8%; animation-delay: 2s; }
+        .floater-7 { bottom: 12%; left: 18%; animation-delay: 0.6s; }
+        .floater-8 { bottom: 22%; right: 16%; animation-delay: 1.4s; }
+        .floater-9 { top: 40%; left: 4%; animation-delay: 1s; }
+        .floater-10 { top: 36%; right: 5%; animation-delay: 1.8s; }
+        .floater-emoji { font-size: 32px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.08)); }
+        .floater-icon { font-size: 28px; width: 52px; height: 52px; display: grid; place-items: center; background: #ffffff; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .floater-icon-circle { width: 44px; height: 44px; display: grid; place-items: center; background: #ffffff; border-radius: 50%; box-shadow: 0 4px 16px rgba(0,0,0,0.08); font-family: serif; font-size: 20px; color: #3B5BDB; font-weight: 700; }
+        .floater-badge { font-size: 11px; font-weight: 600; color: #555; background: #ffffff; padding: 3px 10px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); white-space: nowrap; }
+        .floater-chip { font-size: 12px; font-weight: 700; color: #1a7f37; background: #dafbe1; padding: 6px 14px; border-radius: 999px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); white-space: nowrap; }
+        .floater-chip-blue { color: #3B5BDB; background: #e8edff; }
+        .floater-counter { font-size: 11px; font-weight: 700; color: #3B5BDB; background: #ffffff; padding: 2px 8px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+        .hero-content { position: relative; z-index: 10; text-align: center; max-width: 820px; padding: 0 20px; animation: hero-fade-up 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
         .eyebrow, .section-kicker, .source-kicker { font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.82rem; }
-        .hero-brand-title { font-family: var(--display-font), "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif; font-size: clamp(48px, 8vw, 84px); font-weight: 900; color: #000000; margin: 0 0 20px; line-height: 1.1; }
-        .hero-subtitle { font-size: clamp(18px, 3vw, 28px); font-weight: 500; color: #333333; margin: 0 0 16px; line-height: 1.4; }
+        .hero-brand-title { font-family: var(--display-font), "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif; font-size: clamp(42px, 7vw, 78px); font-weight: 900; color: #000000; margin: 0 0 28px; line-height: 1.08; letter-spacing: -0.03em; animation: hero-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+        .hero-highlight { display: inline-block; background: #3B5BDB; color: #ffffff; padding: 2px 18px; border-radius: 14px; }
+        .hero-desc { font-size: clamp(15px, 2vw, 18px); font-weight: 400; color: #555555; margin: 0 0 32px; line-height: 1.6; max-width: 600px; margin-left: auto; margin-right: auto; animation: hero-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; }
         .lead, .section-note, .step-card p, .testimonial-card p, .footer-copy { color: #585f6b; line-height: 1.7; font-size: 1.04rem; }
-        .hero-microcopy { font-size: 13px; color: #666666; margin: 16px 0 24px; font-weight: 400; }
-        .hero-cta { display: inline-flex; align-items: center; justify-content: center; background: #3B5BDB; color: #FFFFFF; border: none; border-radius: 10px; padding: 16px 40px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 200ms ease; box-shadow: 0 4px 12px rgba(63, 91, 219, 0.15); }
-        .hero-cta:hover { box-shadow: 0 8px 24px rgba(63, 91, 219, 0.25); transform: scale(1.02); }
+        .hero-buttons { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; animation: hero-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both; }
+        .hero-cta-primary { display: inline-flex; align-items: center; justify-content: center; background: #090909; color: #ffffff; border: 2px solid #090909; border-radius: 999px; padding: 16px 36px; font-size: 15px; font-weight: 700; letter-spacing: 0.06em; text-decoration: none; transition: all 300ms ease; box-shadow: 0 4px 12px rgba(0,0,0,0.1); animation: glow-pulse 3s ease-in-out 1.5s infinite; }
+        .hero-cta-primary:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+        .hero-cta-outline { display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #090909; border: 2px solid #090909; border-radius: 999px; padding: 16px 36px; font-size: 15px; font-weight: 700; letter-spacing: 0.06em; text-decoration: none; transition: all 300ms ease; }
+        .hero-cta-outline:hover { background: #090909; color: #ffffff; transform: translateY(-2px); }
+        .hero-microcopy { font-size: 13px; color: #888888; margin: 0; font-weight: 400; animation: hero-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both; }
         .cta-row, .section-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 28px; }
         .btn { min-height: 62px; padding: 0 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; border: 3px solid #090909; font-weight: 800; font-size: 1rem; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s cubic-bezier(0.16,1,0.3,1); }
         .btn:hover { transform: translateY(-3px); }
@@ -481,16 +484,19 @@ export function MarketingSite() {
         .section-head h2 { margin: 14px 0 0; font-size: clamp(2.8rem,5vw,4.8rem); }
         .section-note { margin-top: 18px; }
         .section-note-light { color: rgba(255,255,255,0.86); }
-        .section-band-blue { background: #2f5bff; color: #ffffff; }
+        .section-band-blue { background: linear-gradient(135deg, #2f5bff 0%, #3B5BDB 40%, #5B4BF7 100%); background-size: 200% 200%; animation: gradient-shift 8s ease-in-out infinite; color: #ffffff; position: relative; overflow: hidden; }
+        .section-band-blue::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.06) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.04) 0%, transparent 50%); pointer-events: none; }
         .source-card, .step-card, .testimonial-card, .pricing-card { border: 3px solid #090909; border-radius: 28px; background: #ffffff; padding: 22px; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); }
         .source-card h3, .step-card h3 { margin: 12px 0 0; font-size: clamp(2.1rem,3.4vw,3.4rem); }
         .source-card { min-height: 360px; display: flex; flex-direction: column; justify-content: space-between; }
         .source-card-dark { background: #101010; color: #ffffff; }
         .source-card-blue { background: #2f5bff; color: #ffffff; }
-        .source-card:hover, .pricing-card:hover, .testimonial-card:hover { transform: translateY(-6px) scale(1.01); }
+        .source-card:hover, .pricing-card:hover { transform: translateY(-6px) scale(1.01); }
+        .testimonial-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 12px 36px rgba(47, 91, 255, 0.12); }
         .source-symbol { font-size: 4.8rem; line-height: 1; }
         .step-card h3 { margin: 12px 0 0; font-size: clamp(2.1rem,3.4vw,3.4rem); }
-        .step-card { min-height: 340px; display: flex; flex-direction: column; justify-content: space-between; color: #090909; }
+        .step-card { min-height: 340px; display: flex; flex-direction: column; justify-content: space-between; color: #090909; transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s ease; }
+        .step-card:hover { transform: translateY(-8px) scale(1.02) rotateX(2deg); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
         .step-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 28px; }
         .step-number { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #090909; color: #ffffff; font-weight: 800; flex: 0 0 auto; }
         .pricing-head { text-align: center; margin-left: auto; margin-right: auto; }
@@ -504,7 +510,8 @@ export function MarketingSite() {
         .pricing-subtitle { margin: -4px 0 0; color: #6B7280; font-size: 14px; }
         .pricing-list-free { color: #374151; font-size: 14px; gap: 10px; }
         .pricing-free-cta { margin-top: auto; width: 100%; min-height: 56px; border-radius: 50px; background: #000000; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; text-decoration: none; }
-        .plan-dark { background: #090909; color: #ffffff; border-color: #090909; box-shadow: 10px 10px 0 #2f5bff; }
+        .plan-dark { background: linear-gradient(135deg, #090909 0%, #1a1a2e 50%, #090909 100%); background-size: 200% 200%; animation: gradient-shift 6s ease-in-out infinite; color: #ffffff; border-color: #090909; box-shadow: 10px 10px 0 #2f5bff; transition: box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.16,1,0.3,1); }
+        .plan-dark:hover { box-shadow: 14px 14px 0 #2f5bff, 0 0 40px rgba(47,91,255,0.15); }
         .plan-dark .pricing-badge { background: rgba(255,255,255,0.14); color: #ffffff; }
         .pricing-title { margin: 0; font-size: 2.1rem; }
         .pricing-price { margin: 0; font-size: clamp(2.6rem,4vw,3.8rem); }
@@ -519,6 +526,8 @@ export function MarketingSite() {
         .faq-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s ease, padding-bottom 0.28s ease; padding-bottom: 0; }
         .faq-panel[data-open="true"] { grid-template-rows: 1fr; padding-bottom: 20px; }
         .faq-panel p { margin: 0; overflow: hidden; color: #616875; line-height: 1.7; }
+        .blue-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .particle { position: absolute; bottom: 0; border-radius: 50%; background: rgba(255,255,255,0.3); animation: float-particle linear infinite; }
         .social-proof { background: #090909; color: #ffffff; }
         .stars { display: flex; align-items: center; gap: 4px; margin-bottom: 14px; }
         .star-icon { width: 16px; height: 16px; fill: #FFB800; flex: 0 0 auto; }
@@ -530,7 +539,8 @@ export function MarketingSite() {
         .testimonial-author { display: block; margin-top: 10px; color: #6a7280; font-size: 0.96rem; line-height: 1.5; }
         .footer { background: #090909; color: #ffffff; }
         .footer-inner { padding: 100px 0 60px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 24px; align-items: end; }
-        .footer-brand { font-size: clamp(2.2rem,4vw,3.6rem); }
+        .footer-brand { font-size: clamp(2.2rem,4vw,3.6rem); transition: letter-spacing 0.4s ease; }
+        .footer-brand:hover { letter-spacing: 0.06em; }
         .footer-links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
         .footer-links a { min-height: 48px; padding: 0 18px; border-radius: 999px; background: rgba(255,255,255,0.08); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
         .mobile-sticky-cta { display: none; }
@@ -543,9 +553,14 @@ export function MarketingSite() {
           .topbar { padding: 12px 0; }
           .topbar-inner { flex-direction: column; align-items: stretch; }
           .nav { width: 100%; justify-content: flex-end; }
-          .hero { min-height: 540px; padding: 48px 20px; }
-          .hero-brand-title { font-size: min(64px, 15vw); }
-          .hero-subtitle { font-size: 20px; }
+          .hero { min-height: 540px; padding: 48px 20px; background: #ffffff; }
+          .hero-floaters { display: none; }
+          .hero-orbits { display: none; }
+          .hero-brand-title { font-size: clamp(32px, 10vw, 48px); }
+          .hero-highlight { padding: 1px 12px; border-radius: 10px; }
+          .hero-desc { font-size: 15px; }
+          .hero-buttons { flex-direction: column; gap: 12px; }
+          .hero-cta-primary, .hero-cta-outline { width: 100%; }
           .section { padding: 60px 0; }
           .grid-3, .footer-inner, .pricing-grid { grid-template-columns: 1fr; }
           .step-card, .testimonial-card, .pricing-card { min-height: auto; }

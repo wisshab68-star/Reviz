@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { sanitizeAiJsonValue } from "@/lib/text";
 import { generateInventory } from "@/services/generation-pipeline";
@@ -22,6 +23,11 @@ const inventoryRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const parsed = inventoryRequestSchema.parse(await request.json());
     const inventoryRecord = buildStoredInventoryPayload(parsed);

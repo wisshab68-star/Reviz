@@ -41,7 +41,10 @@ export async function POST(request: Request) {
         // One-time promo purchase
         if (session.metadata?.isPromoExam === "true") {
           const promoTier = session.metadata.tier as "EXAM_PROMO_20" | "EXAM_PROMO_40";
-          if (promoTier) await handlePromoPurchase(userId, promoTier);
+          if (promoTier) {
+            await handlePromoPurchase(userId, promoTier);
+            console.log({ event: event.type, userId, promoTier });
+          }
           break;
         }
 
@@ -66,6 +69,7 @@ export async function POST(request: Request) {
             sub.items.data[0]?.current_period_start,
             sub.items.data[0]?.current_period_end,
           );
+          console.log({ event: event.type, userId, newStatus: sub.status, priceId });
         }
         break;
       }
@@ -79,6 +83,13 @@ export async function POST(request: Request) {
         if (!record) break;
 
         const priceId = sub.items.data[0]?.price.id ?? "";
+
+        // Never downgrade an active subscription due to a spurious event
+        if (sub.status !== "active" && sub.status !== "trialing") {
+          console.log({ event: event.type, userId: record.userId, newStatus: sub.status, priceId, action: "skipped-non-active" });
+          break;
+        }
+
         await syncSubscriptionFromStripe(
           record.userId,
           String(sub.customer),
@@ -88,6 +99,7 @@ export async function POST(request: Request) {
           sub.items.data[0]?.current_period_start,
           sub.items.data[0]?.current_period_end,
         );
+        console.log({ event: event.type, userId: record.userId, newStatus: sub.status, priceId });
         break;
       }
 
@@ -96,7 +108,10 @@ export async function POST(request: Request) {
         const record = await db.subscription.findFirst({
           where: { stripeSubscriptionId: sub.id },
         });
-        if (record) await downgradeToFree(record.userId);
+        if (record) {
+          await downgradeToFree(record.userId);
+          console.log({ event: event.type, userId: record.userId, newStatus: "FREE" });
+        }
         break;
       }
     }

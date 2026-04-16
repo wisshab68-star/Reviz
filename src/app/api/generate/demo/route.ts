@@ -3,9 +3,10 @@ export const maxDuration = 60
 
 import { NextRequest, NextResponse } from "next/server"
 import { generateWithPipeline } from "@/services/generation-pipeline"
+import { db } from "@/lib/db"
 
-const ipRateLimitMap = new Map<string, number>()
-const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000
+const DEMO_RATE_LIMIT = 3
+const WINDOW_MS = 24 * 60 * 60 * 1000 // 24h
 
 const SAMPLE_TEXTS: Record<string, string> = {
   "Mathématiques": `Les probabilités permettent de quantifier l'incertitude d'un événement aléatoire. Une expérience aléatoire est une expérience dont on ne peut pas prévoir avec certitude le résultat. L'univers Ω est l'ensemble de tous les résultats possibles. Un événement A est un sous-ensemble de Ω. La probabilité P(A) est un nombre entre 0 et 1. Si les issues sont équiprobables, P(A) = nombre d'issues favorables / nombre d'issues totales. La probabilité de l'événement certain Ω est P(Ω) = 1. La probabilité de l'événement impossible ∅ est P(∅) = 0. L'événement contraire de A, noté Ā, vérifie P(Ā) = 1 - P(A). Pour deux événements incompatibles A et B : P(A ∪ B) = P(A) + P(B). Pour des événements quelconques : P(A ∪ B) = P(A) + P(B) - P(A ∩ B). Les arbres de probabilités permettent de représenter des expériences successives. La loi des grands nombres stipule que la fréquence d'un événement tend vers sa probabilité quand le nombre d'expériences tend vers l'infini.`,
@@ -28,20 +29,43 @@ function getClientIp(req: NextRequest): string {
   return req.headers.get("x-real-ip") ?? "unknown"
 }
 
+async function checkRateLimit(ip: string): Promise<boolean> {
+  const now = new Date()
+
+  const record = await db.demoRateLimit.findUnique({ where: { ip } })
+
+  if (!record || now > record.resetAt) {
+    // First request or window expired — reset
+    await db.demoRateLimit.upsert({
+      where: { ip },
+      create: { ip, count: 1, resetAt: new Date(now.getTime() + WINDOW_MS) },
+      update: { count: 1, resetAt: new Date(now.getTime() + WINDOW_MS) },
+    })
+    return true
+  }
+
+  if (record.count >= DEMO_RATE_LIMIT) {
+    return false
+  }
+
+  await db.demoRateLimit.update({
+    where: { ip },
+    data: { count: { increment: 1 } },
+  })
+  return true
+}
+
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req)
-    const now = Date.now()
-    const lastRequest = ipRateLimitMap.get(ip)
+    const allowed = await checkRateLimit(ip)
 
-    if (lastRequest && now - lastRequest < RATE_LIMIT_WINDOW_MS) {
+    if (!allowed) {
       return NextResponse.json(
-        { error: "Trop de demandes. Réessaie dans quelques minutes." },
+        { error: "Limite atteinte. Crée un compte pour générer des fiches illimitées." },
         { status: 429 },
       )
     }
-
-    ipRateLimitMap.set(ip, now)
 
     const body = await req.json() as { subject?: string; level?: string; text?: string }
     const subject = typeof body.subject === "string" ? body.subject.trim() : ""

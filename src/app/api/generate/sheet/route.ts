@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { deriveClassicSheetFromFiche } from "@/lib/fiche-storage";
 import { sanitizeAiJsonValue } from "@/lib/text";
@@ -28,6 +29,11 @@ const sheetRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let parsedBody: { sheetId: string } | null = null;
 
   try {

@@ -170,3 +170,9 @@ model VerificationToken {
 
   @@id([identifier, token])
 }
+
+model DemoRateLimit {
+  ip      String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+}

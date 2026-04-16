@@ -6202,3 +6202,134 @@ textarea {
 .demo-fiche-container {
   padding-bottom: 80px;
 }
+
+/* ── App mobile bottom nav ──────────────────────────────────────────────── */
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  /* Hide the sidebar entirely on mobile */
+  .app-sidebar {
+    display: none !important;
+  }
+
+  /* Add bottom padding so content isn't hidden behind nav */
+  .app-main-content {
+    padding-bottom: 72px;
+  }
+
+  /* Fixed bottom navigation bar */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: #1A1A24;
+    border-top: 1px solid #2A2A38;
+    padding: 0 8px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    height: 60px;
+    align-items: stretch;
+    justify-content: space-around;
+  }
+
+  .mobile-bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: color 0.15s;
+  }
+}
+
+/* ── Mobile fixes ───────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  /* Fiche sheet frame: reduce the left "margin" padding for phones */
+  .reviz-sheet-frame {
+    padding: 1.2rem 0.75rem 1.8rem 1.5rem;
+  }
+
+  .reviz-fiche-title {
+    font-size: clamp(2rem, 10vw, 3rem);
+  }
+
+  /* Anchor grid: force single column on phones */
+  .fiche-anchor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fiche-anchor-grid .fiche-anchor-card {
+    min-height: auto;
+  }
+
+  /* Flashcard grid */
+  .reviz-fiche-flashcards {
+    grid-template-columns: 1fr;
+  }
+
+  /* Metrics row */
+  .reviz-fiche-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  /* Try page: compact on phones */
+  .try-main {
+    padding: 1.25rem 0.75rem 5rem;
+    align-items: flex-start;
+  }
+
+  .try-card {
+    padding: 1.5rem 1rem;
+    gap: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .try-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .try-picker {
+    gap: 1.25rem;
+  }
+
+  /* App main content shell: tighter on phones */
+  .content-shell {
+    padding: 1rem 0.75rem 1.5rem;
+  }
+
+  /* Sidebar nav: horizontal scroll on phones */
+  .sidebar-nav {
+    grid-auto-flow: column;
+    justify-content: start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Generator card */
+  .reviz-generator-card {
+    padding: 1.5rem 1rem;
+  }
+
+  /* Generator shell: single column */
+  .reviz-generator-shell {
+    grid-template-columns: 1fr;
+  }
+
+  /* Page shell */
+  .page-shell {
+    width: 100%;
+    padding: 0;
+  }
+}

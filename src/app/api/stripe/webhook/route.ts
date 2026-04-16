@@ -1,5 +1,4 @@
 import Stripe from "stripe";
-import { Plan } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
@@ -76,7 +75,7 @@ async function syncSubscriptionRecord(input: {
       stripeCustomerId: input.stripeCustomerId,
       status: input.subscriptionStatus,
       currentPeriodEnd: input.currentPeriodEnd,
-      plan: input.subscriptionStatus === "active" ? Plan.PREMIUM : Plan.FREE,
+      tier: input.subscriptionStatus === "active" ? "STANDARD" : "FREE",
     },
     create: {
       userId: input.userId,
@@ -84,7 +83,8 @@ async function syncSubscriptionRecord(input: {
       stripeSubscriptionId: input.subscriptionId,
       status: input.subscriptionStatus,
       currentPeriodEnd: input.currentPeriodEnd,
-      plan: input.subscriptionStatus === "active" ? Plan.PREMIUM : Plan.FREE,
+      tier: input.subscriptionStatus === "active" ? "STANDARD" : "FREE",
+      monthlyLimit: input.subscriptionStatus === "active" ? 20 : 2,
     },
   });
 }

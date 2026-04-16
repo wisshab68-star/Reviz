@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { db } from "@/lib/db";
 import { generateSheetRequestSchema } from "@/lib/validations";
+import { canGenerateSheet, incrementSheetCount } from "@/lib/stripe/subscription-service";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -76,51 +77,27 @@ export async function POST(request: Request) {
     if (session?.user?.id) {
       try {
         logStage("quota:start");
-        const userSnapshot = await withStageTimeout(
-          "quota:user",
-          db.user.findUnique({
-            where: { id: session.user.id },
-            select: {
-              subscriptionStatus: true,
-            },
-          }),
+        const quotaCheck = await withStageTimeout(
+          "quota:check",
+          canGenerateSheet(session.user.id),
           8000,
         );
-        const sheetCount = await withStageTimeout(
-          "quota:count",
-          db.studySheet.count({
-            where: {
-              userId: session.user.id,
-              status: {
-                not: "FAILED",
-              },
-            },
-          }),
-          8000,
-        );
-        const premium = userSnapshot?.subscriptionStatus === "active";
 
-        if (!premium && sheetCount >= 2) {
+        if (!quotaCheck.allowed) {
           return NextResponse.json(
             {
               error: "LIMIT_REACHED",
-              message: "Tu as utilisé tes 2 fiches gratuites",
+              message: quotaCheck.reason ?? "Limite mensuelle atteinte.",
             },
             { status: 403 },
           );
         }
 
-        quota = premium
-          ? {
-              allowed: true,
-              remaining: null,
-              limit: null,
-            }
-          : {
-              allowed: true,
-              remaining: Math.max(2 - sheetCount, 0),
-              limit: 2,
-            };
+        quota = {
+          allowed: true,
+          remaining: quotaCheck.remaining,
+          limit: quotaCheck.limit,
+        };
         logStage("quota:done");
       } catch (error) {
         if (!isDatabaseConnectionError(error)) {
@@ -210,6 +187,15 @@ export async function POST(request: Request) {
 
       console.error("[GENERATE] Pending sheet creation failed:", pendingError);
       throw new Error("Impossible de creer la fiche en attente de generation.");
+    }
+
+    // Increment monthly counter after successfully queueing
+    if (session?.user?.id) {
+      try {
+        await incrementSheetCount(session.user.id);
+      } catch (err) {
+        console.error("[GENERATE] incrementSheetCount failed (non-fatal):", err);
+      }
     }
 
     return NextResponse.json({

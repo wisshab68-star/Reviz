@@ -1,15 +1,14 @@
 import Stripe from "stripe";
 
-import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
-import { syncUserPlan, upsertSubscriptionFromStripe } from "@/services/billing-service";
+import { db } from "@/lib/db";
+import {
+  syncSubscriptionFromStripe,
+  downgradeToFree,
+  handlePromoPurchase,
+} from "@/lib/stripe/subscription-service";
 
 export const runtime = "nodejs";
-
-function getPeriodEnd(subscription: Stripe.Subscription) {
-  const periodEnd = subscription.items.data[0]?.current_period_end;
-  return typeof periodEnd === "number" ? new Date(periodEnd * 1000) : undefined;
-}
 
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
@@ -22,7 +21,6 @@ export async function POST(request: Request) {
   const payload = await request.text();
 
   let event: Stripe.Event;
-
   try {
     event = stripe.webhooks.constructEvent(payload, signature, secret);
   } catch (error) {
@@ -32,72 +30,79 @@ export async function POST(request: Request) {
     );
   }
 
-  if (
-    event.type === "checkout.session.completed" ||
-    event.type === "customer.subscription.updated" ||
-    event.type === "customer.subscription.created"
-  ) {
-    const object = event.data.object;
+  try {
+    switch (event.type) {
+      // ── New subscription or renewal ──────────────────────────────────────
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
+        if (!userId) break;
 
-    if (event.type === "checkout.session.completed") {
-      const session = object as Stripe.Checkout.Session;
-      const userId = session.metadata?.userId;
-      const subscriptionId =
-        typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
-      const customerId =
-        typeof session.customer === "string" ? session.customer : session.customer?.id;
+        // One-time promo purchase
+        if (session.metadata?.isPromoExam === "true") {
+          const promoTier = session.metadata.tier as "EXAM_PROMO_20" | "EXAM_PROMO_40";
+          if (promoTier) await handlePromoPurchase(userId, promoTier);
+          break;
+        }
 
-      if (userId && subscriptionId && customerId) {
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        // Recurring subscription
+        const subscriptionId =
+          typeof session.subscription === "string"
+            ? session.subscription
+            : session.subscription?.id;
+        const customerId =
+          typeof session.customer === "string" ? session.customer : session.customer?.id;
 
-        await upsertSubscriptionFromStripe({
-          userId,
-          stripeCustomerId: customerId,
-          stripeSubscriptionId: subscription.id,
-          status: subscription.status,
-          currentPeriodEnd: getPeriodEnd(subscription),
-        });
-        await syncUserPlan(userId, subscription.status);
+        if (subscriptionId && customerId) {
+          const sub = await stripe.subscriptions.retrieve(subscriptionId);
+          const priceId = sub.items.data[0]?.price.id ?? "";
+
+          await syncSubscriptionFromStripe(
+            userId,
+            customerId,
+            sub.id,
+            priceId,
+            sub.status,
+            sub.items.data[0]?.current_period_start,
+            sub.items.data[0]?.current_period_end,
+          );
+        }
+        break;
       }
-    } else {
-      const subscription = object as Stripe.Subscription;
-      const subscriptionRecord = await db.subscription.findFirst({
-        where: {
-          stripeSubscriptionId: subscription.id,
-        },
-      });
 
-      if (subscriptionRecord) {
-        await upsertSubscriptionFromStripe({
-          userId: subscriptionRecord.userId,
-          stripeCustomerId: String(subscription.customer),
-          stripeSubscriptionId: subscription.id,
-          status: subscription.status,
-          currentPeriodEnd: getPeriodEnd(subscription),
+      case "customer.subscription.created":
+      case "customer.subscription.updated": {
+        const sub = event.data.object as Stripe.Subscription;
+        const record = await db.subscription.findFirst({
+          where: { stripeSubscriptionId: sub.id },
         });
-        await syncUserPlan(subscriptionRecord.userId, subscription.status);
+        if (!record) break;
+
+        const priceId = sub.items.data[0]?.price.id ?? "";
+        await syncSubscriptionFromStripe(
+          record.userId,
+          String(sub.customer),
+          sub.id,
+          priceId,
+          sub.status,
+          sub.items.data[0]?.current_period_start,
+          sub.items.data[0]?.current_period_end,
+        );
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as Stripe.Subscription;
+        const record = await db.subscription.findFirst({
+          where: { stripeSubscriptionId: sub.id },
+        });
+        if (record) await downgradeToFree(record.userId);
+        break;
       }
     }
-  }
-
-  if (event.type === "customer.subscription.deleted") {
-    const subscription = event.data.object as Stripe.Subscription;
-    const subscriptionRecord = await db.subscription.findFirst({
-      where: {
-        stripeSubscriptionId: subscription.id,
-      },
-    });
-
-    if (subscriptionRecord) {
-      await upsertSubscriptionFromStripe({
-        userId: subscriptionRecord.userId,
-        stripeCustomerId: String(subscription.customer),
-        stripeSubscriptionId: subscription.id,
-        status: subscription.status,
-        currentPeriodEnd: getPeriodEnd(subscription),
-      });
-      await syncUserPlan(subscriptionRecord.userId, subscription.status);
-    }
+  } catch (err) {
+    console.error("[WEBHOOK] handler error:", err);
+    return new Response("Internal error", { status: 500 });
   }
 
   return new Response("ok", { status: 200 });

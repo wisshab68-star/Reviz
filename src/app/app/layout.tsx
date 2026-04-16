@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { AppTopbar } from "@/components/app-topbar";
+import { MobileNav } from "@/components/mobile-nav";
 
 export const metadata: Metadata = {
   themeColor: "#ffffff",
@@ -19,6 +20,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     >
       <AppTopbar />
       <div
+        className="app-main-content"
         style={{
           flex: 1,
           minWidth: 0,
@@ -29,6 +31,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       >
         {children}
       </div>
+      <MobileNav />
     </div>
   );
 }

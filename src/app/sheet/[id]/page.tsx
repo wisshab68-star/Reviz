@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { AppTopbar } from "@/components/app-topbar";
+import { MobileNav } from "@/components/mobile-nav";
 import { RevizMascotDoodle, RevizMindOrbitDoodle, RevizNotebookDoodle } from "@/components/reviz-illustrations";
 import { SaveSheetButton } from "@/components/save-sheet-button";
 import { SheetView } from "@/components/sheet-view";
@@ -58,9 +59,9 @@ export default async function SheetPage({ params }: PageProps) {
 
   if (sheet.status === "PROCESSING") {
     return (
-      <main className="app-layout" style={{ minHeight: "100vh" }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: "#0F0F13", overflowX: "hidden" }}>
         <AppTopbar />
-
+        <main className="app-main-content" style={{ flex: 1, minWidth: 0, width: "100%", background: "#0F0F13", overflowX: "hidden" }}>
         <div className="content-shell sheet-content-shell">
           <div className="reviz-sheet-frame">
             <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
@@ -95,15 +96,17 @@ export default async function SheetPage({ params }: PageProps) {
             </section>
           </div>
         </div>
-      </main>
+        </main>
+        <MobileNav />
+      </div>
     );
   }
 
   if (sheet.status === "FAILED") {
     return (
-      <main className="app-layout" style={{ minHeight: "100vh" }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: "#0F0F13", overflowX: "hidden" }}>
         <AppTopbar />
-
+        <main className="app-main-content" style={{ flex: 1, minWidth: 0, width: "100%", background: "#0F0F13", overflowX: "hidden" }}>
         <div className="content-shell sheet-content-shell">
           <div className="reviz-sheet-frame">
             <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
@@ -140,14 +143,16 @@ export default async function SheetPage({ params }: PageProps) {
             </section>
           </div>
         </div>
-      </main>
+        </main>
+        <MobileNav />
+      </div>
     );
   }
 
   return (
-    <main className="app-layout" style={{ minHeight: "100vh" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#0F0F13", overflowX: "hidden" }}>
       <AppTopbar />
-
+      <main className="app-main-content" style={{ flex: 1, minWidth: 0, width: "100%", background: "#0F0F13", overflowX: "hidden" }}>
       <div className="content-shell sheet-content-shell">
         <div className="reviz-sheet-frame">
           <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
@@ -187,6 +192,8 @@ export default async function SheetPage({ params }: PageProps) {
           />
         </div>
       </div>
-    </main>
+      </main>
+      <MobileNav />
+    </div>
   );
 }

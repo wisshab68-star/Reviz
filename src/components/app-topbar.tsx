@@ -6,7 +6,7 @@ export async function AppTopbar() {
 
   return (
     <aside
-      className="sidebar"
+      className="sidebar app-sidebar"
       style={{
         width: "280px",
         minWidth: "280px",

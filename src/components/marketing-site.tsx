@@ -53,14 +53,30 @@ const testimonials = [
 
 const pricingPlans = [
   {
-    badge: "Le plus populaire",
-    name: "PRO",
-    price: "4,99€,-/mois",
+    badge: "Standard",
+    name: "Standard",
+    price: "4,99€",
+    period: "/mois",
     items: [
-      "Fiches illimitees",
-      "Toutes les matieres lycee & college",
-      "Flashcards + Quiz inclus",
-      "Resiliation en 1 clic",
+      "Jusqu'à 20 fiches par mois",
+      "Toutes les matières lycée & collège",
+      "Flashcards incluses",
+      "Résiliation en 1 clic",
+    ],
+    cta: "Commencer",
+    className: "plan-dark",
+    ctaClass: "btn plan-dark-cta",
+  },
+  {
+    badge: "Pro",
+    name: "Pro",
+    price: "7,99€",
+    period: "/mois",
+    items: [
+      "Jusqu'à 50 fiches par mois",
+      "Toutes les matières lycée & collège",
+      "Flashcards incluses",
+      "Résiliation en 1 clic",
     ],
     cta: "Commencer",
     className: "plan-dark",
@@ -70,10 +86,10 @@ const pricingPlans = [
 
 const freePlan = {
   badge: "GRATUIT",
-  price: "0€,-",
+  price: "0€",
   subtitle: "Pour commencer",
   items: [
-    "1 fiche générée offerte",
+    "2 fiches gratuites",
     "Toutes les matières",
     "Flashcards incluses",
     "Accès à ta bibliothèque",
@@ -303,8 +319,8 @@ export function MarketingSite() {
           <div className="container section">
             <div className="section-head pricing-head">
               <span className="section-kicker reviz-reveal reviz-reveal-delay-1">Pricing</span>
-              <h2 className="reviz-reveal">Un prix honnete. Pas de surprise.</h2>
-              <p className="section-note reviz-reveal reviz-reveal-delay-1">Le prix d'un cahier de fiches. Zero heure de boulot.</p>
+              <h2 className="reviz-reveal">4,99€ — le prix d&apos;un cahier de fiches.</h2>
+              <p className="section-note reviz-reveal reviz-reveal-delay-1">Pas d&apos;engagement. Annulation en un clic.</p>
             </div>
             <div className="pricing-grid">
               <article className="pricing-card pricing-card-free reviz-reveal reviz-reveal-delay-1">
@@ -323,7 +339,10 @@ export function MarketingSite() {
                 <article key={plan.name} className={`pricing-card ${plan.className} reviz-reveal reviz-reveal-delay-${index + 2}`}>
                   <div className="pricing-badge">{plan.badge}</div>
                   <h3 className="pricing-title">{plan.name}</h3>
-                  <p className="pricing-price">{plan.price}</p>
+                  <p className="pricing-price">
+                    {plan.price}
+                    <span style={{ fontSize: "1rem", fontWeight: 400, opacity: 0.7 }}>{plan.period}</span>
+                  </p>
                   <ul className="pricing-list">
                     {plan.items.map((item) => <li key={item}>• {item}</li>)}
                   </ul>
@@ -332,6 +351,34 @@ export function MarketingSite() {
               ))}
             </div>
             <p className="pricing-footnote">Paiement securise Stripe · Annulation a tout moment · Sans engagement</p>
+
+            {/* Offre spéciale examens */}
+            <div className="promo-exam-block reviz-reveal">
+              <div className="promo-exam-label">
+                <span className="promo-exam-dot" />
+                Offre spéciale · Période d&apos;examens
+              </div>
+              <div className="promo-exam-body">
+                <div className="promo-exam-left">
+                  <h3 className="promo-exam-title">Recharge express<br/>pour les révisions.</h3>
+                  <p className="promo-exam-sub">Un paiement unique. Des fiches disponibles immédiatement. Réservé aux abonnés actifs.</p>
+                  <span className="promo-exam-soon">🕐 Bientôt disponible</span>
+                </div>
+                <div className="promo-exam-cards">
+                  <div className="promo-exam-card">
+                    <p className="promo-exam-price">2€</p>
+                    <p className="promo-exam-qty">20 fiches</p>
+                    <p className="promo-exam-note">paiement unique</p>
+                  </div>
+                  <div className="promo-exam-card promo-exam-card-highlight">
+                    <div className="promo-exam-best">Meilleure valeur</div>
+                    <p className="promo-exam-price">4€</p>
+                    <p className="promo-exam-qty">40 fiches</p>
+                    <p className="promo-exam-note">paiement unique</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -551,7 +598,7 @@ export function MarketingSite() {
         .step-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 28px; }
         .step-number { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #090909; color: #ffffff; font-weight: 800; flex: 0 0 auto; }
         .pricing-head { text-align: center; margin-left: auto; margin-right: auto; }
-        .pricing-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 720px; margin: 0 auto; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; max-width: 1040px; margin: 0 auto; }
         .pricing-card { width: 100%; display: flex; flex-direction: column; gap: 14px; border-color: rgba(9,9,9,0.14); padding: 32px; }
         .pricing-badge { width: fit-content; background: #eef1f6; color: #090909; font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase; }
         .pricing-card-free { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 16px; box-shadow: none; }
@@ -570,6 +617,24 @@ export function MarketingSite() {
         .plan-dark .pricing-list { color: rgba(255,255,255,0.88); }
         .plan-dark-cta { margin-top: auto; background: #ffffff; color: #090909; box-shadow: 8px 8px 0 rgba(255,255,255,0.16); }
         .pricing-footnote { margin: 24px 0 0; text-align: center; color: #666d78; font-size: 0.95rem; }
+        .promo-exam-block { margin-top: 48px; background: #090909; border: 3px solid #090909; border-radius: 28px; padding: 40px 36px; display: flex; flex-direction: column; gap: 28px; max-width: 1040px; margin-left: auto; margin-right: auto; box-shadow: 10px 10px 0 #2f5bff; position: relative; overflow: hidden; }
+        .promo-exam-block::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 0%, rgba(47,91,255,0.18) 0%, transparent 60%); pointer-events: none; }
+        .promo-exam-label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #2f5bff; }
+        .promo-exam-dot { width: 7px; height: 7px; border-radius: 50%; background: #2f5bff; box-shadow: 0 0 8px #2f5bff; flex-shrink: 0; }
+        .promo-exam-body { display: flex; align-items: center; gap: 40px; flex-wrap: wrap; }
+        .promo-exam-left { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 12px; }
+        .promo-exam-title { margin: 0; font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 900; color: #ffffff; font-family: var(--display-font), sans-serif; line-height: 1.15; }
+        .promo-exam-sub { margin: 0; font-size: 0.9rem; color: rgba(255,255,255,0.5); line-height: 1.6; max-width: 320px; }
+        .promo-exam-cards { display: flex; gap: 14px; flex-wrap: wrap; }
+        .promo-exam-card { min-width: 150px; background: #161616; border: 2px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; gap: 4px; position: relative; transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s; cursor: default; }
+        .promo-exam-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(47,91,255,0.2); }
+        .promo-exam-card-highlight { background: #2f5bff; border-color: #2f5bff; box-shadow: 6px 6px 0 rgba(255,255,255,0.12); }
+        .promo-exam-card-highlight:hover { box-shadow: 10px 10px 0 rgba(255,255,255,0.16), 0 12px 32px rgba(47,91,255,0.4); }
+        .promo-exam-best { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #ffffff; color: #090909; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+        .promo-exam-price { margin: 0; font-size: 2.8rem; font-weight: 900; color: #ffffff; font-family: var(--display-font), sans-serif; line-height: 1; }
+        .promo-exam-qty { margin: 0; font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.9); }
+        .promo-exam-note { margin: 0; font-size: 0.75rem; color: rgba(255,255,255,0.45); text-transform: lowercase; }
+        .promo-exam-soon { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 5px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.55); width: fit-content; }
         .faq-list { border-top: 1px solid rgba(9,9,9,0.12); }
         .faq-item { border-bottom: 1px solid rgba(9,9,9,0.12); }
         .faq-trigger { width: 100%; padding: 22px 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 0; background: transparent; text-align: left; font-size: 1.02rem; font-weight: 700; color: #090909; }
@@ -596,7 +661,7 @@ export function MarketingSite() {
         .footer-links a { min-height: 48px; padding: 0 18px; border-radius: 999px; background: rgba(255,255,255,0.08); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
         .mobile-sticky-cta { display: none; }
         @media (max-width: 1180px) {
-          .grid-3, .footer-inner, .pricing-grid { grid-template-columns: 1fr; }
+          .grid-3, .footer-inner { grid-template-columns: 1fr; } .pricing-grid { grid-template-columns: 1fr; }
           .footer-links { justify-content: flex-start; }
         }
         @media (max-width: 767px) {
@@ -613,7 +678,7 @@ export function MarketingSite() {
           .hero-buttons { flex-direction: column; gap: 12px; }
           .hero-cta-primary, .hero-cta-outline { width: 100%; }
           .section { padding: 60px 0; }
-          .grid-3, .footer-inner, .pricing-grid { grid-template-columns: 1fr; }
+          .grid-3, .footer-inner { grid-template-columns: 1fr; } .pricing-grid { grid-template-columns: 1fr; }
           .step-card, .testimonial-card, .pricing-card { min-height: auto; }
           .footer-inner { padding: 60px 0; }
           .mobile-sticky-cta {

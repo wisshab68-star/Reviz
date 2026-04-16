@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { AppTopbar } from "@/components/app-topbar";
+import { MobileNav } from "@/components/mobile-nav";
 import { ReviewView } from "@/components/review-view";
 import { db } from "@/lib/db";
 import type { Flashcard, QuizQuestion } from "@/types/sheet";
@@ -42,20 +43,23 @@ export default async function ReviewPage({ params }: PageProps) {
   }
 
   return (
-    <main className="app-layout">
+    <div style={{ display: "flex", minHeight: "100vh", background: "#0F0F13", overflowX: "hidden" }}>
       <AppTopbar />
-      <div className="content-shell review-content-shell">
-        <div className="reviz-review-frame">
-          <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
-          <div className="reviz-sheet-orb reviz-sheet-orb-c" aria-hidden="true" />
-          <ReviewView
-            sheetId={sheet.id}
-            title={sheet.title}
-            flashcards={sheet.flashcardsJson as Flashcard[]}
-            quiz={sheet.quizJson as QuizQuestion[]}
-          />
+      <main className="app-main-content" style={{ flex: 1, minWidth: 0, width: "100%", background: "#0F0F13", overflowX: "hidden" }}>
+        <div className="content-shell review-content-shell">
+          <div className="reviz-review-frame">
+            <div className="reviz-sheet-orb reviz-sheet-orb-a" aria-hidden="true" />
+            <div className="reviz-sheet-orb reviz-sheet-orb-c" aria-hidden="true" />
+            <ReviewView
+              sheetId={sheet.id}
+              title={sheet.title}
+              flashcards={sheet.flashcardsJson as Flashcard[]}
+              quiz={sheet.quizJson as QuizQuestion[]}
+            />
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+      <MobileNav />
+    </div>
   );
 }

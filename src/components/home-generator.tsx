@@ -94,15 +94,15 @@ const subjectOptions: SubjectOption[] = [
   { value: "Maths", label: "Maths" },
   { value: "Physique-Chimie", label: "Physique-Chimie" },
   { value: "SVT", label: "SVT" },
-  { value: "Histoire-GÃ©o", label: "Histoire-GÃ©o" },
-  { value: "FranÃ§ais", label: "FranÃ§ais" },
+  { value: "Histoire-Géo", label: "Histoire-Géo" },
+  { value: "Français", label: "Français" },
   { value: "Philosophie", label: "Philosophie" },
   { value: "Anglais", label: "Anglais" },
   { value: "Langues vivantes", label: "Langues vivantes" },
   { value: "SES", label: "SES" },
   { value: "Technologie", label: "Technologie" },
   { value: "Arts / Musique", label: "Arts / Musique" },
-  { value: OTHER_SUBJECT_VALUE, label: "Autre (prÃ©cise)" },
+  { value: OTHER_SUBJECT_VALUE, label: "Autre (précise)" },
 ];
 
 const heroMetrics = [
@@ -160,12 +160,14 @@ export function HomeGenerator({
   const [isDragActive, setIsDragActive] = useState(false);
   const [content, setContent] = useState("");
   const [isActivated, setIsActivated] = useState(false);
-  const [textMode, setTextMode] = useState(false);
+  const [textMode, setTextMode] = useState(minimal);
   const [titleHint, setTitleHint] = useState("");
   const [sourceType, setSourceType] = useState("TEXT");
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileSizeLabel, setFileSizeLabel] = useState<string | null>(null);
+  const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
+  const isAppendingPhoto = useRef(false);
   const [fileAccept, setFileAccept] = useState(".pdf,.txt,image/*");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -177,9 +179,10 @@ export function HomeGenerator({
   const resolvedSubject = selectedSubject === OTHER_SUBJECT_VALUE ? customSubject.trim() : selectedSubject;
   const isOtherSubject = selectedSubject === OTHER_SUBJECT_VALUE;
   const isSubjectValid = resolvedSubject.trim().length > 0;
-  const isGenerateDisabled = isSubmitting || isUploading || content.trim().length < 80 || !isSubjectValid;
+  const isGenerateDisabled = isSubmitting || isUploading || content.trim().length < 300 || !isSubjectValid;
   const hasUploadedFile = Boolean(fileName);
-  const isStepOneDone = hasUploadedFile;
+  const hasDirectText = textMode && !fileName && content.trim().length >= 300;
+  const isStepOneDone = hasUploadedFile || hasDirectText;
   const isStepTwoDone = isSubjectValid;
   const currentStep = isStepTwoDone ? 3 : isStepOneDone ? 2 : 1;
   const isSubscriptionActive = subscriptionStatus === "active";
@@ -214,6 +217,8 @@ export function HomeGenerator({
     setStatus(null);
     setError(null);
     setIsActivated(false);
+    setCapturedPhotos([]);
+    isAppendingPhoto.current = false;
     setTextMode(false);
 
     if (fileInputRef.current) {
@@ -332,12 +337,22 @@ export function HomeGenerator({
         throw new Error(data.error ?? "L'import du fichier a echoue.");
       }
 
-      setContent(data.data.extractedText ?? "");
-      setTextMode(true);
-      setSourceType(data.data.sourceType);
-      setDocumentId(data.data.documentId);
-      setFileName(data.data.filename ?? selectedFile.name);
-      setTitleHint((data.data.filename ?? selectedFile.name).replace(/\.[^.]+$/, ""));
+      const extractedText = data.data.extractedText ?? "";
+      const photoName = data.data.filename ?? selectedFile.name;
+
+      if (isAppendingPhoto.current) {
+        setContent((prev) => prev + "\n\n---\n\n" + extractedText);
+        setCapturedPhotos((prev) => [...prev, photoName]);
+      } else {
+        setContent(extractedText);
+        setTextMode(true);
+        setSourceType(data.data.sourceType);
+        setDocumentId(data.data.documentId);
+        setFileName(photoName);
+        setTitleHint(photoName.replace(/\.[^.]+$/, ""));
+        setCapturedPhotos([photoName]);
+      }
+      isAppendingPhoto.current = false;
       setStatus(data.warning ?? "Texte extrait avec succes. Tu peux maintenant generer la fiche.");
     } catch (uploadError) {
       setError(
@@ -577,7 +592,7 @@ export function HomeGenerator({
       const steps = [
         {
           key: "import",
-          label: "Importe ton cours",
+          label: "Écris ou importe",
           done: isStepOneDone,
           active: currentStep === 1,
         },
@@ -603,24 +618,23 @@ export function HomeGenerator({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: "0.45rem",
+          gap: "0.3rem",
           margin: "0 auto 20px",
-          maxWidth: 400,
+          width: "100%",
           flexWrap: "nowrap",
-          whiteSpace: "nowrap",
-          overflowX: "auto",
+          overflowX: "visible",
         }}
       >
         {steps.map((step, index) => (
           <div
             key={step.key}
             className="reviz-stepper-segment"
-            style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem", flex: "0 0 auto" }}
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", flex: "1 1 0", justifyContent: "center" }}
           >
             <div
               className={`reviz-step${step.done ? " done" : ""}${step.active ? " active" : ""}`}
               aria-current={step.active ? "step" : undefined}
-              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", opacity: 1, color: "inherit" }}
             >
               <span
                 className="step-num"
@@ -642,14 +656,14 @@ export function HomeGenerator({
               </span>
               <span
                 className="step-label"
-                style={{ fontFamily: "var(--display-font)", fontSize: "12px", fontWeight: step.active ? 700 : 600, color: step.active ? "#FFFFFF" : "#2A2A38" }}
+                style={{ fontFamily: "var(--display-font)", fontSize: "11px", fontWeight: step.active ? 700 : 500, color: step.active ? "#FFFFFF" : "#6B6B82", whiteSpace: "nowrap" }}
               >
                 {step.label}
               </span>
             </div>
             {index < steps.length - 1 ? (
-              <div className="step-arrow" aria-hidden="true" style={{ color: "#2A2A38", fontFamily: "var(--display-font)", fontSize: "12px", lineHeight: 1 }}>
-                â†’
+              <div className="step-arrow" aria-hidden="true" style={{ color: "#3B3B52", fontFamily: "var(--display-font)", fontSize: "12px", lineHeight: 1 }}>
+                →
               </div>
             ) : null}
           </div>
@@ -664,32 +678,70 @@ export function HomeGenerator({
     }
 
     return (
-      <div
-        className="reviz-file-confirm"
-        role="status"
-        aria-live="polite"
-        style={{
-          background: "#252532",
-          border: "1px solid #2A2A38",
-          color: "#FFFFFF",
-          borderRadius: "12px",
-        }}
-      >
-        <span className="confirm-icon" aria-hidden="true">
-          ?
-        </span>
-        <span className="confirm-name">{truncateFileName(fileName)}</span>
-        <span className="confirm-size">{fileSizeLabel ?? ""}</span>
-        <button
-          type="button"
-          className="confirm-remove"
-          aria-label="Supprimer"
-          onClick={clearSelectedFile}
-          disabled={isSubmitting || isUploading}
+      <>
+        <div
+          className="reviz-file-confirm"
+          role="status"
+          aria-live="polite"
+          style={{
+            background: "#252532",
+            border: "1px solid #2A2A38",
+            color: "#FFFFFF",
+            borderRadius: "12px",
+          }}
         >
-          ?
-        </button>
-      </div>
+          <span className="confirm-icon" aria-hidden="true">
+            ?
+          </span>
+          <span className="confirm-name">{capturedPhotos.length > 1 ? `${capturedPhotos.length} photos` : truncateFileName(fileName)}</span>
+          <span className="confirm-size">{fileSizeLabel ?? ""}</span>
+          <button
+            type="button"
+            className="confirm-remove"
+            aria-label="Supprimer"
+            onClick={clearSelectedFile}
+            disabled={isSubmitting || isUploading}
+          >
+            ?
+          </button>
+        </div>
+
+        {capturedPhotos.length > 0 && capturedPhotos.length < 10 && (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "12px" }}>
+            <label
+              htmlFor={MINIMAL_CAMERA_INPUT_ID}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 20px",
+                background: "#1A1A26",
+                border: "1px solid #3B5BDB",
+                borderRadius: "10px",
+                color: "#3B5BDB",
+                fontFamily: "var(--display-font)",
+                fontSize: "13px",
+                fontWeight: 600,
+                cursor: isUploading || isSubmitting ? "not-allowed" : "pointer",
+                opacity: isUploading || isSubmitting ? 0.5 : 1,
+              }}
+              onClick={() => { isAppendingPhoto.current = true; }}
+              aria-disabled={isUploading || isSubmitting}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              Ajouter une photo ({capturedPhotos.length}/10)
+            </label>
+          </div>
+        )}
+        {capturedPhotos.length >= 10 && (
+          <p style={{ textAlign: "center", color: "#6B6B82", fontSize: "12px", marginTop: "8px" }}>
+            Maximum 10 photos atteint
+          </p>
+        )}
+      </>
     );
   }
 
@@ -1032,7 +1084,7 @@ export function HomeGenerator({
               margin: "0 0 16px 0",
             }}
           >
-            Importe un cours. Choisis la matiere. Genere en 30s.
+            Colle ton cours, ou importe un fichier. Choisis la matière. Génère en 30s.
           </p>
 
           {renderStepper()}
@@ -1142,7 +1194,49 @@ export function HomeGenerator({
               </span>
               <span style={{ color: "currentColor", fontSize: "14px", fontWeight: 600 }}>Photo</span>
             </label>
+
           </div>
+
+          {/* Textarea pour saisie directe de texte */}
+          {textMode && !fileName && (
+            <div style={{ width: "100%", maxWidth: "560px", margin: "0 auto" }}>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Colle ici ton cours, tes notes ou un résumé de chapitre..."
+                disabled={isSubmitting}
+                rows={8}
+                style={{
+                  width: "100%",
+                  background: "#1A1A26",
+                  border: "1px solid #2A2A38",
+                  borderRadius: "14px",
+                  color: "#FFFFFF",
+                  fontFamily: "inherit",
+                  fontSize: "14px",
+                  lineHeight: 1.6,
+                  padding: "16px",
+                  resize: "vertical",
+                  outline: "none",
+                  boxSizing: "border-box",
+                  transition: "border-color 0.15s",
+                }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "#3B5BDB"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "#2A2A38"; }}
+              />
+              {content.length > 0 && (
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+                  <button
+                    type="button"
+                    onClick={() => { setContent(""); }}
+                    style={{ background: "none", border: "none", color: "#8B8B9E", fontSize: "12px", cursor: "pointer", padding: 0 }}
+                  >
+                    Effacer
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {renderFileConfirmation()}
           </div>

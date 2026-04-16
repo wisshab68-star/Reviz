@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { AppTopbar } from "@/components/app-topbar";
+import { MobileNav } from "@/components/mobile-nav";
 import { SettingsPremiumButton } from "@/components/settings-premium-button";
 import { SettingsSignOutButton } from "@/components/settings-signout-button";
 import { db } from "@/lib/db";
@@ -95,9 +96,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const firstName = user.name?.trim().split(/\s+/)[0] ?? "Ton compte";
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0F0F13", display: "flex" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#0F0F13", overflowX: "hidden" }}>
       <AppTopbar />
-
+      <main className="app-main-content" style={{ flex: 1, minWidth: 0, width: "100%", background: "#0F0F13", overflowX: "hidden" }}>
       <div style={{ flex: 1, minWidth: 0, background: "#0F0F13" }}>
         <div
           style={{
@@ -275,6 +276,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           </div>
         </div>
       </div>
-    </main>
+      </main>
+      <MobileNav />
+    </div>
   );
 }

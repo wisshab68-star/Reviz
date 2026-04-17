@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { deriveClassicSheetFromFiche, wrapKeyPointsPayload } from "@/lib/fiche-storage";
 import { detectSubjectFamily, getFlashcardCap, getSubjectFamilyCaps } from "@/lib/subject-families";
 import { sanitizeAiJsonValue, sanitizeText } from "@/lib/text";
+import { incrementSheetCount } from "@/lib/stripe/subscription-service";
 import { countInventoryElements, inferDocumentProfile } from "@/services/generation-pipeline";
 import type { GenerateSheetRequest } from "@/lib/validations";
 import type { ContentInventory, DocumentProfile } from "@/types/generation-pipeline";
@@ -99,7 +100,7 @@ function validateBeforeSave(fiche: any): any {
       if (!isDuplicate) deduped.push(notion);
     }
     if (deduped.length < fiche.notionsCles.length) {
-      console.warn(`[validateBeforeSave] notionsCles: ${fiche.notionsCles.length} → ${deduped.length} après déduplication`);
+      console.warn(`[validateBeforeSave] notionsCles: ${fiche.notionsCles.length} -> ${deduped.length} apres deduplication`);
       fiche.notionsCles = deduped;
     }
   }
@@ -112,7 +113,7 @@ function validateBeforeSave(fiche: any): any {
       if (!isDuplicate) deduped.push(card);
     }
     if (deduped.length < fiche.flashcards.length) {
-      console.warn(`[validateBeforeSave] flashcards: ${fiche.flashcards.length} → ${deduped.length} après déduplication`);
+      console.warn(`[validateBeforeSave] flashcards: ${fiche.flashcards.length} -> ${deduped.length} apres deduplication`);
       fiche.flashcards = deduped;
     }
   }
@@ -277,6 +278,9 @@ export async function saveCompletedSheet(
       updatedAt: new Date(),
     },
   });
+  if (userId) {
+    await incrementSheetCount(userId);
+  }
 }
 
 export async function markSheetFailed(sheetId: string, message: string) {

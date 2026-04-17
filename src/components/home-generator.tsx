@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 
 import { FREE_MONTHLY_SHEET_LIMIT } from "@/lib/plans";
+import { trackUploadPdfInitiated, trackUploadPdfCompleted } from "@/lib/analytics";
 import type { FicheGeneree } from "@/types/fiche-generated";
 import type { GeneratedSheet } from "@/types/sheet";
 
@@ -186,7 +187,7 @@ export function HomeGenerator({
   const isStepTwoDone = isSubjectValid;
   const currentStep = isStepTwoDone ? 3 : isStepOneDone ? 2 : 1;
   const isSubscriptionActive = subscriptionStatus === "active";
-  const hasReachedFreeLimit = isAuthenticated && !isSubscriptionActive && sheetCount >= 1;
+  const hasReachedFreeLimit = isAuthenticated && !isSubscriptionActive && sheetCount >= FREE_MONTHLY_SHEET_LIMIT;
 
   function formatFileSize(sizeInBytes: number) {
     if (sizeInBytes >= 1024 * 1024) {
@@ -316,6 +317,7 @@ export function HomeGenerator({
       return;
     }
 
+    trackUploadPdfInitiated();
     setStatus("Import du fichier et extraction du texte...");
     setIsUploading(true);
     setIsActivated(true);
@@ -353,6 +355,7 @@ export function HomeGenerator({
         setCapturedPhotos([photoName]);
       }
       isAppendingPhoto.current = false;
+      trackUploadPdfCompleted(selectedFile.size, resolvedSubject || data.data.sourceType);
       setStatus(data.warning ?? "Texte extrait avec succes. Tu peux maintenant generer la fiche.");
     } catch (uploadError) {
       setError(
@@ -398,6 +401,8 @@ export function HomeGenerator({
     setIsSubmitting(true);
 
     try {
+      const normalizedTitleHint = titleHint.trim() || undefined;
+
       const generateResponse = await fetch("/api/generate", {
         method: "POST",
         headers: {
@@ -406,7 +411,7 @@ export function HomeGenerator({
         body: JSON.stringify({
           content,
           subject: resolvedSubject,
-          titleHint,
+          titleHint: normalizedTitleHint,
           sourceType,
           documentId: documentId ?? undefined,
         }),
@@ -430,12 +435,18 @@ export function HomeGenerator({
             sheetId: data.sheetId,
             content,
             subject: resolvedSubject,
-            titleHint,
+            titleHint: normalizedTitleHint,
             userId: undefined,
           }),
         });
 
         const inventoryData = await readApiPayload<StepResponse>(inventoryResponse);
+
+        if (inventoryResponse.status === 422 || inventoryData.error === "UNPROCESSABLE_FILE") {
+          setError("Ton fichier est difficile à lire automatiquement. Essaie un PDF de cours en texte, sans trop d'images. Cette tentative n'a pas été comptée sur ton quota.");
+          setStatus(null);
+          return;
+        }
 
         if (!inventoryResponse.ok || !inventoryData.success) {
           throw new Error(inventoryData.error ?? "La generation de l'inventaire a echoue.");
@@ -455,8 +466,10 @@ export function HomeGenerator({
 
         const sheetData = await readApiPayload<StepResponse>(sheetResponse);
 
-        if (!sheetResponse.ok || !sheetData.success) {
-          throw new Error(sheetData.error ?? "La generation de la fiche a echoue.");
+        if (sheetData.status === "FAILED" || (!sheetResponse.ok && !sheetData.success)) {
+          setError("Génération interrompue. Réessaie, ça ne compte pas sur ton quota.");
+          setStatus(null);
+          return;
         }
 
         setStatus("Fiche generee. Redirection vers le resultat...");
@@ -592,7 +605,7 @@ export function HomeGenerator({
       const steps = [
         {
           key: "import",
-          label: "Écris ou importe",
+          label: "Ã‰cris ou importe",
           done: isStepOneDone,
           active: currentStep === 1,
         },
@@ -663,7 +676,7 @@ export function HomeGenerator({
             </div>
             {index < steps.length - 1 ? (
               <div className="step-arrow" aria-hidden="true" style={{ color: "#3B3B52", fontFamily: "var(--display-font)", fontSize: "12px", lineHeight: 1 }}>
-                →
+                â†’
               </div>
             ) : null}
           </div>
@@ -794,7 +807,7 @@ export function HomeGenerator({
             type="text"
             value={customSubject}
             onChange={(event) => setCustomSubject(event.target.value)}
-            placeholder="Ex : NSI, Droit, CinÃ©ma..."
+            placeholder="Ex : NSI, Droit, Cinéma..."
             disabled={!isOtherSubject || isSubmitting || isUploading}
             style={{
               fontFamily: "var(--display-font)",
@@ -916,7 +929,7 @@ export function HomeGenerator({
                   marginBottom: "24px",
                 }}
               >
-                1/1 fiche utilisee
+                {`${Math.min(sheetCount, FREE_MONTHLY_SHEET_LIMIT)}/${FREE_MONTHLY_SHEET_LIMIT} fiche${FREE_MONTHLY_SHEET_LIMIT > 1 ? "s" : ""} utilisee${FREE_MONTHLY_SHEET_LIMIT > 1 ? "s" : ""}`}
               </span>
               <h2
                 style={{
@@ -929,7 +942,7 @@ export function HomeGenerator({
                   whiteSpace: "pre-line",
                 }}
               >
-                {"Tu as vu ce que\nReviz peut faire."}
+                {"Tu es chaud pour réviser —\nne t'arrête pas maintenant."}
               </h2>
               <p
                 style={{
@@ -938,7 +951,7 @@ export function HomeGenerator({
                   margin: "0 0 32px",
                 }}
               >
-                Genere toutes tes fiches en illimite pour le prix d'un cafe.
+                4,99€/mois — moins cher qu'un McDo · moins cher que des fiches Bristol
               </p>
               <div
                 style={{
@@ -1028,7 +1041,7 @@ export function HomeGenerator({
                   margin: "12px 0 0",
                 }}
               >
-                Paiement securise · Annulation a tout moment
+                Gratuit · Pas de CB · Annulation en 1 clic
               </p>
               {error ? (
                 <div
@@ -1088,6 +1101,11 @@ export function HomeGenerator({
           </p>
 
           {renderStepper()}
+
+          <p style={{ fontSize: "13px", color: "#9CA3AF", background: "#1a1a24", padding: "10px 14px", borderRadius: "6px", marginBottom: "12px", lineHeight: "1.5" }}>
+            Fonctionne avec : PDF de cours en texte, jusqu'à 15 Mo<br />
+            Évite : PDFs avec beaucoup de schémas ou scans flous
+          </p>
 
           <div
             className={`reviz-upload-zone${isDragActive ? " drag-active" : ""}`}
@@ -1585,4 +1603,5 @@ export function HomeGenerator({
     </section>
   );
 }
+
 

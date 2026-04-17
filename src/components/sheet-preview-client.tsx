@@ -134,8 +134,8 @@ function SheetPreviewInner() {
                 style={{
                   position: "absolute",
                   inset: 0,
-                  backdropFilter: "blur(6px)",
-                  background: "rgba(0,0,0,0.4)",
+                  backdropFilter: "blur(8px)",
+                  background: "rgba(0,0,0,0.55)",
                   zIndex: 10,
                   borderRadius: "inherit",
                   display: "flex",
@@ -147,19 +147,22 @@ function SheetPreviewInner() {
                   textAlign: "center",
                 }}
               >
-                <p style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 600, margin: 0 }}>
-                  Ta fiche est prête 🎉
+                <p style={{ color: "#fff", fontSize: "1.25rem", fontWeight: 800, margin: 0, letterSpacing: "-0.01em" }}>
+                  Tu rates le plus important 👆
                 </p>
-                <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.95rem", margin: 0 }}>
-                  Crée ton compte gratuitement pour accéder à la fiche complète, aux flashcards et au quiz.
+                <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "0.9rem", margin: 0, maxWidth: "280px", lineHeight: 1.5 }}>
+                  Flashcards, carte mentale, quiz — les outils qui font vraiment la différence sont juste là.
                 </p>
                 <Link
                   href="/sign-in?mode=signup"
                   className="btn btn-primary"
-                  style={{ marginTop: "0.5rem" }}
+                  style={{ marginTop: "0.25rem", fontSize: "15px", fontWeight: 700 }}
                 >
-                  Créer mon compte gratuitement →
+                  Débloquer en 2 secondes →
                 </Link>
+                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", margin: 0 }}>
+                  Connexion Google — sans formulaire
+                </p>
               </div>
             ) : null}
           </div>
@@ -185,11 +188,12 @@ function SheetPreviewInner() {
             flexWrap: "wrap",
           }}
         >
-          <p style={{ color: "#fff", margin: 0, fontSize: "0.95rem" }}>
-            <strong>Débloque ta fiche complète</strong> — Crée ton compte gratuitement
+          <p style={{ color: "#fff", margin: 0, fontSize: "0.95rem", lineHeight: 1.4 }}>
+            <strong>Tu rates le plus important</strong>
+            <span style={{ color: "rgba(255,255,255,0.55)", fontWeight: 400 }}> — moins cher qu'un McDo</span>
           </p>
-          <Link href="/sign-in?mode=signup" className="btn btn-primary" style={{ flexShrink: 0 }}>
-            Créer mon compte →
+          <Link href="/sign-in?mode=signup" className="btn btn-primary" style={{ flexShrink: 0, fontWeight: 700 }}>
+            Continuer avec Google →
           </Link>
         </div>
       ) : null}

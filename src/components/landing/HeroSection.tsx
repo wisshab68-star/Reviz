@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import styles from './HeroSection.module.css';
+import { trackClickCtaLanding } from '@/lib/analytics';
 
 /* ── Premium SVG icons inline (no emoji, no external deps) ── */
 const IC = '#1a1a1a';
@@ -171,8 +172,8 @@ export default function HeroSection() {
         </p>
 
         <div className={styles.ctaSection}>
-          <Link href="/try" className={styles.btnPrimary}>
-            Générer ma première fiche
+          <Link href="/try" className={styles.btnPrimary} onClick={trackClickCtaLanding}>
+            Génère ta fiche en 30 secondes
           </Link>
           <Link href="/sign-in" className={styles.btnSecondary}>
             Se connecter

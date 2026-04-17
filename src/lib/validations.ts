@@ -1,13 +1,27 @@
 import { z } from "zod";
 
+const optionalNonEmptyTrimmedString = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") {
+      return value;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  },
+  z.string().min(1).max(160).optional(),
+);
+
 export const generateSheetRequestSchema = z.object({
   userId: z.string().cuid().optional(),
   documentId: z.string().cuid().optional(),
   sourceType: z.enum(["TEXT", "PDF", "IMAGE", "DOCX", "AUDIO"]).default("TEXT"),
   subject: z.string().trim().min(2).max(80).optional(),
-  titleHint: z.string().trim().min(1).max(160).optional(),
+  titleHint: optionalNonEmptyTrimmedString,
   content: z.string().trim().min(80, "Le contenu doit contenir au moins 80 caracteres."),
 });
+
+export { optionalNonEmptyTrimmedString };
 
 export const generatedSheetSchema = z.object({
   title: z.string().min(3).max(180),

@@ -90,7 +90,7 @@ export async function authenticateWithPasswordAction(formData: FormData) {
           data: {
             name: existingUser.name ?? name ?? null,
             passwordHash,
-            emailVerified: existingUser.emailVerified ?? new Date(),
+            emailVerified: existingUser.emailVerified ?? null,
           },
         });
       } else {
@@ -99,7 +99,6 @@ export async function authenticateWithPasswordAction(formData: FormData) {
             name: name || null,
             email,
             passwordHash,
-            emailVerified: new Date(),
           },
         });
       }

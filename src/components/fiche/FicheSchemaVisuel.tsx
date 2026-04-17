@@ -183,8 +183,8 @@ export function FicheSchemaVisuel({ schema, blueprintId }: FicheSchemaVisuelProp
   const svgHeight = blueprintId === "chronologie" ? 420 : elements.length <= 4 ? 420 : 500;
   const positions = buildNodePositions(elements, svgWidth, svgHeight, blueprintId);
 
-  // ASCII mind map — render as pre-formatted text block (no SVG)
-  if (schema.ascii?.trim()) {
+  // ASCII fallback — only if no graphable elements exist
+  if (schema.ascii?.trim() && elements.length === 0) {
     return (
       <div className="reviz-schema-shell" data-print="carte-mentale" style={{ background: "#FFFFFF", color: "#000000" }}>
         <div className="reviz-schema-badge">{getSchemaBadge(blueprintId)}</div>
@@ -291,7 +291,7 @@ export function FicheSchemaVisuel({ schema, blueprintId }: FicheSchemaVisuelProp
           return (
             <g key={element.id}>
               {isCentral ? (
-                <path d={buildCloudPath(box)} fill={cfg.fill} stroke="#050505" strokeWidth="3" />
+                <path d={buildCloudPath(box)} fill={cfg.fill} stroke="none" />
               ) : (
                 <rect
                   x={box.x}
@@ -300,8 +300,7 @@ export function FicheSchemaVisuel({ schema, blueprintId }: FicheSchemaVisuelProp
                   height={box.height}
                   rx="28"
                   fill={cfg.fill}
-                  stroke="#050505"
-                  strokeWidth="3"
+                  stroke="none"
                 />
               )}
               <circle
@@ -309,8 +308,7 @@ export function FicheSchemaVisuel({ schema, blueprintId }: FicheSchemaVisuelProp
                 cy={box.y + 16}
                 r="5"
                 fill="#ffffff"
-                stroke="#050505"
-                strokeWidth="1.5"
+                stroke="none"
               />
               <text
                 x={center.x}
@@ -327,22 +325,6 @@ export function FicheSchemaVisuel({ schema, blueprintId }: FicheSchemaVisuelProp
           );
         })}
       </svg>
-      <div className="fiche-schema-legend">
-        {elements.map((element) => {
-          const cfg = COULEURS[element.couleur] ?? COULEURS.gris;
-
-          return (
-            <div key={`legend-${element.id}`} className="fiche-schema-legend-item">
-              <span
-                className="fiche-schema-legend-dot"
-                style={{ background: cfg.stroke }}
-                aria-hidden="true"
-              />
-              <span>{element.label}</span>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }

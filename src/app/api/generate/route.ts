@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 import { DocumentType, Prisma } from "@prisma/client";
 
 import { auth } from "@/auth";
-import { isDatabaseConnectionError } from "@/lib/database-fallback";
 import { db } from "@/lib/db";
 import { generateSheetRequestSchema } from "@/lib/validations";
-import { canGenerateSheet, incrementSheetCount } from "@/lib/stripe/subscription-service";
+import { canGenerateSheet } from "@/lib/stripe/subscription-service";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -44,28 +43,22 @@ export async function POST(request: Request) {
   };
 
   try {
-    let session = null;
+    logStage("auth:start");
+    const session = await withStageTimeout("auth", auth(), 8000);
+    logStage("auth:done");
 
-    try {
-      logStage("auth:start");
-      session = await withStageTimeout("auth", auth(), 8000);
-      logStage("auth:done");
-    } catch (error) {
-      if (!isDatabaseConnectionError(error)) {
-        if (error instanceof GenerateStageTimeoutError) {
-          throw error;
-        }
-        throw error;
-      }
-
-      console.error("Auth lookup failed, continuing as guest.", error);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     const json = await request.json();
     const parsed = generateSheetRequestSchema.parse(json);
     const input = {
       ...parsed,
-      userId: session?.user?.id ?? parsed.userId,
+      userId: session.user.id,
     };
     const contentLength = input.content.trim().length;
     console.log(
@@ -74,42 +67,29 @@ export async function POST(request: Request) {
 
     let quota = null;
 
-    if (session?.user?.id) {
-      try {
-        logStage("quota:start");
-        const quotaCheck = await withStageTimeout(
-          "quota:check",
-          canGenerateSheet(session.user.id),
-          8000,
-        );
+    logStage("quota:start");
+    const quotaCheck = await withStageTimeout(
+      "quota:check",
+      canGenerateSheet(session.user.id),
+      8000,
+    );
 
-        if (!quotaCheck.allowed) {
-          return NextResponse.json(
-            {
-              error: "LIMIT_REACHED",
-              message: quotaCheck.reason ?? "Limite mensuelle atteinte.",
-            },
-            { status: 403 },
-          );
-        }
-
-        quota = {
-          allowed: true,
-          remaining: quotaCheck.remaining,
-          limit: quotaCheck.limit,
-        };
-        logStage("quota:done");
-      } catch (error) {
-        if (!isDatabaseConnectionError(error)) {
-          if (error instanceof GenerateStageTimeoutError) {
-            throw error;
-          }
-          throw error;
-        }
-
-        console.error("Quota lookup failed, continuing without persistence.", error);
-      }
+    if (!quotaCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: "LIMIT_REACHED",
+          message: quotaCheck.reason ?? "Limite mensuelle atteinte.",
+        },
+        { status: 403 },
+      );
     }
+
+    quota = {
+      allowed: true,
+      remaining: quotaCheck.remaining,
+      limit: quotaCheck.limit,
+    };
+    logStage("quota:done");
 
     let resolvedDocumentId = input.documentId;
 
@@ -120,7 +100,7 @@ export async function POST(request: Request) {
           "document:create",
           db.document.create({
             data: {
-              userId: session?.user?.id ?? input.userId,
+              userId: input.userId,
               type: (input.sourceType || "TEXT") as DocumentType,
               filename: input.titleHint ?? "Texte saisi",
               rawText: input.content,
@@ -136,17 +116,12 @@ export async function POST(request: Request) {
         resolvedDocumentId = generatedDocument.id;
         logStage("document:create:done");
       } catch (documentError) {
-        if (!isDatabaseConnectionError(documentError)) {
           if (documentError instanceof GenerateStageTimeoutError) {
             throw documentError;
           }
           throw documentError;
         }
-
-        console.error("[GENERATE] Document creation failed:", documentError);
-        throw new Error("Impossible de preparer le document pour la generation.");
       }
-    }
 
     const pendingTitle = input.titleHint ? cleanFilename(input.titleHint) : "Generation en cours...";
     let pendingSheet: { id: string; status: string } | null = null;
@@ -157,7 +132,7 @@ export async function POST(request: Request) {
         "pending-sheet:create",
         db.studySheet.create({
           data: {
-            userId: session?.user?.id ?? input.userId,
+            userId: input.userId,
             documentId: resolvedDocumentId,
             sourceType: input.sourceType,
             title: pendingTitle,
@@ -178,24 +153,10 @@ export async function POST(request: Request) {
       );
       logStage("pending-sheet:create:done");
     } catch (pendingError) {
-      if (!isDatabaseConnectionError(pendingError)) {
-        if (pendingError instanceof GenerateStageTimeoutError) {
-          throw pendingError;
-        }
+      if (pendingError instanceof GenerateStageTimeoutError) {
         throw pendingError;
       }
-
-      console.error("[GENERATE] Pending sheet creation failed:", pendingError);
-      throw new Error("Impossible de creer la fiche en attente de generation.");
-    }
-
-    // Increment monthly counter after successfully queueing
-    if (session?.user?.id) {
-      try {
-        await incrementSheetCount(session.user.id);
-      } catch (err) {
-        console.error("[GENERATE] incrementSheetCount failed (non-fatal):", err);
-      }
+      throw pendingError;
     }
 
     return NextResponse.json({

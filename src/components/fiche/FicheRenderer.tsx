@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { FicheContentBlock } from "@/components/fiche/FicheContentBlock";
 import { FicheFeynman } from "@/components/fiche/FicheFeynman";
 import { FicheFlashcards } from "@/components/fiche/FicheFlashcards";
@@ -11,12 +12,15 @@ import { detectSubjectFamily, getFormulesSectionLabel } from "@/lib/subject-fami
 import { looksLikeFormula, sanitizeAiText } from "@/lib/text";
 import type { FicheGeneree, ZonedBlock, ZonedFiche } from "@/types/fiche-generated";
 import type { ReactElement, ReactNode } from "react";
+import { trackTestSheetViewed } from "@/lib/analytics";
 
 type RenderableFiche = FicheGeneree | ZonedFiche;
 
 interface FicheRendererProps {
   fiche: RenderableFiche;
   sheetId?: string;
+  /** When true, show résumé/définitions/notions freely and blur Reviz differentiators */
+  previewMode?: boolean;
 }
 
 function Divider() {
@@ -556,13 +560,72 @@ function renderBlueprintContent(fiche: Pick<FicheGeneree, "blueprintSections">) 
   );
 }
 
-export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
+/** Sections blurred in preview mode (the Reviz differentiators) */
+const PREVIEW_LOCKED_SECTIONS: FicheSectionKey[] = ["imageMentale", "schema", "feynman", "blueprint"];
+
+function LockIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function BlurLock({ children }: { children: ReactNode }) {
+  return (
+    <div style={{ position: "relative", userSelect: "none" }}>
+      <div style={{ filter: "blur(6px)", pointerEvents: "none", opacity: 0.55 }}>
+        {children}
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+        }}
+      >
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            background: "rgba(15,15,19,0.82)",
+            border: "1px solid rgba(59,91,219,0.45)",
+            color: "#fff",
+            fontSize: "12px",
+            fontWeight: 700,
+            padding: "7px 14px",
+            borderRadius: "999px",
+            letterSpacing: "0.02em",
+            backdropFilter: "blur(4px)",
+            boxShadow: "0 2px 16px rgba(59,91,219,0.18)",
+          }}
+        >
+          <span style={{ color: "#3B5BDB", display: "inline-flex" }}><LockIcon /></span>
+          Connexion Google pour débloquer
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export function FicheRenderer({ fiche, sheetId, previewMode = false }: FicheRendererProps) {
   const displayFiche = normalizeFicheForDisplay(fiche);
   const subjectFamily = displayFiche.subjectFamily ?? detectSubjectFamily(displayFiche.matiere);
   const formulesLabel = getFormulesSectionLabel(subjectFamily);
   const handlePrint = () => {
     window.print();
   };
+
+  useEffect(() => {
+    if (sheetId) {
+      trackTestSheetViewed(sheetId);
+    }
+  }, [sheetId]);
 
   if (isZonedFiche(displayFiche)) {
     return (
@@ -768,7 +831,45 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
         <FicheFeynman texte={displayFiche.feynman} />
       </div>
     ),
-    flashcards: (
+    flashcards: previewMode ? (
+      <div key="flashcards" data-print="section">
+        <SectionLabel>Flashcards</SectionLabel>
+        {/* Show 2 questions as teaser, blur their answers */}
+        <div style={{ display: "grid", gap: "0.6rem" }}>
+          {displayFiche.flashcards.slice(0, 2).map((fc, i) => (
+            <div
+              key={`fc-preview-${i}`}
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 12,
+                padding: "0.85rem 1rem",
+              }}
+            >
+              <p style={{ margin: "0 0 0.5rem", fontWeight: 600, fontSize: "0.875rem", color: "#1a1a1a" }}>
+                {fc.question}
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "0.8rem",
+                  color: "#444",
+                  filter: "blur(4px)",
+                  userSelect: "none",
+                }}
+              >
+                {fc.reponse}
+              </p>
+            </div>
+          ))}
+          {displayFiche.flashcards.length > 2 ? (
+            <p style={{ margin: 0, fontSize: "12px", color: "#888", textAlign: "center" }}>
+              + {displayFiche.flashcards.length - 2} flashcard{displayFiche.flashcards.length - 2 > 1 ? "s" : ""} bloquee{displayFiche.flashcards.length - 2 > 1 ? "s" : ""}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    ) : (
       <div key="flashcards" data-print="section">
         <SectionLabel>Flashcards</SectionLabel>
         <FicheFlashcards flashcards={displayFiche.flashcards} blueprintId={displayFiche.blueprintId} />
@@ -802,6 +903,8 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
           : "reviz-print-section-verso";
         const printBreakClass = key === firstVersoKey ? " reviz-print-break-before" : "";
 
+        const isLocked = previewMode && PREVIEW_LOCKED_SECTIONS.includes(key);
+
         return (
           <div
             key={`section-${key}`}
@@ -809,7 +912,7 @@ export function FicheRenderer({ fiche, sheetId }: FicheRendererProps) {
             data-print={key === "feynman" ? "feynman-wrapper" : "section"}
           >
           <Divider />
-          {section}
+          {isLocked ? <BlurLock>{section}</BlurLock> : section}
           </div>
         );
       })}

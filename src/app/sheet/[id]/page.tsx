@@ -149,6 +149,13 @@ export default async function SheetPage({ params }: PageProps) {
     );
   }
 
+  const subscription = session?.user?.id
+    ? await db.subscription.findUnique({ where: { userId: session.user.id }, select: { tier: true, sheetsUsedMonth: true, monthlyLimit: true } })
+    : null;
+  const isFree = !subscription || subscription.tier === "FREE";
+  const sheetsUsed = subscription?.sheetsUsedMonth ?? 0;
+  const sheetsLimit = subscription?.monthlyLimit ?? 2;
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#0F0F13", overflowX: "hidden" }}>
       <AppTopbar />
@@ -177,6 +184,22 @@ export default async function SheetPage({ params }: PageProps) {
               <RevizMascotDoodle className="reviz-illustration reviz-illustration-mascot" />
             </div>
           </header>
+
+          {isFree ? (
+            <p style={{
+              textAlign: "center",
+              fontSize: "13px",
+              color: "#8B8B9E",
+              margin: "0 0 8px",
+              letterSpacing: "0.01em",
+            }}>
+              Fiche {sheetsUsed}/{sheetsLimit} utilisée
+              <span style={{ margin: "0 8px", opacity: 0.4 }}>·</span>
+              <Link href="/pricing" style={{ color: "#3B5BDB", textDecoration: "none", fontWeight: 600 }}>
+                4,99€/mois — moins cher qu'un McDo
+              </Link>
+            </p>
+          ) : null}
 
           <SheetView
             summary={sheet.summary}

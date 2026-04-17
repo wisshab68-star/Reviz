@@ -42,7 +42,7 @@ MISSION :
 Analyser un cours et generer une fiche de revision structuree en JSON.
 Tu dois produire une fiche qui ressemble a ce qu'un bon professeur remettrait a un eleve, pas a un resume generique.
 
-REGLES PEDAGOGIQUES (OBLIGATOIRES — toute violation invalide la fiche) :
+REGLES PEDAGOGIQUES (OBLIGATOIRES â€” toute violation invalide la fiche) :
 
 Tu n'es PAS un assistant qui resume un document.
 Tu ES un examinateur qui construit une fiche pour qu'un eleve
@@ -50,18 +50,18 @@ reussisse l'examen. Avant d'ecrire chaque section, execute
 le raisonnement interne decrit ci-dessous. Si un element ne
 passe pas le test, ne l'inclus pas.
 
-POUR LES notionsCles — TEST OBLIGATOIRE PAR NOTION :
+POUR LES notionsCles â€” TEST OBLIGATOIRE PAR NOTION :
 Pour chaque notion candidate, reponds mentalement a :
 "Si un eleve ne connait pas cette notion, peut-il reussir l'examen ?"
-- Si OUI → EXCLUS cette notion, elle n'est pas cle.
-- Si NON → INCLUS cette notion.
+- Si OUI â†’ EXCLUS cette notion, elle n'est pas cle.
+- Si NON â†’ INCLUS cette notion.
 INTERDIT : lister un mot simplement parce qu'il apparait souvent
 dans le cours. Un mot frequent mais non actionnable a l'examen
 (ex: "introduction", "contexte", "methode") ne doit JAMAIS figurer
 dans notionsCles.
 Les proprietes et criteres importants doivent etre absorbes dans notionsCles, jamais dans un champ separe.
 
-POUR LES notionsCles — INTERDICTION DE COPIER-COLLER :
+POUR LES notionsCles â€” INTERDICTION DE COPIER-COLLER :
 INTERDIT : recopier une phrase du cours mot pour mot ou quasi
 mot pour mot. Chaque item DOIT etre reformule.
 TEST OBLIGATOIRE : chaque item doit repondre a la question
@@ -71,7 +71,7 @@ FORMAT : formule chaque item comme une regle ou un critere actionnable que
 l'eleve peut reutiliser directement, jamais comme une definition
 passive ou une description.
 
-POUR LES flashcards — QUOTAS OBLIGATOIRES :
+POUR LES flashcards â€” QUOTAS OBLIGATOIRES :
 - MINIMUM 2 flashcards portant sur des pieges ou erreurs classiques
   que les eleves commettent frequemment a l'examen.
 - MINIMUM 1 flashcard demandant d'appliquer une formule, une regle
@@ -82,7 +82,7 @@ POUR LES flashcards — QUOTAS OBLIGATOIRES :
 - INTERDIT : flashcard dont la reponse est un simple "oui" ou "non"
   sans explication.
 
-POUR LE piege — PRECISION EXIGEE :
+POUR LE piege â€” PRECISION EXIGEE :
 INTERDIT : les generalites vagues comme "Ne pas confondre A et B"
 ou "Attention a ne pas melanger X et Y".
 OBLIGATOIRE : nommer l'erreur exacte, puis donner un exemple
@@ -90,7 +90,7 @@ de formulation INCORRECTE vs CORRECTE.
 MAUVAIS : "Ne pas confondre acide et base"
 BON : "Erreur : ecrire que la base cede un proton H+.
 Correct : c'est l'acide qui cede H+, la base le capte.
-Formulation correcte de la reaction : HA → A- + H+"
+Formulation correcte de la reaction : HA â†’ A- + H+"
 
 REGLES PAR TYPE DE COURS :
 - Cours formel : privilegie formules, conditions, criteres, distinctions de cas, methode de resolution
@@ -185,10 +185,10 @@ export function buildFicheSystemPrompt(subject: string): string {
   const formulesLabel = getFormulesSectionLabel(family);
   const flashcardCap = getFlashcardCap(family);
 
-  console.log("[SUBJECT_FAMILY] matière:", subject,
-    "→ famille:", family,
-    "→ label formules:", formulesLabel,
-    "→ cap flashcards:", flashcardCap);
+  console.log("[SUBJECT_FAMILY] matiÃ¨re:", subject,
+    "â†’ famille:", family,
+    "â†’ label formules:", formulesLabel,
+    "â†’ cap flashcards:", flashcardCap);
 
   return `
 ${ABSOLUTE_GENERATION_CONSTRAINTS}
@@ -198,24 +198,25 @@ ${specificInstructions}
 NOTE SUR LES FLASHCARDS : Maximum ${flashcardCap} flashcards pour ce cours.
 
 NOTE SUR LE BLOC FORMULES : Ce bloc s'intitule "${formulesLabel}"
-pour cette matière. Adapter le contenu en conséquence.
+pour cette matiÃ¨re. Adapter le contenu en consÃ©quence.
 
 ${FICHE_SYSTEM_PROMPT_BASE.replace(`${ABSOLUTE_GENERATION_CONSTRAINTS}\n\n`, "")}`;
 }
 
 export function buildUserPrompt(content: string): string {
-  const cleanedContent = normalizeDocumentText(content);
-  const subject = inferSubject(cleanedContent);
+  const subject = inferSubject(content);
   const family = detectSubjectFamily(subject);
   const caps = getSubjectFamilyCaps(family);
   const subjectInstructions = getSubjectSpecificInstructions(family);
-  const textForModel = prepareTextForModel(cleanedContent);
+  const textForModel = prepareTextForModel(content);
 
   return `Voici le contenu du cours a analyser :
 
 ---
 ${textForModel}
 ---
+
+Note : Le texte fourni est limite a 320 000 caracteres pour raisons de performance. Si le cours est plus long, les sections finales peuvent etre tronquees.
 
 Genere la fiche de revision complete en JSON selon le format demande, sans jamais depasser les caps absolus.
 
@@ -331,3 +332,5 @@ export function buildClassicUserPrompt(content: string, titleHint?: string): str
 
   return lines.filter(Boolean).join("\n");
 }
+
+

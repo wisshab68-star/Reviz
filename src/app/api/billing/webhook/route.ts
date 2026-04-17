@@ -69,6 +69,12 @@ export async function POST(request: Request) {
             sub.items.data[0]?.current_period_start,
             sub.items.data[0]?.current_period_end,
           );
+          const amountPaid = session.amount_total ?? 0;
+          await sendGA4Event(userId, "subscription_completed", {
+            subscription_id: sub.id,
+            value: amountPaid / 100,
+            currency: "EUR",
+          });
           console.log({ event: event.type, userId, newStatus: sub.status, priceId });
         }
         break;
@@ -121,4 +127,40 @@ export async function POST(request: Request) {
   }
 
   return new Response("ok", { status: 200 });
+}
+
+async function sendGA4Event(
+  userId: string,
+  eventName: string,
+  params: Record<string, unknown>,
+) {
+  const measurementId = process.env.GA4_MEASUREMENT_ID;
+  const apiSecret = process.env.GA4_API_SECRET;
+
+  if (!measurementId || !apiSecret) {
+    console.warn("[GA4] GA4_MEASUREMENT_ID or GA4_API_SECRET not set — skipping event");
+    return;
+  }
+
+  const body = {
+    client_id: `server.${userId}`,
+    user_id: userId,
+    events: [{ name: eventName, params }],
+  };
+
+  try {
+    const res = await fetch(
+      `https://www.google-analytics.com/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    if (!res.ok) {
+      console.error("[GA4] Measurement Protocol failed:", res.status, res.statusText);
+    }
+  } catch (err) {
+    console.error("[GA4] Measurement Protocol error:", err);
+  }
 }

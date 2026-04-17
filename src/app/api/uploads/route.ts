@@ -24,8 +24,6 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file");
-    const userId = formData.get("userId");
-
     if (!(file instanceof File)) {
       return NextResponse.json(
         { success: false, error: "Aucun fichier n'a ete envoye." },
@@ -46,9 +44,7 @@ export async function POST(request: Request) {
     try {
       const persistedDocument = await db.document.create({
         data: {
-          userId:
-            session?.user?.id ??
-            (typeof userId === "string" && userId ? userId : undefined),
+          userId: session?.user?.id,
           type: extracted.sourceType,
           filename: file.name,
           mimeType: extracted.mimeType,

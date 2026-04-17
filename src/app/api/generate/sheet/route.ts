@@ -59,6 +59,13 @@ export async function POST(request: Request) {
       throw new Error("Fiche introuvable.");
     }
 
+    if (sheet.userId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const stored = parseStoredInventoryPayload(sheet.inventoryJson);
     if (!stored) {
       throw new Error("L'inventaire intermediaire est introuvable ou invalide.");
@@ -98,8 +105,8 @@ export async function POST(request: Request) {
     );
     const generated = sanitizeAiJsonValue(deriveClassicSheetFromFiche(fiche)) as GeneratedSheet;
 
-    await saveCompletedSheet(sheetId, generated, fiche, stored.request.userId ?? sheet.userId ?? undefined);
-    await trackUsage(stored.request.userId ?? sheet.userId ?? undefined, "sheet_generated");
+    await saveCompletedSheet(sheetId, generated, fiche, sheet.userId ?? undefined);
+    await trackUsage(sheet.userId ?? undefined, "sheet_generated");
 
     return NextResponse.json({
       success: true,

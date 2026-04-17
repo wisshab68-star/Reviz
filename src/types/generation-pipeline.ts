@@ -1,4 +1,4 @@
-export type PedagogicalFamily =
+﻿export type PedagogicalFamily =
   | "formel"
   | "processus"
   | "conceptuel"
@@ -119,5 +119,7 @@ export interface SourceQuality {
   wordCount: number;
   noiseLevel: "faible" | "moyen" | "eleve";
   isUsable: boolean;
+  reason?: string;
   warnings: string[];
 }
+

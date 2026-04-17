@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { isDatabaseConnectionError } from "@/lib/database-fallback";
-import { authenticateWithPasswordAction, signInWithGoogleAction } from "./actions";
+import { signInWithGoogleAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Connexion Reviz",
-  description: "Connecte-toi a Reviz avec Google ou ton email et mot de passe.",
+  description: "Connecte-toi a Reviz avec Google pour debloquer ta fiche complete.",
 };
 
 type SignInPageProps = {
@@ -18,19 +18,6 @@ type SignInPageProps = {
     redirectTo?: string;
   }>;
 };
-
-function inputStyle() {
-  return {
-    width: "100%",
-    background: "#1E1E2A",
-    border: "1px solid #2A2A38",
-    borderRadius: "10px",
-    padding: "12px 16px",
-    color: "#FFFFFF",
-    fontSize: "14px",
-    outline: "none",
-  } as const;
-}
 
 function bulletItem(label: string) {
   return (
@@ -70,16 +57,14 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     console.error("Auth lookup failed on /sign-in, continuing.", error);
   }
 
-  if (session?.user) {
-    redirect("/app");
-  }
-
   const resolvedSearchParams = await searchParams;
-  const mode = resolvedSearchParams?.mode === "login" ? "login" : "signup";
   const errorMessage = resolvedSearchParams?.error;
   const redirectTo = resolvedSearchParams?.redirectTo ?? "";
-  const isLogin = mode === "login";
-  const sharedInputStyle = inputStyle();
+  const safeRedirectTo = redirectTo.startsWith("/") ? redirectTo : "/app";
+
+  if (session?.user) {
+    redirect(safeRedirectTo);
+  }
 
   return (
     <main
@@ -100,48 +85,6 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         }}
       >
         <div style={{ width: "100%", maxWidth: "420px", margin: "0 auto" }}>
-          <div
-            style={{
-              background: "#1E1E2A",
-              borderRadius: "50px",
-              padding: "4px",
-              display: "inline-flex",
-              marginBottom: "24px",
-            }}
-          >
-            <Link
-              href="/sign-in?mode=signup"
-              style={{
-                background: !isLogin ? "#FFFFFF" : "transparent",
-                color: !isLogin ? "#000000" : "#8B8B9E",
-                borderRadius: "50px",
-                padding: "8px 20px",
-                fontSize: "13px",
-                fontWeight: 700,
-                transition: "all 0.2s",
-                textDecoration: "none",
-              }}
-            >
-              Creer
-            </Link>
-            <Link
-              href="/sign-in?mode=login"
-              style={{
-                background: isLogin ? "#FFFFFF" : "transparent",
-                color: isLogin ? "#000000" : "#8B8B9E",
-                borderRadius: "50px",
-                padding: "8px 20px",
-                fontSize: "13px",
-                fontWeight: 700,
-                transition: "all 0.2s",
-                textDecoration: "none",
-                cursor: "pointer",
-              }}
-            >
-              Connecter
-            </Link>
-          </div>
-
           <Link
             href="/"
             style={{
@@ -160,15 +103,19 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
           <h1
             style={{
-              margin: "0 0 24px",
+              margin: "0 0 16px",
               fontFamily: "var(--display-font)",
               fontSize: "32px",
               fontWeight: 900,
               color: "#FFFFFF",
             }}
           >
-            {isLogin ? "Se connecter" : "Creer mon compte"}
+            Debloque ta fiche complete
           </h1>
+
+          <p style={{ color: "#A4A3B3", lineHeight: 1.6, margin: "0 0 24px" }}>
+            Un clic avec Google, et tu retrouves ta fiche complete sur /try en quelques secondes.
+          </p>
 
           {errorMessage ? (
             <div
@@ -188,24 +135,24 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
           <div style={{ display: "grid", gap: "16px" }}>
             <form action={signInWithGoogleAction}>
-              <input type="hidden" name="redirectTo" value={redirectTo} />
+              <input type="hidden" name="redirectTo" value={safeRedirectTo} />
               <button
                 type="submit"
                 style={{
                   width: "100%",
-                  background: "#1E1E2A",
-                  border: "1px solid #2A2A38",
-                  borderRadius: "12px",
-                  padding: "14px",
-                  color: "#FFFFFF",
-                  fontSize: "14px",
-                  fontWeight: 600,
+                  background: "#FFFFFF",
+                  border: "none",
+                  borderRadius: "14px",
+                  padding: "16px",
+                  color: "#111",
+                  fontSize: "15px",
+                  fontWeight: 700,
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "12px",
                   cursor: "pointer",
-                  transition: "border-color 0.2s ease",
+                  boxShadow: "0 2px 16px rgba(0,0,0,0.3)",
                 }}
               >
                 <span aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
@@ -221,83 +168,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
               </button>
             </form>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr auto 1fr",
-                alignItems: "center",
-                gap: "12px",
-                color: "#2A2A38",
-                fontSize: "14px",
-              }}
-            >
-              <span style={{ borderTop: "1px solid #2A2A38" }} />
-              <span>ou</span>
-              <span style={{ borderTop: "1px solid #2A2A38" }} />
-            </div>
-
-            <form action={authenticateWithPasswordAction} style={{ display: "grid", gap: "14px" }}>
-              <input type="hidden" name="mode" value={mode} />
-              <input type="hidden" name="redirectTo" value={redirectTo} />
-
-              {!isLogin ? (
-                <input
-                  name="name"
-                  type="text"
-                  placeholder="Prenom"
-                  autoComplete="given-name"
-                  style={sharedInputStyle}
-                />
-              ) : null}
-
-              <input
-                name="email"
-                type="email"
-                placeholder="Email"
-                autoComplete="email"
-                required
-                style={sharedInputStyle}
-              />
-
-              <input
-                name="password"
-                type="password"
-                placeholder="Mot de passe"
-                autoComplete={isLogin ? "current-password" : "new-password"}
-                minLength={8}
-                required
-                style={sharedInputStyle}
-              />
-
-              <button
-                type="submit"
-                style={{
-                  background: "#3B5BDB",
-                  color: "#FFFFFF",
-                  borderRadius: "50px",
-                  padding: "14px",
-                  width: "100%",
-                  fontFamily: "var(--display-font)",
-                  fontWeight: 700,
-                  fontSize: "15px",
-                  border: "none",
-                  cursor: "pointer",
-                  boxShadow: "0 0 24px rgba(59,91,219,0.3)",
-                }}
-              >
-                {isLogin ? "Se connecter" : "Creer mon compte"}
-              </button>
-            </form>
-
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", color: "#8B8B9E", fontSize: "14px" }}>
-              <span>{isLogin ? "Pas encore de compte ?" : "Tu as deja un compte ?"}</span>
-              <Link
-                href={isLogin ? "/sign-in?mode=signup" : "/sign-in?mode=login"}
-                style={{ color: "#3B5BDB", textDecoration: "none" }}
-              >
-                {isLogin ? "S'inscrire" : "Se connecter"}
-              </Link>
-            </div>
+            <p style={{ color: "#8B8B9E", fontSize: "12px", textAlign: "center", margin: 0 }}>
+              Gratuit - pas de CB - pas de mot de passe
+            </p>
           </div>
         </div>
       </section>
@@ -312,7 +185,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           padding: "40px",
         }}
       >
-        <div style={{ display: "grid", gap: "0", justifyItems: "center", width: "100%" }}>
+        <div style={{ display: "grid", justifyItems: "center", width: "100%" }}>
           <h2
             style={{
               color: "#FFFFFF",
@@ -324,15 +197,13 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
               lineHeight: 1,
             }}
           >
-            Ton allie
-            <br />
-            pour reussir
+            Ce que tu debloques
           </h2>
 
           <div style={{ width: "100%", display: "grid", justifyItems: "center" }}>
-            {bulletItem("Fiche generee en 30 secondes")}
-            {bulletItem("Flashcards automatiques incluses")}
-            {bulletItem("Methode validee par les neurosciences")}
+            {bulletItem("Fiche complete sans zone floutee")}
+            {bulletItem("Carte mentale + methode Feynman")}
+            {bulletItem("2 fiches de test avant abonnement")}
           </div>
         </div>
       </section>

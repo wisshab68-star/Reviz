@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { HomeGenerator } from "@/components/home-generator";
 import { PremiumUpgradeBanner } from "@/components/premium-upgrade-banner";
+import { AuthTracker } from "@/components/AuthTracker";
 import { getCurrentUserAccess } from "@/lib/user-access";
 
 export const metadata: Metadata = {
@@ -51,6 +52,7 @@ export default async function AppPage({ searchParams }: AppPageProps) {
           gap: "20px",
         }}
       >
+        <AuthTracker userId={access.userId} />
         <PremiumUpgradeBanner active={upgraded} />
 
         <section className="landing-stage landing-stage-marketing" style={{ width: "100%", background: "#0F0F13" }}>

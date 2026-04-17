@@ -1,10 +1,12 @@
-import { Prisma } from "@prisma/client";
+﻿import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { sanitizeAiJsonValue } from "@/lib/text";
+import { optionalNonEmptyTrimmedString } from "@/lib/validations";
+import { assessSourceQuality } from "@/services/extract-service";
 import { generateInventory } from "@/services/generation-pipeline";
 import {
   assertInventoryNotEmpty,
@@ -18,7 +20,7 @@ const inventoryRequestSchema = z.object({
   sheetId: z.string().cuid(),
   content: z.string().trim().min(80),
   subject: z.string().trim().min(2).max(80).optional(),
-  titleHint: z.string().trim().min(1).max(160).optional(),
+  titleHint: optionalNonEmptyTrimmedString,
   userId: z.string().cuid().optional(),
 });
 
@@ -30,12 +32,40 @@ export async function POST(request: Request) {
 
   try {
     const parsed = inventoryRequestSchema.parse(await request.json());
+    const quality = assessSourceQuality(parsed.content);
+
+    if (!quality.isUsable) {
+      return Response.json(
+        {
+          error: "UNPROCESSABLE_FILE",
+          reason: quality.reason,
+          tokens_used: 0,
+        },
+        { status: 422 },
+      );
+    }
+
     const inventoryRecord = buildStoredInventoryPayload(parsed);
     const inventory = await generateInventory(inventoryRecord.sourceText, inventoryRecord.profile);
     assertInventoryNotEmpty(inventory);
 
+    const sheet = await db.studySheet.findFirst({
+      where: {
+        id: parsed.sheetId,
+        userId: session.user.id,
+      },
+      select: { id: true },
+    });
+
+    if (!sheet) {
+      return NextResponse.json(
+        { success: false, error: "Sheet not found" },
+        { status: 404 },
+      );
+    }
+
     await db.studySheet.update({
-      where: { id: parsed.sheetId },
+      where: { id: sheet.id },
       data: {
         inventoryJson: sanitizeAiJsonValue({
           ...inventoryRecord,
@@ -63,3 +93,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

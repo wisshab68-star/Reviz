@@ -17,6 +17,7 @@ import {
   saveCompletedSheet,
 } from "@/services/generate-sheet-stages";
 import { trackUsage } from "@/services/usage-service";
+import { sendGA4Event, extractGa4ClientId } from "@/lib/ga4-server";
 import type { ClassifiedContent } from "@/lib/prompts/classify-content";
 import type { FicheGeneree } from "@/types/fiche-generated";
 import type { GeneratedSheet } from "@/types/sheet";
@@ -33,6 +34,12 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const gaCookie = request.headers.get("cookie")
+    ?.split(";")
+    .find((c) => c.trim().startsWith("_ga="))
+    ?.split("=")[1];
+  const ga4ClientId = extractGa4ClientId(gaCookie) ?? undefined;
 
   let parsedBody: { sheetId: string } | null = null;
 
@@ -107,6 +114,13 @@ export async function POST(request: Request) {
 
     await saveCompletedSheet(sheetId, generated, fiche, sheet.userId ?? undefined);
     await trackUsage(sheet.userId ?? undefined, "sheet_generated");
+    if (sheet.userId) {
+      void sendGA4Event(sheet.userId, "sheet_generated", {
+        sheetId,
+        subject: classified.matiere,
+        timestamp: new Date().toISOString(),
+      }, ga4ClientId);
+    }
 
     return NextResponse.json({
       success: true,

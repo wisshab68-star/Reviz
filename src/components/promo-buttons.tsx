@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { getGa4ClientId } from "@/lib/analytics";
+
 export function PromoButtons() {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +15,7 @@ export function PromoButtons() {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, gaClientId: getGa4ClientId() }),
       });
       const data = (await res.json()) as { success: boolean; url?: string; error?: string };
       if (!data.success || !data.url) throw new Error(data.error ?? "Erreur Stripe.");

@@ -92,6 +92,7 @@ export async function createCheckoutSession(
   userId: string,
   userEmail: string,
   tier: "STANDARD" | "PRO",
+  gaClientId?: string,
 ) {
   const sub = await getOrCreateSubscription(userId);
   const config = PRICING_TIERS[tier];
@@ -109,7 +110,7 @@ export async function createCheckoutSession(
     mode: "subscription",
     success_url: `${appUrl}/pricing?success=true`,
     cancel_url: `${appUrl}/pricing`,
-    metadata: { userId, tier },
+    metadata: { userId, tier, ...(gaClientId ? { gaClientId } : {}) },
   });
 
   return session;
@@ -122,6 +123,7 @@ export async function createPromoCheckoutSession(
   userId: string,
   userEmail: string,
   promoTier: "EXAM_PROMO_20" | "EXAM_PROMO_40",
+  gaClientId?: string,
 ) {
   const sub = await getOrCreateSubscription(userId);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -148,7 +150,7 @@ export async function createPromoCheckoutSession(
     mode: "payment",
     success_url: `${appUrl}/pricing?promo_success=true`,
     cancel_url: `${appUrl}/pricing`,
-    metadata: { userId, tier: promoTier, isPromoExam: "true" },
+    metadata: { userId, tier: promoTier, isPromoExam: "true", ...(gaClientId ? { gaClientId } : {}) },
   });
 
   return session;

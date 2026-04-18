@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { getGa4ClientId } from "@/lib/analytics";
+
 type Plan = {
   id: "STANDARD" | "PRO";
   label: string;
@@ -56,7 +58,7 @@ export function PricingCards({ plans, currentTier, hasPremium, isLoggedIn }: Pri
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, gaClientId: getGa4ClientId() }),
       });
       const data = await res.json() as { success?: boolean; url?: string; error?: string };
       if (data.success && data.url) {

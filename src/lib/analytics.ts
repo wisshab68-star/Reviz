@@ -1,3 +1,12 @@
+export function getGa4ClientId(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const match = document.cookie.match(/(?:^|;\s*)_ga=([^;]+)/);
+  if (!match) return undefined;
+  const parts = match[1].split(".");
+  if (parts.length < 4) return undefined;
+  return `${parts[2]}.${parts[3]}`;
+}
+
 function gtag(...args: unknown[]) {
   if (typeof window !== "undefined" && (window as any).gtag) {
     (window as any).gtag(...args);
@@ -47,18 +56,16 @@ export function trackCreateOwnClicked(sheetId: string) {
   });
 }
 
-export function trackPaywallDisplayed(userId: string) {
+export function trackPaywallDisplayed(userId?: string) {
   gtag("event", "paywall_displayed", {
-    userId,
+    ...(userId ? { userId } : {}),
     timestamp: new Date().toISOString(),
   });
 }
 
-export function trackSubscriptionCompleted(subscriptionId: string, price: number) {
-  gtag("event", "subscription_completed", {
-    subscriptionId,
-    price,
-    currency: "EUR",
+export function trackPricingPageViewed() {
+  gtag("event", "pricing_page_viewed", {
     timestamp: new Date().toISOString(),
   });
 }
+

@@ -11,9 +11,13 @@ export async function POST(request: Request) {
   }
 
   let tier: string;
+  let gaClientId: string | undefined;
   try {
-    const body = await request.json() as { tier?: string };
+    const body = await request.json() as { tier?: string; gaClientId?: string };
     tier = body.tier ?? "STANDARD";
+    gaClientId = typeof body.gaClientId === "string" && body.gaClientId.length < 64
+      ? body.gaClientId
+      : undefined;
   } catch {
     tier = "STANDARD";
   }
@@ -26,12 +30,14 @@ export async function POST(request: Request) {
         session.user.id,
         session.user.email,
         tier,
+        gaClientId,
       );
     } else if (tier === "STANDARD" || tier === "PRO") {
       stripeSession = await createCheckoutSession(
         session.user.id,
         session.user.email,
         tier,
+        gaClientId,
       );
     } else {
       return NextResponse.json({ success: false, error: "Tier invalide." }, { status: 400 });

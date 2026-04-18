@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { trackPaywallDisplayed, getGa4ClientId } from "@/lib/analytics";
 
 type Plan = {
   id: "STANDARD" | "PRO";
@@ -59,9 +61,12 @@ type TryPaywallProps = {
 export function TryPaywall({ isLoggedIn }: TryPaywallProps) {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
+  useEffect(() => {
+    trackPaywallDisplayed();
+  }, []);
+
   async function handleSubscribe(tier: "STANDARD" | "PRO") {
     if (!isLoggedIn) {
-      // Not logged in: send to sign-in, then pricing
       window.location.href = `/sign-in?mode=signup&redirectTo=/pricing`;
       return;
     }
@@ -71,7 +76,7 @@ export function TryPaywall({ isLoggedIn }: TryPaywallProps) {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, gaClientId: getGa4ClientId() }),
       });
       const data = await res.json() as { success?: boolean; url?: string; error?: string };
       if (data.success && data.url) {

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { getGa4ClientId } from "@/lib/analytics";
+
 type BillingActionsProps = {
   currentTier: string;
   hasPremium: boolean;
@@ -19,7 +21,7 @@ export function BillingActions({ currentTier, hasPremium }: BillingActionsProps)
       const response = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, gaClientId: getGa4ClientId() }),
       });
       const data = (await response.json()) as { success: boolean; url?: string; error?: string };
 

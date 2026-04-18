@@ -7,6 +7,7 @@ import {
   downgradeToFree,
   handlePromoPurchase,
 } from "@/lib/stripe/subscription-service";
+import { sendGA4Event } from "@/lib/ga4-server";
 
 export const runtime = "nodejs";
 
@@ -38,11 +39,18 @@ export async function POST(request: Request) {
         const userId = session.metadata?.userId;
         if (!userId) break;
 
+        const gaClientId = session.metadata?.gaClientId ?? undefined;
+
         // One-time promo purchase
         if (session.metadata?.isPromoExam === "true") {
           const promoTier = session.metadata.tier as "EXAM_PROMO_20" | "EXAM_PROMO_40";
           if (promoTier) {
             await handlePromoPurchase(userId, promoTier);
+            await sendGA4Event(userId, "promo_purchase_completed", {
+              promo_tier: promoTier,
+              value: (session.amount_total ?? 0) / 100,
+              currency: "EUR",
+            }, gaClientId);
             console.log({ event: event.type, userId, promoTier });
           }
           break;
@@ -74,7 +82,7 @@ export async function POST(request: Request) {
             subscription_id: sub.id,
             value: amountPaid / 100,
             currency: "EUR",
-          });
+          }, gaClientId);
           console.log({ event: event.type, userId, newStatus: sub.status, priceId });
         }
         break;
@@ -116,6 +124,9 @@ export async function POST(request: Request) {
         });
         if (record) {
           await downgradeToFree(record.userId);
+          await sendGA4Event(record.userId, "subscription_cancelled", {
+            subscription_id: sub.id,
+          });
           console.log({ event: event.type, userId: record.userId, newStatus: "FREE" });
         }
         break;
@@ -129,38 +140,3 @@ export async function POST(request: Request) {
   return new Response("ok", { status: 200 });
 }
 
-async function sendGA4Event(
-  userId: string,
-  eventName: string,
-  params: Record<string, unknown>,
-) {
-  const measurementId = process.env.GA4_MEASUREMENT_ID;
-  const apiSecret = process.env.GA4_API_SECRET;
-
-  if (!measurementId || !apiSecret) {
-    console.warn("[GA4] GA4_MEASUREMENT_ID or GA4_API_SECRET not set — skipping event");
-    return;
-  }
-
-  const body = {
-    client_id: `server.${userId}`,
-    user_id: userId,
-    events: [{ name: eventName, params }],
-  };
-
-  try {
-    const res = await fetch(
-      `https://www.google-analytics.com/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      },
-    );
-    if (!res.ok) {
-      console.error("[GA4] Measurement Protocol failed:", res.status, res.statusText);
-    }
-  } catch (err) {
-    console.error("[GA4] Measurement Protocol error:", err);
-  }
-}

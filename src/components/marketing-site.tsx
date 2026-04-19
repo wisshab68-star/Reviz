@@ -221,32 +221,28 @@ export function MarketingSite() {
       <main className="page">
         <HeroSection />
 
-        <section className="section-band video-band" style={{ background: "#0d0d0d", padding: "5rem 0" }}>
-          <div className="container section" style={{ paddingTop: "0", paddingBottom: "0" }}>
-            <div className="section-head" style={{ marginBottom: "2.5rem" }}>
-              <h2 className="reviz-reveal" style={{ color: "#fff" }}>
+        <section className="section-band video-band" style={{ background: "#0d0d0d" }}>
+          <div className="video-band-inner">
+            {/* Colonne gauche : texte */}
+            <div className="video-band-text">
+              <h2 className="reviz-reveal" style={{ color: "#fff", margin: 0 }}>
                 Vois comment Reviz transforme ton cours en fiche
               </h2>
-              <p className="section-note reviz-reveal reviz-reveal-delay-1" style={{ color: "rgba(255,255,255,0.6)" }}>
-                Upload, choisis ta matière, et ta fiche complète arrive en moins d'1 minute.
+              <p className="section-note reviz-reveal reviz-reveal-delay-1" style={{ color: "rgba(255,255,255,0.6)", marginTop: "1.25rem" }}>
+                Upload ton cours, choisis ta matière, et ta fiche complète arrive en moins d'1 minute.
               </p>
+              <div style={{ marginTop: "2rem" }} className="reviz-reveal reviz-reveal-delay-2">
+                <a href="/try" className="btn btn-primary" style={{ display: "inline-flex", textDecoration: "none" }}>
+                  Essayer gratuitement →
+                </a>
+              </div>
             </div>
-            {/* Vidéo 9:16 centrée — format mobile natif */}
-            <div
-              className="reviz-reveal reviz-reveal-delay-1"
-              style={{
-                position: "relative",
-                width: "min(340px, 90vw)",
-                margin: "0 auto",
-                aspectRatio: "9/16",
-                borderRadius: "28px",
-                border: "3px solid #050505",
-                boxShadow: "10px 10px 0 #2f5bff, 0 40px 80px rgba(0,0,0,0.5)",
-                overflow: "hidden",
-                background: "#fff",
-              }}
-            >
-              <RevizVideoPlayer />
+
+            {/* Colonne droite : vidéo pleine hauteur */}
+            <div className="video-band-player reviz-reveal reviz-reveal-delay-1">
+              <div className="video-frame">
+                <RevizVideoPlayer />
+              </div>
             </div>
           </div>
         </section>
@@ -622,6 +618,17 @@ export function MarketingSite() {
         .faq-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s ease, padding-bottom 0.28s ease; padding-bottom: 0; }
         .faq-panel[data-open="true"] { grid-template-rows: 1fr; padding-bottom: 20px; }
         .faq-panel p { margin: 0; overflow: hidden; color: #616875; line-height: 1.7; }
+        /* ── Video band ── */
+        .video-band-inner { display: grid; grid-template-columns: 1fr auto; min-height: 90vh; max-width: 1400px; margin: 0 auto; padding: 0 40px; gap: 60px; align-items: center; }
+        .video-band-text { max-width: 520px; }
+        .video-band-text h2 { font-size: clamp(2.4rem, 4vw, 4rem); }
+        .video-band-player { display: flex; align-items: center; justify-content: flex-end; height: 90vh; }
+        .video-frame { height: 85vh; aspect-ratio: 9/16; border-radius: 28px; border: 3px solid #050505; box-shadow: 10px 10px 0 #2f5bff, 0 40px 80px rgba(0,0,0,0.6); overflow: hidden; background: #fff; flex-shrink: 0; }
+        @media (max-width: 900px) {
+          .video-band-inner { grid-template-columns: 1fr; min-height: auto; padding: 60px 24px; gap: 40px; }
+          .video-band-player { height: auto; justify-content: center; }
+          .video-frame { height: auto; width: min(320px, 85vw); aspect-ratio: 9/16; }
+        }
         .blue-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
         .particle { position: absolute; bottom: 0; border-radius: 50%; background: rgba(255,255,255,0.3); animation: float-particle linear infinite; }
         .social-proof { background: #090909; color: #ffffff; }

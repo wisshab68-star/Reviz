@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { FicheRenderer } from "@/components/fiche/FicheRenderer";
 import { TryPaywall } from "@/components/try/TryPaywall";
-import { trackCreateOwnClicked } from "@/lib/analytics";
+import { trackCreateOwnClicked, trackUploadPdfInitiated, trackUploadPdfCompleted, trackTestSheetViewed } from "@/lib/analytics";
 import type { FicheGeneree } from "@/types/fiche-generated";
 
 type Step = "input" | "uploading" | "viewing";
@@ -66,6 +66,8 @@ function getFriendlyError(status: number, error?: string) {
 
 export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isTester = searchParams.get("tester") === "1";
   const [isHydrated, setIsHydrated] = useState(false);
   const [isLoggedIn] = useState(initialIsLoggedIn);
   const [step, setStep] = useState<Step>("input");
@@ -78,6 +80,9 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (isTester) {
+      writeStoredState({ count: 0, fiche: null });
+    }
     const storedState = readStoredState();
     setTryCount(storedState.count);
     setFiche(storedState.fiche);
@@ -112,7 +117,7 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
   }
 
   async function handleFile(file: File) {
-
+    trackUploadPdfInitiated();
     setError(null);
     setStep("uploading");
 
@@ -208,6 +213,8 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
 
       setFiche(step2Data.fiche);
       setTryCount((currentCount) => Math.min(currentCount + 1, MAX_FREE_TRIES));
+      trackUploadPdfCompleted(0, step2Data.fiche?.subject ?? "unknown");
+      trackTestSheetViewed(step2Data.fiche?.id ?? "demo");
       setText("");
       setError(null);
       setStep("viewing");
@@ -451,7 +458,7 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
   }
 
   // Show paywall when limit is reached and no fiche is currently displayed
-  if (hasReachedTryLimit && step === "input") {
+  if (hasReachedTryLimit && step === "input" && !isTester) {
     return <TryPaywall isLoggedIn={isLoggedIn} />;
   }
 

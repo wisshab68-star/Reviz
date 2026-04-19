@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { trackPaywallDisplayed, getGa4ClientId } from "@/lib/analytics";
+import { trackPaywallDisplayed, trackPaywallShown, trackStripeRedirectClicked, trackGoogleSigninClicked, getGa4ClientId } from "@/lib/analytics";
 
 type Plan = {
   id: "STANDARD" | "PRO";
@@ -63,14 +63,17 @@ export function TryPaywall({ isLoggedIn }: TryPaywallProps) {
 
   useEffect(() => {
     trackPaywallDisplayed();
+    trackPaywallShown("quota_reached");
   }, []);
 
   async function handleSubscribe(tier: "STANDARD" | "PRO") {
     if (!isLoggedIn) {
+      trackGoogleSigninClicked("try_paywall");
       window.location.href = `/sign-in?mode=signup&redirectTo=/pricing`;
       return;
     }
 
+    trackStripeRedirectClicked();
     setLoadingTier(tier);
     try {
       const res = await fetch("/api/billing/checkout", {

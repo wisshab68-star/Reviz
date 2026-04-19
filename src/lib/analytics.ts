@@ -69,3 +69,30 @@ export function trackPricingPageViewed() {
   });
 }
 
+export function trackGoogleSigninClicked(source: string) {
+  gtag("event", "google_signin_clicked", {
+    source, // "blurred_sheet" | "try_paywall" | "sheet_preview"
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export function trackSheetUnlocked(sheetId: string) {
+  gtag("event", "sheet_unlocked", {
+    sheetId,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export function trackPaywallShown(trigger: string) {
+  gtag("event", "paywall_shown", {
+    trigger, // "quota_reached" | "second_sheet"
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export function trackStripeRedirectClicked() {
+  gtag("event", "stripe_redirect_clicked", {
+    timestamp: new Date().toISOString(),
+  });
+}
+

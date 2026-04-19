@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { FicheRenderer } from "@/components/fiche/FicheRenderer";
 import { TryPaywall } from "@/components/try/TryPaywall";
-import { trackCreateOwnClicked, trackUploadPdfInitiated, trackUploadPdfCompleted, trackTestSheetViewed } from "@/lib/analytics";
+import { trackCreateOwnClicked, trackUploadPdfInitiated, trackUploadPdfCompleted, trackTestSheetViewed, trackGoogleSigninClicked, trackSheetUnlocked, trackPaywallShown } from "@/lib/analytics";
 import type { FicheGeneree } from "@/types/fiche-generated";
 
 type Step = "input" | "uploading" | "viewing";
@@ -215,6 +215,7 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
       setTryCount((currentCount) => Math.min(currentCount + 1, MAX_FREE_TRIES));
       trackUploadPdfCompleted(0, step2Data.fiche?.matiere ?? "unknown");
       trackTestSheetViewed("demo");
+      if (isLoggedIn) trackSheetUnlocked("demo");
       setText("");
       setError(null);
       setStep("viewing");
@@ -300,7 +301,7 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
             </p>
             <Link
               href="/sign-in?mode=signup&redirectTo=/try"
-              onClick={() => trackCreateOwnClicked("try-demo")}
+              onClick={() => { trackGoogleSigninClicked("blurred_sheet"); trackCreateOwnClicked("try-demo"); }}
               style={{
                 background: "#2F5BFF",
                 color: "#fff",

@@ -5,6 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { RevizMascotDoodle, RevizMindOrbitDoodle, RevizNotebookDoodle } from "@/components/reviz-illustrations";
+import { trackGoogleSigninClicked } from "@/lib/analytics";
 import { SheetView } from "@/components/sheet-view";
 import type { FicheGeneree } from "@/types/fiche-generated";
 import type { GeneratedSheet } from "@/types/sheet";
@@ -192,7 +193,7 @@ function SheetPreviewInner() {
             <strong>Tu rates le plus important</strong>
             <span style={{ color: "rgba(255,255,255,0.55)", fontWeight: 400 }}> — moins cher qu'un McDo</span>
           </p>
-          <Link href="/sign-in?mode=signup" className="btn btn-primary" style={{ flexShrink: 0, fontWeight: 700 }}>
+          <Link href="/sign-in?mode=signup" className="btn btn-primary" style={{ flexShrink: 0, fontWeight: 700 }} onClick={() => trackGoogleSigninClicked("sheet_preview")}>
             Continuer avec Google →
           </Link>
         </div>

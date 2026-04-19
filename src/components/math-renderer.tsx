@@ -15,6 +15,12 @@ const KNOWN_LATEX_COMMANDS = new Set([
   'vec', 'forall', 'exists', 'emptyset', 'cdot', 'leq', 'geq', 'neq', 'infty',
   'mathbb', 'left', 'right', 'overline', 'underline', 'alpha', 'beta', 'gamma',
   'delta', 'epsilon', 'lambda', 'mu', 'pi', 'sigma', 'theta', 'phi', 'psi', 'omega',
+  'mapsto', 'to', 'Rightarrow', 'Leftarrow', 'Leftrightarrow', 'rightarrow', 'leftarrow',
+  'leftrightarrow', 'iff', 'implies', 'in', 'notin', 'subset', 'subseteq', 'supset',
+  'supseteq', 'land', 'lor', 'lnot', 'neg', 'wedge', 'vee', 'equiv', 'sim', 'simeq',
+  'approx', 'pm', 'mp', 'div', 'mod', 'circ', 'bullet', 'oplus', 'otimes', 'partial',
+  'nabla', 'perp', 'parallel', 'angle', 'triangle', 'square', 'Diamond', 'ell',
+  'Re', 'Im', 'wp', 'aleph', 'hbar', 'imath', 'jmath',
 ])
 
 function escapeHtml(value: string) {

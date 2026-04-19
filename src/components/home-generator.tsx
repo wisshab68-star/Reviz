@@ -605,7 +605,7 @@ export function HomeGenerator({
       const steps = [
         {
           key: "import",
-          label: "Ã‰cris ou importe",
+          label: "Écris ou importe",
           done: isStepOneDone,
           active: currentStep === 1,
         },

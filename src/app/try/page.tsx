@@ -162,7 +162,7 @@ export default async function TryPage() {
               }}
             />
             <span style={{ fontSize: 12, color: "#8B8B9E", fontWeight: 600, letterSpacing: "0.04em" }}>
-              Gratuit · Sans inscription · 30 secondes
+              Gratuit · Sans inscription · moins d'1 min
             </span>
           </div>
 
@@ -178,7 +178,7 @@ export default async function TryPage() {
             }}
           >
             Transforme ton cours<br />
-            <span style={{ color: "#2F5BFF" }}>en fiche en 30 sec</span>
+            <span style={{ color: "#2F5BFF" }}>en fiche en moins d'1 min</span>
           </h1>
 
           <p style={{ color: "#8B8B9E", fontSize: 15, margin: 0, lineHeight: 1.7 }}>
@@ -203,7 +203,7 @@ export default async function TryPage() {
           }}
         >
           {[
-            { value: "30 s", label: "pour générer" },
+            { value: "< 1 min", label: "pour générer" },
             { value: "5", label: "formats acceptés" },
             { value: "100%", label: "IA pédagogique" },
           ].map((stat) => (

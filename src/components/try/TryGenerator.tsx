@@ -213,8 +213,8 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
 
       setFiche(step2Data.fiche);
       setTryCount((currentCount) => Math.min(currentCount + 1, MAX_FREE_TRIES));
-      trackUploadPdfCompleted(0, step2Data.fiche?.subject ?? "unknown");
-      trackTestSheetViewed(step2Data.fiche?.id ?? "demo");
+      trackUploadPdfCompleted(0, step2Data.fiche?.matiere ?? "unknown");
+      trackTestSheetViewed("demo");
       setText("");
       setError(null);
       setStep("viewing");

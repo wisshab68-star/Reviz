@@ -167,13 +167,13 @@ export default function HeroSection() {
         </h1>
 
         <p className={styles.subheadline}>
-          Générées en 30 secondes, basées sur les mécanismes de la mémoire
+          Générées en moins d'1 minute, basées sur les mécanismes de la mémoire
           validés par les neurosciences.
         </p>
 
         <div className={styles.ctaSection}>
           <Link href="/try" className={styles.btnPrimary} onClick={trackClickCtaLanding}>
-            Génère ta fiche en 30 secondes
+            Génère ta fiche en moins d'1 min
           </Link>
           <Link href="/sign-in" className={styles.btnSecondary}>
             Se connecter

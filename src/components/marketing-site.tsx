@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { MethodeReviz } from "@/components/landing/MethodeReviz";
 import HeroSection from "@/components/landing/HeroSection";
+import { RevizVideoPlayer } from "@/components/landing/RevizVideoPlayer";
 
 const sourceCards = [
   {
@@ -220,53 +221,32 @@ export function MarketingSite() {
       <main className="page">
         <HeroSection />
 
-        <section className="section-band video-placeholder-band" style={{ background: "#0d0d0d", padding: "5rem 0" }}>
-          <div className="container section">
+        <section className="section-band video-band" style={{ background: "#0d0d0d", padding: "5rem 0" }}>
+          <div className="container section" style={{ paddingTop: "0", paddingBottom: "0" }}>
             <div className="section-head" style={{ marginBottom: "2.5rem" }}>
               <h2 className="reviz-reveal" style={{ color: "#fff" }}>
                 Vois comment Reviz transforme ton cours en fiche
               </h2>
               <p className="section-note reviz-reveal reviz-reveal-delay-1" style={{ color: "rgba(255,255,255,0.6)" }}>
-                En 30 secondes, importe ton cours et obtiens une fiche structurée, des flashcards, et une carte mentale.
+                Upload, choisis ta matière, et ta fiche complète arrive en moins d'1 minute.
               </p>
             </div>
+            {/* Vidéo 9:16 centrée — format mobile natif */}
             <div
               className="reviz-reveal reviz-reveal-delay-1"
               style={{
                 position: "relative",
-                maxWidth: "720px",
+                width: "min(340px, 90vw)",
                 margin: "0 auto",
-                aspectRatio: "16/9",
-                background: "#1a1a1a",
-                borderRadius: "16px",
-                border: "1px solid rgba(255,255,255,0.1)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "1rem",
+                aspectRatio: "9/16",
+                borderRadius: "28px",
+                border: "3px solid #050505",
+                boxShadow: "10px 10px 0 #2f5bff, 0 40px 80px rgba(0,0,0,0.5)",
                 overflow: "hidden",
+                background: "#fff",
               }}
             >
-              <div
-                aria-hidden="true"
-                style={{
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "50%",
-                  background: "rgba(99,102,241,0.2)",
-                  border: "2px solid rgba(99,102,241,0.5)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1.8rem",
-                }}
-              >
-                ▶
-              </div>
-              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", margin: 0 }}>
-                Vidéo de présentation — bientôt disponible
-              </p>
+              <RevizVideoPlayer />
             </div>
           </div>
         </section>

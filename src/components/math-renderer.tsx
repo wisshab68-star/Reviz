@@ -9,7 +9,8 @@ interface MathRendererProps {
 
 const EXPLICIT_MATH_PATTERN = /\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g
 const EXPLICIT_MATH_DETECTOR = /\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/
-const NAKED_LATEX_PATTERN = /\\(?:frac|bar|cup|cap|text|times|sqrt|sum|int|lim|vec|forall|exists|emptyset|cdot|leq|geq|neq|infty|mathbb|left|right|Si|et|ou)\b|\\[A-Za-z]+(?=\{)|P\([^)]*\\(?:cup|cap|bar)[^)]*\)/
+// Kept for P(...) special case only — command detection now uses KNOWN_LATEX_COMMANDS
+const NAKED_LATEX_SPECIAL = /\\[A-Za-z]+(?=\{)|P\([^)]*\\(?:cup|cap|bar)[^)]*\)/
 const KNOWN_LATEX_COMMANDS = new Set([
   'frac', 'bar', 'cup', 'cap', 'text', 'times', 'sqrt', 'sum', 'int', 'lim',
   'vec', 'forall', 'exists', 'emptyset', 'cdot', 'leq', 'geq', 'neq', 'infty',
@@ -58,11 +59,18 @@ function normalizeMathInput(value: string) {
 
 function looksLikeNakedLatex(value: string) {
   const text = value.trim()
+  if (!text) return false
 
-  if (!text || !NAKED_LATEX_PATTERN.test(text)) {
-    return false
-  }
+  // Check for known LaTeX commands (covers \mapsto, \to, \frac, \rightarrow, etc.)
+  const commands = text.match(/\\([A-Za-z]+)/g)
+  const hasKnownCommand = commands?.some(cmd => KNOWN_LATEX_COMMANDS.has(cmd.slice(1))) ?? false
 
+  // Also check for \cmd{...} pattern and P(...) special case
+  const hasSpecial = NAKED_LATEX_SPECIAL.test(text)
+
+  if (!hasKnownCommand && !hasSpecial) return false
+
+  // Reject if too many long natural-language words (it's a sentence, not a formula)
   const longWords = text.match(/[A-Za-zÀ-ÿ']{9,}/g) ?? []
   return longWords.length <= 6
 }

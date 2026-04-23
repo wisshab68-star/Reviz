@@ -471,7 +471,7 @@ function prepareModelInputText(sourceText: string): string {
     .filter((line) => !/[|]{2,}/.test(line));
 
   const text = lines.join("\n");
-  const MAX_CHARS = 4000 * 4; // ~4000 tokens
+  const MAX_CHARS = 8_000; // keep below 9000 chunk threshold → always single Haiku call
   return text.slice(0, MAX_CHARS).trim();
 }
 

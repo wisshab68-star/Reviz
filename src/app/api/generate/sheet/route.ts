@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -9,14 +10,18 @@ import { selectPedagogicalBlueprint } from "@/lib/pedagogy/blueprint-selector";
 import {
   collectStrictFormulas,
   createSheetBudget,
+  generateInventory,
   generateSheet,
 } from "@/services/generation-pipeline";
 import {
+  assertInventoryNotEmpty,
+  buildStoredInventoryPayload,
   finalizeFicheForSave,
   markSheetFailed,
   parseStoredInventoryPayload,
   saveCompletedSheet,
 } from "@/services/generate-sheet-stages";
+import { assessSourceQuality } from "@/services/extract-service";
 import { trackUsage } from "@/services/usage-service";
 import { sendGA4Event, extractGa4ClientId } from "@/lib/ga4-server";
 import type { ClassifiedContent } from "@/lib/prompts/classify-content";
@@ -74,17 +79,50 @@ export async function POST(request: Request) {
       );
     }
 
-    const stored = parseStoredInventoryPayload(sheet.inventoryJson);
-    if (!stored) {
-      throw new Error("L'inventaire intermediaire est introuvable ou invalide.");
-    }
+    let stored = parseStoredInventoryPayload(sheet.inventoryJson);
 
     const sourceText = sheet.document?.extractedText?.trim()
       || sheet.document?.rawText?.trim()
-      || stored.sourceText.trim();
+      || stored?.sourceText.trim()
+      || "";
 
     if (!sourceText) {
       throw new Error("Le contenu source est introuvable pour generer la fiche.");
+    }
+
+    if (!stored) {
+      // Inventory not yet generated — run it inline before generating the sheet
+      const quality = assessSourceQuality(sourceText);
+      if (!quality.isUsable) {
+        return NextResponse.json(
+          { success: false, error: "UNPROCESSABLE_FILE", reason: quality.reason },
+          { status: 422 },
+        );
+      }
+
+      const inventoryRecord = buildStoredInventoryPayload({
+        content: sourceText,
+        subject: undefined,
+        titleHint: sheet.title ?? undefined,
+        userId: sheet.userId ?? undefined,
+      });
+      const budget = createSheetBudget();
+      const inventory = await generateInventory(inventoryRecord.sourceText, inventoryRecord.profile, budget);
+      assertInventoryNotEmpty(inventory);
+
+      await db.studySheet.update({
+        where: { id: sheetId },
+        data: {
+          inventoryJson: sanitizeAiJsonValue({
+            ...inventoryRecord,
+            inventory,
+          }) as unknown as Prisma.InputJsonValue,
+          status: "PROCESSING",
+          updatedAt: new Date(),
+        },
+      });
+
+      stored = { ...inventoryRecord, inventory };
     }
 
     const blueprint = selectPedagogicalBlueprint(stored.profile, stored.inventory);

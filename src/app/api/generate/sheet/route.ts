@@ -79,6 +79,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // One shared budget for the entire request (inventory + sheet must fit within 60s Vercel limit)
+    const budget = createSheetBudget();
+
     let stored = parseStoredInventoryPayload(sheet.inventoryJson);
 
     const sourceText = sheet.document?.extractedText?.trim()
@@ -106,7 +109,6 @@ export async function POST(request: Request) {
         titleHint: sheet.title ?? undefined,
         userId: sheet.userId ?? undefined,
       });
-      const budget = createSheetBudget();
       const inventory = await generateInventory(inventoryRecord.sourceText, inventoryRecord.profile, budget);
       assertInventoryNotEmpty(inventory);
 
@@ -143,7 +145,7 @@ export async function POST(request: Request) {
       classified,
       blueprint,
       strictFormulas,
-      createSheetBudget(),
+      budget,
     );
 
     const fiche = finalizeFicheForSave(

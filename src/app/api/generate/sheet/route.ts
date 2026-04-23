@@ -8,6 +8,7 @@ import { sanitizeAiJsonValue } from "@/lib/text";
 import { selectPedagogicalBlueprint } from "@/lib/pedagogy/blueprint-selector";
 import {
   collectStrictFormulas,
+  createSheetBudget,
   generateSheet,
 } from "@/services/generation-pipeline";
 import {
@@ -104,6 +105,7 @@ export async function POST(request: Request) {
       classified,
       blueprint,
       strictFormulas,
+      createSheetBudget(),
     );
 
     const fiche = finalizeFicheForSave(

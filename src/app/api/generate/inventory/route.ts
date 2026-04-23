@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { sanitizeAiJsonValue } from "@/lib/text";
 import { optionalNonEmptyTrimmedString } from "@/lib/validations";
 import { assessSourceQuality } from "@/services/extract-service";
-import { generateInventory } from "@/services/generation-pipeline";
+import { generateInventory, createInventoryBudget } from "@/services/generation-pipeline";
 import {
   assertInventoryNotEmpty,
   buildStoredInventoryPayload,
@@ -46,7 +46,8 @@ export async function POST(request: Request) {
     }
 
     const inventoryRecord = buildStoredInventoryPayload(parsed);
-    const inventory = await generateInventory(inventoryRecord.sourceText, inventoryRecord.profile);
+    const budget = createInventoryBudget();
+    const inventory = await generateInventory(inventoryRecord.sourceText, inventoryRecord.profile, budget);
     assertInventoryNotEmpty(inventory);
 
     const sheet = await db.studySheet.findFirst({
@@ -84,10 +85,13 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[GENERATE][INVENTORY] failed:", error);
 
+    const message = error instanceof Error ? error.message : "La generation de l'inventaire a echoue.";
+    const isTimeout = /PIPELINE_BUDGET_EXCEEDED/i.test(message);
+
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "La generation de l'inventaire a echoue.",
+        error: isTimeout ? "FUNCTION_INVOCATION_TIMEOUT" : message,
       },
       { status: 500 },
     );

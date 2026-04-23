@@ -1,4 +1,4 @@
-﻿import pdfParse from "pdf-parse";
+import pdfParse from "pdf-parse";
 
 import { MODELS } from "@/lib/models";
 import { anthropic } from "@/lib/openai";
@@ -63,14 +63,14 @@ function removeMetadataLines(text: string): string {
     // Lignes courtes contenant un nom propre + mot-cle scolaire = metadata
     if (
       wordCount <= 10
-      && /[A-Z][a-zÃ -Ã¿]+\s+[A-Z][a-zÃ -Ã¿]+/.test(trimmed)
-      && /\b(Sp[eÃ©]cialit[eÃ©]|Terminale|Premi[eÃ¨]re|Seconde|Lyc[eÃ©]e|Coll[eÃ¨]ge|Professeur|Prof\b|Manuel|[EÃ‰]dition|Acad[eÃ©]mie)\b/i.test(trimmed)
+      && /[A-Z][a-zà-ÿ]+\s+[A-Z][a-zà-ÿ]+/.test(trimmed)
+      && /\b(Sp[eé]cialit[eé]|Terminale|Premi[eè]re|Seconde|Lyc[eé]e|Coll[eè]ge|Professeur|Prof\b|Manuel|[EÉ]dition|Acad[eé]mie)\b/i.test(trimmed)
     ) {
       return false;
     }
 
     // Copyright, ISBN, editeurs
-    if (/^\s*(Â©|Copyright)\b/i.test(trimmed) || /^\s*ISBN\b/i.test(trimmed) || /\b[EÃ‰]ditions?\s+[A-Z]/i.test(trimmed)) {
+    if (/^\s*(©|Copyright)\b/i.test(trimmed) || /^\s*ISBN\b/i.test(trimmed) || /\b[EÉ]ditions?\s+[A-Z]/i.test(trimmed)) {
       return false;
     }
 
@@ -81,7 +81,7 @@ function removeMetadataLines(text: string): string {
 
     // Lignes type "Chapitre 3" ou "Cours de Terminale" isolees
     if (
-      /^(Chapitre|Cours|Le[cÃ§]on|Activit[eÃ©]|Exercice|Fiche|Document)\s+\d\b/i.test(trimmed)
+      /^(Chapitre|Cours|Le[cç]on|Activit[eé]|Exercice|Fiche|Document)\s+\d\b/i.test(trimmed)
       && wordCount <= 12
     ) {
       return false;
@@ -109,9 +109,9 @@ export function cleanExtractedText(text: string) {
   cleaned = cleaned
     .replace(/\\[a-zA-Z]+\{[^}]{0,50}\}/g, "")
     .replace(/[tuq]\{[^}]{0,20}\}/g, "")
-    .replace(/[\u25A0-\u25FFâ–¡â– ]{2,}/g, "")
+    .replace(/[\u25A0-\u25FF□■]{2,}/g, "")
     .replace(/^\s*\d+\.\d+(\.\d+)*\s*$/gm, "")
-    .replace(/[Â«Â»â€ž"â€Ÿ]/g, "\"")
+    .replace(/[«»„"‟]/g, "\"")
     .replace(/\u201C|\u201D|\u201E|\u201F/g, "\"");
   cleaned = normalizeDocumentText(cleaned).replace(/\n{3,}/g, "\n\n").trim();
 
@@ -136,9 +136,9 @@ export function cleanExtractedText(text: string) {
 
       const isProfInstruction =
         /\(H[0-9]+\)/i.test(trimmed)
-        || /Ã€ FAIRE POUR/i.test(trimmed)
+        || /À FAIRE POUR/i.test(trimmed)
         || /LIRE MANUEL/i.test(trimmed)
-        || /pages? [0-9]+ Ã  [0-9]+/i.test(trimmed)
+        || /pages? [0-9]+ à [0-9]+/i.test(trimmed)
         || /sur [0-9]+ pages?/i.test(trimmed)
         || /[0-9]+\/[0-9]+\s*$/i.test(trimmed);
       if (isProfInstruction) {
@@ -146,24 +146,31 @@ export function cleanExtractedText(text: string) {
       }
 
       const isProfConsigne =
-        /p\d{2,3}\s*n[Â°o]?\s*\d/i.test(trimmed)
-        || /act(ivitÃƒÂ©)?\s*conseillÃƒÂ©e/i.test(trimmed)
-        || /exercices?\s*conseillÃƒÂ©s?/i.test(trimmed)
+        /p\d{2,3}\s*n[°o]?\s*\d/i.test(trimmed)
+        || /act(ivitÃ©)?\s*conseillÃ©e/i.test(trimmed)
+        || /exercices?\s*conseillÃ©s?/i.test(trimmed)
         || /en\s*devoir/i.test(trimmed)
-        || /ÃƒÂ©dition\s*\d{4}/i.test(trimmed)
-        || /odyssÃƒÂ©e\s*\d/i.test(trimmed)
+        || /Ã©dition\s*\d{4}/i.test(trimmed)
+        || /odyssÃ©e\s*\d/i.test(trimmed)
         || /hatier|bordas|nathan|hachette|magnard/i.test(trimmed)
         || /youtu\.be|youtube\.com/i.test(trimmed)
-        || /TP\s*(tice|algo|conseillÃƒÂ©)/i.test(trimmed)
+        || /TP\s*(tice|algo|conseillÃ©)/i.test(trimmed)
         || /\bact\d\b/i.test(trimmed)
-        || (/\bp\.\s*\d{3}/.test(trimmed) && trimmed.length < 80);
+        || (/p\d{3}/.test(trimmed) && trimmed.length < 80);
       if (isProfConsigne) {
         return false;
       }
 
+      const startsWithConjugatedVerb =
+        /^(sont|est|ont|a|était|étaient|sera|seront|peut|peuvent|doit|doivent|fait|font|va|vont|permet|permettent)\b/i
+          .test(trimmed);
+      if (startsWithConjugatedVerb) {
+        return false;
+      }
+
       const isOrphanFragment =
-        /^(- [a-zÃ Ã¢Ã©Ã¨ÃªÃ«Ã®Ã¯Ã´Ã¹Ã»Ã¼Ã§])/.test(trimmed)
-        && trimmed.length < 20;
+        /^(- [a-zàâéèêëîïôùûüç])/.test(trimmed)
+        && trimmed.length < 40;
       if (isOrphanFragment) {
         return false;
       }
@@ -172,7 +179,7 @@ export function cleanExtractedText(text: string) {
         return false;
       }
 
-      if (trimmed.length < 6) {
+      if (trimmed.length < 15) {
         return false;
       }
 
@@ -258,12 +265,6 @@ export function assessSourceQuality(sourceText: string): SourceQuality {
   const totalChars = sourceText.length;
   const alphanumChars = (sourceText.match(/[a-zA-Z0-9àâäéèêëîïôùûüœæçñÀÂÄÉÈÊËÎÏÔÙÛÜŒÆÇÑ]/g) ?? []).length;
   const alphanumDensity = totalChars > 0 ? alphanumChars / totalChars : 0;
-  const nonEmptyLines = sourceText
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-  const shortLines = nonEmptyLines.filter((line) => line.length < 10).length;
-  const shortLineRatio = nonEmptyLines.length > 0 ? shortLines / nonEmptyLines.length : 0;
   const noiseChars = (
     sourceText.match(/[^\w\sÀ-ÿ.,;:!?()\-"'\/+=%°€£@&#\n\r\t√∫×÷≤≥π→⇌₂μÅ↔]/g) ?? []
   ).length;
@@ -279,11 +280,6 @@ export function assessSourceQuality(sourceText: string): SourceQuality {
   }
   if (alphanumDensity < 0.2) {
     const reason = `Densité alphanumérique insuffisante (${alphanumDensity.toFixed(2)}, minimum 0.20)`;
-    warnings.push(reason);
-    failureReasons.push(reason);
-  }
-  if (shortLineRatio > 0.5) {
-    const reason = `Trop de lignes courtes (${(shortLineRatio * 100).toFixed(0)}%, maximum 50%)`;
     warnings.push(reason);
     failureReasons.push(reason);
   }
@@ -341,4 +337,3 @@ export async function extractTextFromFile(file: File): Promise<ExtractedPayload>
 
   return result;
 }
-

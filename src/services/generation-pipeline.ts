@@ -56,6 +56,16 @@ function createPipelineBudget(totalMs = PIPELINE_TOTAL_BUDGET_MS, reserveMs = PI
   };
 }
 
+// Budget for the inventory serverless function (maxDuration=60s, ~10s reserved for auth+DB)
+export function createInventoryBudget(): PipelineBudget {
+  return createPipelineBudget(48_000, 2_000);
+}
+
+// Budget for the sheet generation serverless function (maxDuration=60s, ~10s reserved for auth+DB)
+export function createSheetBudget(): PipelineBudget {
+  return createPipelineBudget(48_000, 2_000);
+}
+
 function getRemainingBudgetMs(budget?: PipelineBudget): number {
   return budget ? budget.deadlineAt - Date.now() : Number.POSITIVE_INFINITY;
 }

@@ -14,7 +14,7 @@ import {
 } from "@/services/generate-sheet-stages";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const inventoryRequestSchema = z.object({
   sheetId: z.string().cuid(),

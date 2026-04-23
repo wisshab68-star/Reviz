@@ -12,7 +12,7 @@ import {
 } from "@/services/generation-pipeline";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const DEMO_RATE_LIMIT = 2;
 const WINDOW_MS = 24 * 60 * 60 * 1000;

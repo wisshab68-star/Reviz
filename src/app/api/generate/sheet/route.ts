@@ -23,7 +23,7 @@ import type { FicheGeneree } from "@/types/fiche-generated";
 import type { GeneratedSheet } from "@/types/sheet";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const sheetRequestSchema = z.object({
   sheetId: z.string().cuid(),

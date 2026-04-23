@@ -4,7 +4,7 @@ import { hashDemoStagePayload, verifyDemoStageToken } from "@/lib/demo-stage-tok
 import { generateSheet, sanitizeFicheOutput } from "@/services/generation-pipeline";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /**
  * POST /api/generate/demo/complete

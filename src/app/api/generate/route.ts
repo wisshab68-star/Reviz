@@ -7,7 +7,7 @@ import { generateSheetRequestSchema } from "@/lib/validations";
 import { canGenerateSheet } from "@/lib/stripe/subscription-service";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 class GenerateStageTimeoutError extends Error {
   constructor(public readonly stage: string, public readonly timeoutMs: number) {

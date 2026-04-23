@@ -25,6 +25,8 @@ const inventoryRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const budget = createInventoryBudget(); // start budget before auth to include all overhead
+
   const session = await auth();
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -46,7 +48,6 @@ export async function POST(request: Request) {
     }
 
     const inventoryRecord = buildStoredInventoryPayload(parsed);
-    const budget = createInventoryBudget();
     const inventory = await generateInventory(inventoryRecord.sourceText, inventoryRecord.profile, budget);
     assertInventoryNotEmpty(inventory);
 

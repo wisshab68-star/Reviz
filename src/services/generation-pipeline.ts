@@ -181,25 +181,9 @@ async function createParsedAnthropicJson<T>(
   preferredTimeoutMs: number,
   budget?: PipelineBudget,
 ): Promise<T> {
-  let lastError: unknown = null;
-
-  for (const model of [HAIKU_GENERATION_MODEL, SONNET_GENERATION_FALLBACK_MODEL]) {
-    try {
-      const message = await createAnthropicMessage(stage, buildParams(model), preferredTimeoutMs, budget);
-      const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
-      return parseAnthropicJson<T>(raw);
-    } catch (error) {
-      lastError = error;
-
-      if (model === SONNET_GENERATION_FALLBACK_MODEL || !isRecoverableJsonError(error)) {
-        throw error;
-      }
-
-      console.warn(`[Pipeline] ${stage} a renvoye un JSON invalide avec Haiku, fallback vers Sonnet.`, error);
-    }
-  }
-
-  throw lastError instanceof Error ? lastError : new Error(`Le stage ${stage} a echoue.`);
+  const message = await createAnthropicMessage(stage, buildParams(HAIKU_GENERATION_MODEL), preferredTimeoutMs, budget);
+  const raw = message.content[0]?.type === "text" ? message.content[0].text : "";
+  return parseAnthropicJson<T>(raw);
 }
 
 function normalizeKey(value: string) {

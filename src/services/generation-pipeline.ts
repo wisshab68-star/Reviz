@@ -773,7 +773,7 @@ export async function generateInventory(
     const userPrompt = buildInventoryUserPrompt(preparedSourceText);
     const parsed = await createParsedAnthropicJson<ContentInventory>("inventory", (model) => ({
       model,
-      max_tokens: 4000,
+      max_tokens: 6000,
       system: [
         {
           type: "text" as const,

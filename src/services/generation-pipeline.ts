@@ -471,7 +471,7 @@ function prepareModelInputText(sourceText: string): string {
     .filter((line) => !/[|]{2,}/.test(line));
 
   const text = lines.join("\n");
-  const MAX_CHARS = 4000 * 4; // ~4000 tokens estimes
+  const MAX_CHARS = 8000; // ~2000 tokens — keeps inventory in a single chunk within Vercel 60s limit
   return text.slice(0, MAX_CHARS).trim();
 }
 
@@ -789,7 +789,7 @@ export async function generateInventory(
     const userPrompt = buildInventoryUserPrompt(preparedSourceText);
     const parsed = await createParsedAnthropicJson<ContentInventory>("inventory", (model) => ({
       model,
-      max_tokens: 8000,
+      max_tokens: 4000,
       system: [
         {
           type: "text" as const,

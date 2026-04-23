@@ -1,4 +1,4 @@
-﻿import { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { sanitizeAiJsonValue } from "@/lib/text";
 import { optionalNonEmptyTrimmedString } from "@/lib/validations";
 import { assessSourceQuality } from "@/services/extract-service";
-import { generateInventory, createInventoryBudget } from "@/services/generation-pipeline";
+import { generateInventory } from "@/services/generation-pipeline";
 import {
   assertInventoryNotEmpty,
   buildStoredInventoryPayload,
@@ -24,19 +24,8 @@ const inventoryRequestSchema = z.object({
   userId: z.string().cuid().optional(),
 });
 
-async function authWithTimeout() {
-  return Promise.race([
-    auth(),
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("FUNCTION_INVOCATION_TIMEOUT")), 8000),
-    ),
-  ]);
-}
-
 export async function POST(request: Request) {
-  const budget = createInventoryBudget();
-
-  const session = await authWithTimeout();
+  const session = await auth();
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -50,14 +39,13 @@ export async function POST(request: Request) {
         {
           error: "UNPROCESSABLE_FILE",
           reason: quality.reason,
-          tokens_used: 0,
         },
         { status: 422 },
       );
     }
 
     const inventoryRecord = buildStoredInventoryPayload(parsed);
-    const inventory = await generateInventory(inventoryRecord.sourceText, inventoryRecord.profile, budget);
+    const inventory = await generateInventory(inventoryRecord.sourceText, inventoryRecord.profile);
     assertInventoryNotEmpty(inventory);
 
     const sheet = await db.studySheet.findFirst({
@@ -95,16 +83,12 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[GENERATE][INVENTORY] failed:", error);
 
-    const message = error instanceof Error ? error.message : "La generation de l'inventaire a echoue.";
-    const isTimeout = /PIPELINE_BUDGET_EXCEEDED/i.test(message);
-
     return NextResponse.json(
       {
         success: false,
-        error: isTimeout ? "FUNCTION_INVOCATION_TIMEOUT" : message,
+        error: error instanceof Error ? error.message : "La generation de l'inventaire a echoue.",
       },
       { status: 500 },
     );
   }
 }
-

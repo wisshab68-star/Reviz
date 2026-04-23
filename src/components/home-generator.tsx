@@ -436,6 +436,34 @@ export function HomeGenerator({
       }
 
       if (data.queued && data.sheetId) {
+        setStatus("Analyse du document...");
+
+        const inventoryResponse = await fetch("/api/generate/inventory", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sheetId: data.sheetId,
+            content,
+            subject: resolvedSubject,
+            titleHint,
+            userId: undefined,
+          }),
+        });
+
+        const inventoryData = await readApiPayload<StepResponse>(inventoryResponse);
+
+        if (inventoryResponse.status === 422 || inventoryData.error === "UNPROCESSABLE_FILE") {
+          setError("Ton fichier est difficile à lire automatiquement. Essaie un PDF de cours en texte, sans trop d'images. Cette tentative n'a pas été comptée sur ton quota.");
+          setStatus(null);
+          return;
+        }
+
+        if (!inventoryResponse.ok || !inventoryData.success) {
+          throw new Error(inventoryData.error ?? "La generation de l'inventaire a echoue.");
+        }
+
         setStatus("Generation de la fiche...");
 
         const sheetResponse = await fetch("/api/generate/sheet", {
@@ -450,16 +478,8 @@ export function HomeGenerator({
 
         const sheetData = await readApiPayload<StepResponse>(sheetResponse);
 
-        if (sheetResponse.status === 422 || sheetData.error === "UNPROCESSABLE_FILE") {
-          setError("Ton fichier est difficile à lire automatiquement. Essaie un PDF de cours en texte, sans trop d'images. Cette tentative n'a pas été comptée sur ton quota.");
-          setStatus(null);
-          return;
-        }
-
-        if (sheetData.status === "FAILED" || (!sheetResponse.ok && !sheetData.success)) {
-          setError("Génération interrompue. Réessaie, ça ne compte pas sur ton quota.");
-          setStatus(null);
-          return;
+        if (!sheetResponse.ok || !sheetData.success) {
+          throw new Error(sheetData.error ?? "La generation de la fiche a echoue.");
         }
 
         setStatus("Fiche generee. Redirection vers le resultat...");

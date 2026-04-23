@@ -236,12 +236,24 @@ export function HomeGenerator({
   }
 
   function formatGenerationError(message: string) {
-    if (/FUNCTION_INVOCATION_TIMEOUT|timeout|timed out|erreur serveur|server error|500|502|503|504/i.test(message)) {
-      return "Ton fichier est difficile a analyser (mise en page complexe ou trop d'images). ?? Essaie avec un cours plus simple ou copie-colle le texte directement.";
+    if (/FUNCTION_INVOCATION_TIMEOUT/i.test(message)) {
+      return "La génération a pris trop de temps (serveur surchargé). Réessaie dans quelques secondes.";
+    }
+
+    if (/timed out|erreur serveur|server error/i.test(message)) {
+      return "Le serveur a mis trop de temps à répondre. Réessaie dans quelques secondes.";
+    }
+
+    if (/502|503|504/i.test(message)) {
+      return "Le serveur est temporairement indisponible. Réessaie dans quelques instants.";
+    }
+
+    if (/500/i.test(message)) {
+      return `Erreur serveur interne. Réessaie, ou copie-colle le texte directement. (${message})`;
     }
 
     if (/429|quota|insufficient_quota|billing/i.test(message)) {
-      return "Le compte OpenAI configure localement n'a plus de quota. Reviz peut maintenant basculer en mode demo ; relance la generation une fois.";
+      return "Quota Anthropic épuisé. Contacte le support Reviz.";
     }
 
     return message;

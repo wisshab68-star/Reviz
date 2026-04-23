@@ -24,10 +24,19 @@ const inventoryRequestSchema = z.object({
   userId: z.string().cuid().optional(),
 });
 
-export async function POST(request: Request) {
-  const budget = createInventoryBudget(); // start budget before auth to include all overhead
+async function authWithTimeout() {
+  return Promise.race([
+    auth(),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("FUNCTION_INVOCATION_TIMEOUT")), 8000),
+    ),
+  ]);
+}
 
-  const session = await auth();
+export async function POST(request: Request) {
+  const budget = createInventoryBudget();
+
+  const session = await authWithTimeout();
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }

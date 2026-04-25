@@ -96,3 +96,23 @@ export function trackStripeRedirectClicked() {
   });
 }
 
+export function trackLandingPageViewed() {
+  gtag("event", "landing_page_viewed", {
+    timestamp: new Date().toISOString(),
+  });
+}
+
+// inputType: "pdf" | "photo" | "text"
+export function trackInputTypeSelected(inputType: "pdf" | "photo" | "text") {
+  gtag("event", "input_type_selected", {
+    inputType,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export function trackCreateAnotherSheetClicked() {
+  gtag("event", "create_another_sheet_clicked", {
+    timestamp: new Date().toISOString(),
+  });
+}
+

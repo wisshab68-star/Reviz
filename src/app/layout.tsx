@@ -17,6 +17,9 @@ export const metadata: Metadata = {
     siteName: "Reviz",
   },
   metadataBase: new URL("https://revizai.app"),
+  verification: {
+    google: "VlU7_UMUyaXY_Uv3zS_APlvDkqt6kq9nnZbg6TFCIEc",
+  },
 };
 
 export default function RootLayout({

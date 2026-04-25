@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 import styles from './HeroSection.module.css';
-import { trackClickCtaLanding } from '@/lib/analytics';
+import { trackClickCtaLanding, trackLandingPageViewed } from '@/lib/analytics';
 
 /* ── Premium SVG icons inline (no emoji, no external deps) ── */
 const IC = '#1a1a1a';
@@ -98,6 +99,8 @@ const floaters = [
 ] as const;
 
 export default function HeroSection() {
+  useEffect(() => { trackLandingPageViewed(); }, []);
+
   return (
     <section className={styles.hero}>
 
@@ -181,8 +184,8 @@ export default function HeroSection() {
         </div>
 
         <p className={styles.trustLine}>
-          <span className={styles.trustHighlight}>4,99€/mois</span>
-          {' '}— c'est le prix d'un cahier de fiches. Pas d'engagement.
+          <span className={styles.trustHighlight}>3,99€/mois</span>
+          {' '}en annuel — ou 4,99€/mois sans engagement.
         </p>
 
       </div>

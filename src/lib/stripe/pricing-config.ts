@@ -29,6 +29,16 @@ export const PRICING_TIERS = {
     features: ["Générez jusqu'à 50 fiches", "Export PDF", "Priorité support"],
   },
 
+  STANDARD_ANNUAL: {
+    tier: "STANDARD_ANNUAL" as const,
+    name: "Standard Annuel",
+    price: 3.99,
+    monthlyLimit: 20,
+    stripePriceId: process.env.STRIPE_PRICE_STANDARD_ANNUAL ?? "",
+    description: "Le meilleur rapport qualité/prix",
+    features: ["Générez jusqu'à 20 fiches/mois", "Export PDF", "Support email", "2 mois offerts vs mensuel"],
+  },
+
   EXAM_PROMO_20: {
     tier: "EXAM_PROMO_20" as const,
     name: "Promo Examen — 20 fiches",

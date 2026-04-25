@@ -8,55 +8,27 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum Plan {
-  FREE
-  PREMIUM
-}
-
-enum SubscriptionTier {
-  FREE
-  STANDARD
-  PRO
-  EXAM_PROMO_20
-  EXAM_PROMO_40
-}
-
-enum DocumentType {
-  TEXT
-  PDF
-  IMAGE
-  DOCX
-  AUDIO
-}
-
-enum ProcessingStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-}
-
 model User {
-  id                 String         @id @default(cuid())
+  id                 String           @id @default(cuid())
   name               String?
-  email              String         @unique
-  passwordHash       String?
+  email              String           @unique
   emailVerified      DateTime?
   image              String?
-  plan               Plan           @default(FREE)
-  stripeCustomerId   String?        @unique
+  plan               Plan             @default(FREE)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  passwordHash       String?
+  stripeCustomerId   String?          @unique
+  subscriptionId     String?          @unique
   subscriptionStatus String?
-  subscriptionId     String?        @unique
-  hasSeenDemo        Boolean        @default(false)
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  hasSeenDemo        Boolean          @default(false)
   accounts           Account[]
-  sessions           Session[]
   documents          Document[]
-  studySheets        StudySheet[]
-  subscriptions      Subscription[]
-  usageEvents        UsageEvent[]
   promoExamAccess    PromoExamAccess?
+  sessions           Session[]
+  studySheets        StudySheet[]
+  subscriptions      Subscription?
+  usageEvents        UsageEvent[]
 }
 
 model Document {
@@ -71,7 +43,7 @@ model Document {
   processingStatus ProcessingStatus @default(PENDING)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-  user             User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user             User?            @relation(fields: [userId], references: [id])
   studySheets      StudySheet[]
 }
 
@@ -79,7 +51,6 @@ model StudySheet {
   id              String           @id @default(cuid())
   userId          String?
   documentId      String?
-  inventoryJson   Json?
   title           String
   sourceType      DocumentType
   summary         String
@@ -90,25 +61,28 @@ model StudySheet {
   status          ProcessingStatus @default(COMPLETED)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  user            User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
-  document        Document?        @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  inventoryJson   Json?
+  document        Document?        @relation(fields: [documentId], references: [id])
+  user            User?            @relation(fields: [userId], references: [id])
 }
 
 model Subscription {
   id                   String           @id @default(cuid())
   userId               String           @unique
-  tier                 SubscriptionTier @default(FREE)
-  status               String           @default("active")
-  monthlyLimit         Int              @default(2)
-  sheetsUsedMonth      Int              @default(0)
   stripeCustomerId     String?          @unique
   stripeSubscriptionId String?          @unique
-  stripePriceId        String?
-  currentPeriodStart   DateTime?
+  status               String           @default("active")
   currentPeriodEnd     DateTime?
-  cancelledAt          DateTime?
   createdAt            DateTime         @default(now())
+  cancelledAt          DateTime?
+  currentPeriodStart   DateTime?
+  monthlyLimit         Int              @default(2)
+  sheetsUsedMonth      Int              @default(0)
+  stripePriceId        String?
+  tier                 SubscriptionTier @default(FREE)
   updatedAt            DateTime         @updatedAt
+  isAmbassador         Boolean          @default(false)
+  ambassadorExpiresAt  DateTime?
   user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -136,31 +110,27 @@ model UsageEvent {
 }
 
 model Account {
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
 }
 
 model Session {
-  sessionToken String   @unique
+  sessionToken String   @id @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([sessionToken])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -175,4 +145,32 @@ model DemoRateLimit {
   ip      String   @id
   count   Int      @default(0)
   resetAt DateTime
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+}
+
+enum SubscriptionTier {
+  FREE
+  STANDARD
+  PRO
+  EXAM_PROMO_20
+  EXAM_PROMO_40
+}
+
+enum DocumentType {
+  TEXT
+  PDF
+  IMAGE
+  DOCX
+  AUDIO
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }

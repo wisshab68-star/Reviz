@@ -36,8 +36,13 @@ export async function canGenerateSheet(userId: string): Promise<{
 }> {
   const sub = await getOrCreateSubscription(userId);
 
-  // Reset if the period ended
+  // Ambassadors get unlimited access until their expiry date
   const now = new Date();
+  if (sub.isAmbassador && sub.ambassadorExpiresAt && sub.ambassadorExpiresAt > now) {
+    return { allowed: true, remaining: 999, limit: 999 };
+  }
+
+  // Reset if the period ended
   let sheetsUsed = sub.sheetsUsedMonth;
 
   if (sub.currentPeriodEnd && now > sub.currentPeriodEnd) {
@@ -64,6 +69,8 @@ export async function canGenerateSheet(userId: string): Promise<{
       reason:
         sub.tier === "FREE"
           ? "Tu as utilisé tes 2 fiches gratuites. Passe en Standard ou Pro pour continuer."
+          : sub.tier === "STANDARD" || sub.tier === "STANDARD_ANNUAL"
+          ? `Limite mensuelle atteinte (${sub.monthlyLimit} fiches ${tierName}). Passe au plan Pro pour générer jusqu'à 50 fiches/mois.`
           : `Limite mensuelle atteinte (${sub.monthlyLimit} fiches ${tierName}). Réessaie le mois prochain.`,
       remaining: 0,
       limit: sub.monthlyLimit,

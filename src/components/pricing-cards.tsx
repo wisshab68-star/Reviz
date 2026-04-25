@@ -26,8 +26,9 @@ type PricingCardsProps = {
 export function PricingCards({ plans, currentTier, hasPremium, isLoggedIn }: PricingCardsProps) {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAnnual, setIsAnnual] = useState(false);
 
-  async function handleCheckout(tier: "STANDARD" | "PRO") {
+  async function handleCheckout(tier: "STANDARD" | "STANDARD_ANNUAL" | "PRO") {
     if (!isLoggedIn) {
       window.location.href = `/sign-in?mode=signup&redirectTo=/pricing`;
       return;
@@ -55,10 +56,11 @@ export function PricingCards({ plans, currentTier, hasPremium, isLoggedIn }: Pri
     setLoadingTier(tier);
     setError(null);
     try {
+      const effectiveTier = tier === "STANDARD" && isAnnual ? "STANDARD_ANNUAL" : tier;
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier, gaClientId: getGa4ClientId() }),
+        body: JSON.stringify({ tier: effectiveTier, gaClientId: getGa4ClientId() }),
       });
       const data = await res.json() as { success?: boolean; url?: string; error?: string };
       if (data.success && data.url) {
@@ -75,8 +77,61 @@ export function PricingCards({ plans, currentTier, hasPremium, isLoggedIn }: Pri
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+
+      {/* Toggle mensuel / annuel */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: "0.5rem" }}>
+        <button
+          type="button"
+          onClick={() => setIsAnnual(false)}
+          style={{
+            padding: "6px 18px",
+            borderRadius: 999,
+            border: "none",
+            cursor: "pointer",
+            fontWeight: 600,
+            fontSize: 13,
+            background: !isAnnual ? "rgba(47,91,255,0.18)" : "transparent",
+            color: !isAnnual ? "#7B9FFF" : "#5C5C78",
+            transition: "all 0.15s",
+          }}
+        >
+          Mensuel
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsAnnual(true)}
+          style={{
+            padding: "6px 18px",
+            borderRadius: 999,
+            border: "none",
+            cursor: "pointer",
+            fontWeight: 600,
+            fontSize: 13,
+            background: isAnnual ? "rgba(47,91,255,0.18)" : "transparent",
+            color: isAnnual ? "#7B9FFF" : "#5C5C78",
+            transition: "all 0.15s",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          Annuel
+          <span style={{
+            background: "linear-gradient(90deg, #2F5BFF, #6C3FFF)",
+            color: "#fff",
+            fontSize: 10,
+            fontWeight: 700,
+            padding: "2px 8px",
+            borderRadius: 999,
+            letterSpacing: "0.05em",
+          }}>
+            −20%
+          </span>
+        </button>
+      </div>
+
       {plans.map((plan) => {
-        const isCurrentPlan = currentTier === plan.id;
+        const isCurrentPlan = currentTier === plan.id || (isAnnual && plan.id === "STANDARD" && currentTier === "STANDARD_ANNUAL");
         const isLoading = loadingTier === plan.id;
 
         return (
@@ -129,6 +184,11 @@ export function PricingCards({ plans, currentTier, hasPremium, isLoggedIn }: Pri
                   {plan.label}
                 </div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 3, marginBottom: 4 }}>
+                  {isAnnual && plan.id === "STANDARD" && (
+                    <span style={{ color: "#5C5C78", fontSize: 16, textDecoration: "line-through", marginRight: 4 }}>
+                      4,99 €
+                    </span>
+                  )}
                   <span
                     style={{
                       fontFamily: "var(--display-font)",
@@ -139,9 +199,11 @@ export function PricingCards({ plans, currentTier, hasPremium, isLoggedIn }: Pri
                       lineHeight: 1,
                     }}
                   >
-                    {plan.price} €
+                    {isAnnual && plan.id === "STANDARD" ? "3,99" : plan.price} €
                   </span>
-                  <span style={{ color: "#5C5C78", fontSize: 13 }}>{plan.period}</span>
+                  <span style={{ color: "#5C5C78", fontSize: 13 }}>
+                    {isAnnual && plan.id === "STANDARD" ? "/mois, facturé 47,88 €/an" : plan.period}
+                  </span>
                 </div>
                 <p style={{ margin: 0, color: "#8B8B9E", fontSize: 13, lineHeight: 1.5 }}>
                   {plan.tagline}

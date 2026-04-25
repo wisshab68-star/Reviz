@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         tier,
         gaClientId,
       );
-    } else if (tier === "STANDARD" || tier === "PRO") {
+    } else if (tier === "STANDARD" || tier === "STANDARD_ANNUAL" || tier === "PRO") {
       stripeSession = await createCheckoutSession(
         session.user.id,
         session.user.email,

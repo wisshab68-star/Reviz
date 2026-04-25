@@ -56,8 +56,9 @@ const pricingPlans = [
   {
     badge: "Standard",
     name: "Standard",
-    price: "4,99€",
-    period: "/mois",
+    price: "3,99€",
+    priceMonthly: "4,99€",
+    period: "/mois en annuel",
     items: [
       "Jusqu'à 20 fiches par mois",
       "Toutes les matières lycée & collège",
@@ -67,6 +68,7 @@ const pricingPlans = [
     cta: "Commencer",
     className: "plan-dark",
     ctaClass: "btn plan-dark-cta",
+    annualBadge: true,
   },
   {
     badge: "Pro",
@@ -295,8 +297,8 @@ export function MarketingSite() {
           <div className="container section">
             <div className="section-head pricing-head">
               <span className="section-kicker reviz-reveal reviz-reveal-delay-1">Pricing</span>
-              <h2 className="reviz-reveal">4,99€ — le prix d&apos;un cahier de fiches.</h2>
-              <p className="section-note reviz-reveal reviz-reveal-delay-1">Pas d&apos;engagement. Annulation en un clic.</p>
+              <h2 className="reviz-reveal">Dès 3,99€/mois — le prix d&apos;un cahier de fiches.</h2>
+              <p className="section-note reviz-reveal reviz-reveal-delay-1">3,99€/mois en annuel · 4,99€/mois sans engagement. Annulation en un clic.</p>
             </div>
             <div className="pricing-grid">
               <article className="pricing-card pricing-card-free reviz-reveal reviz-reveal-delay-1">
@@ -313,12 +315,22 @@ export function MarketingSite() {
               </article>
               {pricingPlans.map((plan, index) => (
                 <article key={plan.name} className={`pricing-card ${plan.className} reviz-reveal reviz-reveal-delay-${index + 2}`}>
-                  <div className="pricing-badge">{plan.badge}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <div className="pricing-badge">{plan.badge}</div>
+                    {"annualBadge" in plan && plan.annualBadge && (
+                      <span style={{ background: "linear-gradient(90deg,#2f5bff,#6C3FFF)", color: "#fff", fontSize: 11, fontWeight: 800, padding: "3px 10px", borderRadius: 999, letterSpacing: "0.05em" }}>−20% annuel</span>
+                    )}
+                  </div>
                   <h3 className="pricing-title">{plan.name}</h3>
-                  <p className="pricing-price">
-                    {plan.price}
-                    <span style={{ fontSize: "1rem", fontWeight: 400, opacity: 0.7 }}>{plan.period}</span>
-                  </p>
+                  <div>
+                    {"priceMonthly" in plan && plan.priceMonthly && (
+                      <span style={{ fontSize: "1.1rem", opacity: 0.45, textDecoration: "line-through", marginRight: 6 }}>{plan.priceMonthly}</span>
+                    )}
+                    <span className="pricing-price" style={{ display: "inline" }}>
+                      {plan.price}
+                    </span>
+                    <span style={{ fontSize: "1rem", fontWeight: 400, opacity: 0.7 }}> {plan.period}</span>
+                  </div>
                   <ul className="pricing-list">
                     {plan.items.map((item) => <li key={item}>• {item}</li>)}
                   </ul>

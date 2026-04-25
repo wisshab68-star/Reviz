@@ -182,8 +182,7 @@ export default async function TryPage() {
           </h1>
 
           <p style={{ color: "#8B8B9E", fontSize: 15, margin: 0, lineHeight: 1.7 }}>
-            PDF, photo ou texte — Reviz génère ta fiche complète avec carte mentale,<br />
-            méthode Feynman et flashcards.
+            PDF, photo ou texte — Reviz génère ta fiche complète avec les meilleurs outils de mémorisation.
           </p>
         </div>
 

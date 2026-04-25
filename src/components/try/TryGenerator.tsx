@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { FicheRenderer } from "@/components/fiche/FicheRenderer";
 import { TryPaywall } from "@/components/try/TryPaywall";
-import { trackCreateOwnClicked, trackUploadPdfInitiated, trackUploadPdfCompleted, trackTestSheetViewed, trackGoogleSigninClicked, trackSheetUnlocked, trackPaywallShown } from "@/lib/analytics";
+import { trackCreateOwnClicked, trackUploadPdfInitiated, trackUploadPdfCompleted, trackTestSheetViewed, trackGoogleSigninClicked, trackSheetUnlocked, trackPaywallShown, trackInputTypeSelected, trackCreateAnotherSheetClicked } from "@/lib/analytics";
 import type { FicheGeneree } from "@/types/fiche-generated";
 
 type Step = "input" | "uploading" | "viewing";
@@ -93,7 +93,13 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
       return;
     }
 
-    setStep(storedState.fiche ? "viewing" : "input");
+    if (storedState.fiche) {
+      setStep("viewing");
+      // User came back after Google login with a pending fiche — fire unlock event
+      if (initialIsLoggedIn) trackSheetUnlocked("demo");
+    } else {
+      setStep("input");
+    }
     setIsHydrated(true);
   }, []);
 
@@ -110,6 +116,7 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
   const currentAttemptLabel = `${Math.min(tryCount, MAX_FREE_TRIES)}/${MAX_FREE_TRIES} fiche${MAX_FREE_TRIES > 1 ? "s" : ""} testee${MAX_FREE_TRIES > 1 ? "s" : ""}`;
 
   function resetForAnotherTry() {
+    trackCreateAnotherSheetClicked();
     setError(null);
     setText("");
     setFiche(null);
@@ -272,7 +279,7 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
           {currentAttemptLabel}
         </div>
 
-        <div style={{ paddingBottom: !isLoggedIn ? "72px" : 0 }}>
+        <div style={{ paddingBottom: !isLoggedIn ? "140px" : 0 }}>
           <FicheRenderer fiche={fiche} previewMode={!isLoggedIn} />
         </div>
 
@@ -517,7 +524,7 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
       >
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => { trackInputTypeSelected("pdf"); fileInputRef.current?.click(); }}
           style={{
             background: "#3B5BDB",
             border: "none",
@@ -545,7 +552,7 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
 
         <button
           type="button"
-          onClick={() => photoInputRef.current?.click()}
+          onClick={() => { trackInputTypeSelected("photo"); photoInputRef.current?.click(); }}
           style={{
             background: "transparent",
             border: "1px solid #2A2A38",
@@ -609,7 +616,7 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
       {/* Generate button — identical to app */}
       <button
         type="button"
-        onClick={() => void handleTextSubmit()}
+        onClick={() => { trackInputTypeSelected("text"); void handleTextSubmit(); }}
         disabled={text.trim().length < 80}
         style={{
           background: text.trim().length >= 80 ? "#3B5BDB" : "#1E1E2A",

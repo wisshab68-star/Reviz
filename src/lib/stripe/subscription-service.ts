@@ -98,7 +98,7 @@ export async function incrementSheetCount(userId: string) {
 export async function createCheckoutSession(
   userId: string,
   userEmail: string,
-  tier: "STANDARD" | "PRO",
+  tier: "STANDARD" | "PRO" | "STANDARD_ANNUAL",
   gaClientId?: string,
 ) {
   const sub = await getOrCreateSubscription(userId);

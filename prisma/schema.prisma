@@ -155,6 +155,7 @@ enum Plan {
 enum SubscriptionTier {
   FREE
   STANDARD
+  STANDARD_ANNUAL
   PRO
   EXAM_PROMO_20
   EXAM_PROMO_40

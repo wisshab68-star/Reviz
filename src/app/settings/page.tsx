@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AppTopbar } from "@/components/app-topbar";
 import { MobileNav } from "@/components/mobile-nav";
+import { SettingsManageSubscriptionButton } from "@/components/settings-manage-subscription-button";
 import { SettingsPremiumButton } from "@/components/settings-premium-button";
 import { SettingsSignOutButton } from "@/components/settings-signout-button";
 import { db } from "@/lib/db";
@@ -263,6 +264,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 <p style={{ margin: 0, color: "#FFFFFF", fontSize: "15px" }}>
                   Ton abonnement Premium est actif.
                 </p>
+                <SettingsManageSubscriptionButton />
               </>
             ) : (
               <SettingsPremiumButton>

@@ -221,6 +221,9 @@ export function MarketingSite() {
       </header>
 
       <main className="page">
+        <h1 style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>
+          Reviz — Fiches de révision bac 2026 générées en 30 secondes
+        </h1>
         <HeroSection />
 
         <section className="section-band video-band" style={{ background: "#0d0d0d" }}>

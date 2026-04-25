@@ -5,15 +5,18 @@ import "./globals.css";
 import "@/styles/print.css";
 
 export const metadata: Metadata = {
-  title: "Reviz AI",
-  description: "Reviz AI - Transforme tes revisions avec l'intelligence artificielle",
+  title: "Reviz — Fiches de révision bac 2026 en 30s | 3,99€/an",
+  description: "Reviz génère tes fiches de révision bac 2026 en 30 secondes à partir de tes cours. 3,99€/an en abonnement annuel. Essaie maintenant sur revizai.app",
+  keywords: "reviz, fiches révision bac 2026, révision bac, lycée 2026, app révision bac, fiches de révision",
   openGraph: {
-    title: "Reviz AI",
-    description: "Reviz AI - Transforme tes revisions avec l'intelligence artificielle",
+    title: "Reviz — Fiches de révision bac 2026 en 30s",
+    description: "Génère tes fiches de révision bac 2026 en 30 secondes. 3,99€/an.",
+    url: "https://revizai.app",
     type: "website",
     locale: "fr_FR",
-    siteName: "Reviz AI",
+    siteName: "Reviz",
   },
+  metadataBase: new URL("https://revizai.app"),
 };
 
 export default function RootLayout({
@@ -33,6 +36,29 @@ export default function RootLayout({
             gtag('js', new Date());
             gtag('config', 'G-CQ10FGZVZC');
           `}
+        </Script>
+        <Script id="schema-org" type="application/ld+json" strategy="beforeInteractive">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Reviz",
+            "description": "Application de fiches de révision bac 2026 générées en 30 secondes par IA",
+            "url": "https://revizai.app",
+            "applicationCategory": "EducationalApplication",
+            "offers": {
+              "@type": "Offer",
+              "price": "3.99",
+              "priceCurrency": "EUR",
+              "priceSpecification": {
+                "@type": "UnitPriceSpecification",
+                "billingDuration": "P1Y"
+              }
+            },
+            "audience": {
+              "@type": "EducationalAudience",
+              "educationalRole": "student"
+            }
+          })}
         </Script>
       </head>
       <body>

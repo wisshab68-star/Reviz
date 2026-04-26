@@ -11,12 +11,12 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Reviz — Fiches de révision bac 2026 en 30s",
     description: "Génère tes fiches de révision bac 2026 en 30 secondes. 3,99€/an.",
-    url: "https://www.revizai.app",
+    url: "https://revizai.app",
     type: "website",
     locale: "fr_FR",
     siteName: "Reviz",
   },
-  metadataBase: new URL("https://www.revizai.app"),
+  metadataBase: new URL("https://revizai.app"),
   verification: {
     google: "VlU7_UMUyaXY_Uv3zS_APlvDkqt6kq9nnZbg6TFCIEc",
   },
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
-        <link rel="canonical" href="https://www.revizai.app" />
+        <link rel="canonical" href="https://revizai.app" />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-CQ10FGZVZC"
           strategy="afterInteractive"

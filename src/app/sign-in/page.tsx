@@ -9,7 +9,7 @@ import { signInWithGoogleAction } from "./actions";
 export const metadata: Metadata = {
   title: "Connexion Reviz",
   description: "Connecte-toi a Reviz avec Google pour debloquer ta fiche complete.",
-  alternates: { canonical: "https://www.revizai.app/sign-in" },
+  alternates: { canonical: "https://revizai.app/sign-in" },
 };
 
 type SignInPageProps = {

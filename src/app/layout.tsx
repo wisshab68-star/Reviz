@@ -28,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
+        <link rel="canonical" href="https://www.revizai.app" />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-CQ10FGZVZC"
           strategy="afterInteractive"

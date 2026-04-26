@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Genere ta fiche gratuite - Reviz",
   description:
     "Importe ton PDF, prends une photo ou colle ton texte. Reviz genere ta fiche en 30 secondes. Gratuit, sans inscription.",
+  alternates: { canonical: "https://www.revizai.app/try" },
 }
 
 export default async function TryPage() {

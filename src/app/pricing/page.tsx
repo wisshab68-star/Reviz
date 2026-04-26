@@ -15,6 +15,7 @@ import { AffiliateTracker } from "@/components/affiliate-tracker";
 export const metadata: Metadata = {
   title: "Reviz Premium — Génère des fiches sans limite",
   description: "Moins cher qu'un McDo. Génère jusqu'à 50 fiches par mois avec carte mentale, Feynman et flashcards.",
+  alternates: { canonical: "https://www.revizai.app/pricing" },
 };
 
 const PLANS = [

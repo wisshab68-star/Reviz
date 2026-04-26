@@ -25,10 +25,11 @@ export async function createAffiliateCode(name: string, email: string) {
     attempts++;
   }
 
-  // Create Stripe coupon (0% discount — tracking only)
+  // Create Stripe coupon (tracking only, no actual discount)
   const coupon = await stripe.coupons.create({
     id: code,
-    percent_off: 0,
+    amount_off: 1,
+    currency: "eur",
     duration: "forever",
     name: `Affiliée ${name}`,
     metadata: { affiliate_code: code, affiliate_email: email },

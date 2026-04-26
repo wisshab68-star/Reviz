@@ -3,6 +3,6 @@ import type { MetadataRoute } from "next";
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: { userAgent: "*", allow: "/" },
-    sitemap: "https://revizai.app/sitemap.xml",
+    sitemap: "https://www.revizai.app/sitemap.xml",
   };
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { auth } from "@/auth";
@@ -9,6 +10,7 @@ import { PRICING_TIERS } from "@/lib/stripe/pricing-config";
 import { getOrCreateSubscription } from "@/lib/stripe/subscription-service";
 import { PricingCards } from "@/components/pricing-cards";
 import { PricingPageTracker } from "@/components/pricing-page-tracker";
+import { AffiliateTracker } from "@/components/affiliate-tracker";
 
 export const metadata: Metadata = {
   title: "Reviz Premium — Génère des fiches sans limite",
@@ -79,6 +81,7 @@ export default async function PricingPage() {
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#0F0F13" }}>
       <PricingPageTracker />
+      <Suspense fallback={null}><AffiliateTracker /></Suspense>
       <AppTopbar />
       <main className="app-main-content" style={{ flex: 1, minWidth: 0, background: "#0F0F13" }}>
         <div style={{ maxWidth: 720, margin: "0 auto", padding: "3rem 1.5rem 4rem" }}>

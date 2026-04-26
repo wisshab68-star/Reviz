@@ -100,6 +100,7 @@ export async function createCheckoutSession(
   userEmail: string,
   tier: "STANDARD" | "PRO" | "STANDARD_ANNUAL",
   gaClientId?: string,
+  affiliateCode?: string,
 ) {
   const sub = await getOrCreateSubscription(userId);
   const config = PRICING_TIERS[tier];
@@ -117,7 +118,13 @@ export async function createCheckoutSession(
     mode: "subscription",
     success_url: `${appUrl}/pricing?success=true`,
     cancel_url: `${appUrl}/pricing`,
-    metadata: { userId, tier, ...(gaClientId ? { gaClientId } : {}) },
+    ...(affiliateCode ? { discounts: [{ promotion_code: affiliateCode }] } : { allow_promotion_codes: true }),
+    metadata: {
+      userId,
+      tier,
+      ...(gaClientId ? { gaClientId } : {}),
+      ...(affiliateCode ? { affiliateCode } : {}),
+    },
   });
 
   return session;

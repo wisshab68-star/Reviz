@@ -1,7 +1,9 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+
+import { AffiliateTracker } from "@/components/affiliate-tracker";
 
 import { MethodeReviz } from "@/components/landing/MethodeReviz";
 import HeroSection from "@/components/landing/HeroSection";
@@ -211,6 +213,7 @@ export function MarketingSite() {
 
   return (
     <div className="landing">
+      <Suspense fallback={null}><AffiliateTracker /></Suspense>
       <header className={`topbar ${isScrolled ? "topbar-scrolled" : ""}`}>
         <div className="container topbar-inner">
           <nav className="nav">

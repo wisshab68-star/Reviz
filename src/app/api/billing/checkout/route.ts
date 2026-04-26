@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 import { auth } from "@/auth";
 import { createCheckoutSession, createPromoCheckoutSession } from "@/lib/stripe/subscription-service";
@@ -12,12 +13,17 @@ export async function POST(request: Request) {
 
   let tier: string;
   let gaClientId: string | undefined;
+  let affiliateCode: string | undefined;
   try {
     const body = await request.json() as { tier?: string; gaClientId?: string };
     tier = body.tier ?? "STANDARD";
     gaClientId = typeof body.gaClientId === "string" && body.gaClientId.length < 64
       ? body.gaClientId
       : undefined;
+    // Read affiliate code from cookie
+    const cookieStore = await cookies();
+    const refCookie = cookieStore.get("reviz_ref")?.value;
+    affiliateCode = refCookie && /^[A-Z0-9]{4,20}$/.test(refCookie) ? refCookie : undefined;
   } catch {
     tier = "STANDARD";
   }
@@ -38,6 +44,7 @@ export async function POST(request: Request) {
         session.user.email,
         tier,
         gaClientId,
+        affiliateCode,
       );
     } else {
       return NextResponse.json({ success: false, error: "Tier invalide." }, { status: 400 });

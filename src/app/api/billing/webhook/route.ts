@@ -7,6 +7,7 @@ import {
   downgradeToFree,
   handlePromoPurchase,
 } from "@/lib/stripe/subscription-service";
+import { trackAffiliateSale } from "@/lib/stripe/affiliate-service";
 import { sendGA4Event } from "@/lib/ga4-server";
 
 export const runtime = "nodejs";
@@ -77,6 +78,15 @@ export async function POST(request: Request) {
             sub.items.data[0]?.current_period_start,
             sub.items.data[0]?.current_period_end,
           );
+
+          // Track affiliate sale if a promo code was used
+          const promoCode = session.metadata?.affiliateCode;
+          if (promoCode) {
+            await trackAffiliateSale(promoCode).catch((e) =>
+              console.error("[WEBHOOK] affiliate tracking failed:", e),
+            );
+          }
+
           const amountPaid = session.amount_total ?? 0;
           await sendGA4Event(userId, "subscription_completed", {
             subscription_id: sub.id,

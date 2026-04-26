@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
+import { CopyButton } from "./copy-button";
 
 export const metadata: Metadata = { title: "Dashboard Affiliée — Reviz", robots: "noindex" };
 
@@ -54,12 +55,7 @@ export default async function AffiliateDashboard({ params }: { params: Promise<{
           <p style={{ margin: "0 0 10px", color: "#5C5C78", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Ton lien affilié</p>
           <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: "0.75rem 1rem" }}>
             <span style={{ flex: 1, color: "#C4C4D4", fontSize: 13, wordBreak: "break-all" }}>{affiliateLink}</span>
-            <button
-              onClick={() => { void navigator.clipboard.writeText(affiliateLink); }}
-              style={{ flexShrink: 0, background: "rgba(47,91,255,0.2)", border: "1px solid rgba(47,91,255,0.4)", color: "#7B9FFF", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-            >
-              Copier
-            </button>
+            <CopyButton text={affiliateLink} />
           </div>
           <p style={{ margin: "10px 0 0", color: "#5C5C78", fontSize: 12 }}>
             Code promo : <span style={{ color: "#fff", fontWeight: 700, fontFamily: "monospace" }}>{affiliate.code}</span>

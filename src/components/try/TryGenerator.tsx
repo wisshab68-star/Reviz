@@ -76,6 +76,7 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
   const [fiche, setFiche] = useState<FicheGeneree | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tryCount, setTryCount] = useState(0);
+  const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -123,44 +124,51 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
     setStep("input");
   }
 
+  async function uploadFileForText(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/uploads", { method: "POST", body: formData });
+    const data = (await res.json()) as { success?: boolean; data?: { extractedText?: string }; error?: string };
+    if (!res.ok || !data.success || !data.data?.extractedText) {
+      throw new Error(data.error ?? "Impossible de lire ce fichier.");
+    }
+    return data.data.extractedText;
+  }
+
   async function handleFile(file: File) {
     trackUploadPdfInitiated();
     setError(null);
     setStep("uploading");
-
-    const messages = [
-      "On analyse ton cours...",
-      "Extraction du texte...",
-      "Generation de ta fiche...",
-    ];
-
-    let i = 0;
-    setUploadProgress(messages[0] ?? "On analyse ton cours...");
+    setUploadProgress("On analyse ton cours...");
     const interval = setInterval(() => {
-      i = Math.min(i + 1, messages.length - 1);
-      setUploadProgress(messages[i] ?? messages[messages.length - 1] ?? "Generation...");
+      setUploadProgress((p) => p === "On analyse ton cours..." ? "Extraction du texte..." : "Generation de ta fiche...");
     }, 2500);
-
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const uploadRes = await fetch("/api/uploads", { method: "POST", body: formData });
-      const uploadData = (await uploadRes.json()) as {
-        success?: boolean;
-        data?: { extractedText?: string };
-        error?: string;
-      };
-
-      if (!uploadRes.ok || !uploadData.success || !uploadData.data?.extractedText) {
-        throw new Error(uploadData.error ?? "Impossible de lire ce fichier. Essaie un PDF de cours en texte.");
-      }
-
+      const text = await uploadFileForText(file);
       clearInterval(interval);
       setUploadProgress("Generation de ta fiche...");
-      await generateFiche(uploadData.data.extractedText);
+      await generateFiche(text);
     } catch (err) {
       clearInterval(interval);
+      setError(err instanceof Error ? err.message : "Une erreur est survenue.");
+      setStep(fiche ? "viewing" : "input");
+    }
+  }
+
+  async function handleMultiplePhotos(files: File[]) {
+    trackUploadPdfInitiated();
+    setError(null);
+    setStep("uploading");
+    try {
+      const texts: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        setUploadProgress(`Analyse de la photo ${i + 1}/${files.length}...`);
+        const t = await uploadFileForText(files[i]!);
+        texts.push(t);
+      }
+      setUploadProgress("Génération de ta fiche...");
+      await generateFiche(texts.join("\n\n"));
+    } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue.");
       setStep(fiche ? "viewing" : "input");
     }
@@ -487,13 +495,61 @@ export function TryGenerator({ initialIsLoggedIn = false }: TryGeneratorProps) {
         type="file"
         ref={photoInputRef}
         accept="image/*"
-        capture="environment"
+        multiple
         style={{ display: "none" }}
         onChange={(e) => {
-          const selectedFile = e.target.files?.[0];
-          if (selectedFile) void handleFile(selectedFile);
+          const files = Array.from(e.target.files ?? []);
+          if (files.length === 1) {
+            void handleFile(files[0]!);
+          } else if (files.length > 1) {
+            setSelectedPhotos(files);
+          }
+          e.target.value = "";
         }}
       />
+
+      {/* Multi-photo preview */}
+      {selectedPhotos.length > 1 && (
+        <div style={{ background: "#1A1A26", border: "1px solid #2A2A38", borderRadius: 14, padding: "1rem", display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>
+              📷 {selectedPhotos.length} photos sélectionnées
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedPhotos([])}
+              style={{ background: "none", border: "none", color: "#5C5C78", cursor: "pointer", fontSize: 12 }}
+            >
+              Annuler
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {selectedPhotos.map((f, i) => (
+              <div key={i} style={{ position: "relative" }}>
+                <img
+                  src={URL.createObjectURL(f)}
+                  alt={`Photo ${i + 1}`}
+                  style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, border: "1px solid #2A2A38" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhotos((prev) => prev.filter((_, j) => j !== i))}
+                  style={{ position: "absolute", top: -6, right: -6, background: "#ff4444", border: "none", borderRadius: "50%", width: 18, height: 18, color: "#fff", fontSize: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => { void handleMultiplePhotos(selectedPhotos); setSelectedPhotos([]); }}
+            style={{ background: "#3B5BDB", color: "#fff", border: "none", borderRadius: 50, padding: "14px 0", width: "100%", fontWeight: 700, fontSize: 14, cursor: "pointer" }}
+          >
+            Générer ma fiche ({selectedPhotos.length} photos) →
+          </button>
+        </div>
+      )}
 
       {/* Hint */}
       <p

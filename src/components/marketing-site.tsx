@@ -104,28 +104,28 @@ const freePlan = {
 
 const faqItems = [
   {
-    question: "Reviz fonctionne pour le college et le lycee ?",
+    question: "Reviz fonctionne pour le collège et le lycée ?",
     answer:
-      "Oui, Reviz couvre toutes les matieres du college (6eme-3eme) et du lycee (Seconde-Terminale), ainsi que le BTS et la Licence.",
+      "Oui, Reviz couvre toutes les matières du collège (6e-3e) et du lycée (Seconde-Terminale), ainsi que le BTS et la Licence.",
   },
   {
     question: "Comment fonctionne la fiche gratuite ?",
     answer:
-      "Tu importes ton cours PDF ou tu prends une photo de ton cahier, tu choisis ta matiere, et Reviz genere ta fiche en 30 secondes. Aucune carte bancaire requise pour commencer.",
+      "Tu importes ton cours PDF ou tu prends une photo de ton cahier, tu choisis ta matière, et Reviz génère ta fiche en 30 secondes. Aucune carte bancaire requise pour commencer.",
   },
   {
     question: "Mes cours restent-ils confidentiels ?",
     answer:
-      "Oui. Tes documents sont traites uniquement pour generer ta fiche et ne sont ni stockes ni partages avec des tiers.",
+      "Oui. Tes documents sont traités uniquement pour générer ta fiche et ne sont ni stockés ni partagés avec des tiers.",
   },
   {
     question: "Comment annuler mon abonnement ?",
-    answer: "En un clic depuis ton espace compte. Aucune periode d'engagement, aucun frais d'annulation.",
+    answer: "En un clic depuis ton espace compte. Aucune période d'engagement, aucun frais d'annulation.",
   },
   {
-    question: "Reviz fonctionne-t-il sur telephone ?",
+    question: "Reviz fonctionne-t-il sur téléphone ?",
     answer:
-      "Oui, Reviz est optimise mobile. Tu peux meme prendre une photo de ton cahier ou tableau directement depuis l'app.",
+      "Oui, Reviz est optimisé mobile. Tu peux même prendre une photo de ton cahier ou tableau directement depuis l'app.",
   },
 ] as const;
 
@@ -273,10 +273,10 @@ export function MarketingSite() {
           </div>
           <div className="container section">
             <div className="section-head">
-              <span className="section-kicker section-kicker-light reviz-reveal reviz-reveal-delay-1">Comment ca marche</span>
-              <h2 className="reviz-reveal">3 entrees. un rendu net.</h2>
+              <span className="section-kicker section-kicker-light reviz-reveal reviz-reveal-delay-1">Comment ça marche</span>
+              <h2 className="reviz-reveal">3 entrées. Un rendu net.</h2>
               <p className="section-note section-note-light reviz-reveal reviz-reveal-delay-1">
-                Reviz est volontairement simple : tu donnes ton cours, l'IA structure, puis tu revises.
+                Reviz est volontairement simple : tu donnes ton cours, l'IA structure, puis tu révises.
               </p>
             </div>
             <div className="grid grid-3">
@@ -380,7 +380,7 @@ export function MarketingSite() {
           <div className="container section">
             <div className="section-head">
               <span className="section-kicker reviz-reveal reviz-reveal-delay-1">FAQ</span>
-              <h2 className="reviz-reveal">Questions frequentes</h2>
+              <h2 className="reviz-reveal">Questions fréquentes</h2>
             </div>
             <div className="faq-list">
               {faqItems.map((item, index) => {
@@ -409,8 +409,8 @@ export function MarketingSite() {
         <section ref={socialProofRef} className="section-band social-proof">
           <div className="container section">
             <div className="section-head">
-              <span className="section-kicker section-kicker-light reviz-reveal reviz-reveal-delay-1">Ils revisent deja avec Reviz</span>
-              <h2 className="reviz-reveal">deja utilise par +{formatStudentCount(studentCount)} eleves</h2>
+              <span className="section-kicker section-kicker-light reviz-reveal reviz-reveal-delay-1">Ils révisent déjà avec Reviz</span>
+              <h2 className="reviz-reveal">Déjà utilisé par +{formatStudentCount(studentCount)} élèves</h2>
             </div>
             <div className="grid grid-3">
               {testimonials.map((testimonial, index) => (

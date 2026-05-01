@@ -26,7 +26,7 @@ type PricingCardsProps = {
 export function PricingCards({ plans, currentTier, hasPremium, isLoggedIn }: PricingCardsProps) {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isAnnual, setIsAnnual] = useState(false);
+  const [isAnnual, setIsAnnual] = useState(true);
 
   async function handleCheckout(tier: "STANDARD" | "STANDARD_ANNUAL" | "PRO") {
     if (!isLoggedIn) {
@@ -202,8 +202,13 @@ export function PricingCards({ plans, currentTier, hasPremium, isLoggedIn }: Pri
                     {isAnnual && plan.id === "STANDARD" ? "3,99" : plan.price} €
                   </span>
                   <span style={{ color: "#5C5C78", fontSize: 13 }}>
-                    {isAnnual && plan.id === "STANDARD" ? "/mois, facturé 47,88 €/an" : plan.period}
+                    {isAnnual && plan.id === "STANDARD" ? "/mois" : plan.period}
                   </span>
+                  {isAnnual && plan.id === "STANDARD" && (
+                    <div style={{ fontSize: 12, color: "#34D399", fontWeight: 600, marginTop: 4 }}>
+                      soit 47,88 €/an — économisez 20%
+                    </div>
+                  )}
                 </div>
                 <p style={{ margin: 0, color: "#8B8B9E", fontSize: 13, lineHeight: 1.5 }}>
                   {plan.tagline}

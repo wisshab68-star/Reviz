@@ -3,12 +3,13 @@
 import { useEffect } from "react";
 import { trackSignupCompleted } from "@/lib/analytics";
 
-const TRACKED_KEY = "reviz-auth-tracked";
+const TRACKED_KEY_PREFIX = "reviz-signup-tracked:";
 
 export function AuthTracker({ userId }: { userId: string }) {
   useEffect(() => {
-    if (sessionStorage.getItem(TRACKED_KEY)) return;
-    sessionStorage.setItem(TRACKED_KEY, "1");
+    const key = `${TRACKED_KEY_PREFIX}${userId}`;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, "1");
     trackSignupCompleted(userId);
   }, [userId]);
 

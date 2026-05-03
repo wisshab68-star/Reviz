@@ -1,12 +1,9 @@
 "use client";
 
-import { trackSignupCompleted } from "@/lib/analytics";
-
 export function GoogleSignInButton({ children }: { children: React.ReactNode }) {
   return (
     <button
       type="submit"
-      onClick={() => trackSignupCompleted("pending")}
       style={{
         width: "100%",
         background: "#FFFFFF",
